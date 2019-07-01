@@ -1,0 +1,443 @@
+
+# This is an "import" file. To use it press F5 in liam2 environment, or run
+# the following command in a console:
+# INSTALL PATH\liam2 import demo_import.yml
+output: H:\LIAM2_commented_code\Prospective_simulations\Import_files\Seed_17101945_start_2014_t4\LIAM2_files\microsim_base_2014_t4.h5
+#globals:
+ #   periodic:
+  #      path: H:\LIAM2_commented_code\globals\globals_transposed_prosp.csv
+   #     transposed: true
+
+entities:
+    household:
+        path: H:\LIAM2_commented_code\Prospective_simulations\Import_files\Seed_17101945_start_2014_t4\SAS_input\microsim_base_forward_2014_t4_hh.csv
+        # if fields are not specified, they are all imported
+        fields:
+            - Year: int
+            - pondera: int
+            - household_id2: int
+
+        oldnames:
+            Year: ano4
+    person:
+        path: H:\LIAM2_commented_code\Prospective_simulations\Import_files\Seed_17101945_start_2014_t4\SAS_input\microsim_base_forward_2014_t4.csv
+        fields:
+        #Period and id are implicit
+            - pondera:         int
+            # We need to declare first all the variables we previously imported. 
+            # First, here are the socio-demographic variables
+            - age:           int
+            - age_quarters: int
+            - agegroup: int
+            - male:        bool
+            - marital_status:    int
+           # - hhstate: int
+            - little_children: int
+            # Second, we list here education variables
+            - formation: int
+            - student: bool
+            - polimodal: int
+            - university_year: int
+            # Second, we import labour-market related variables 
+            - labour_market_state:     int
+            - seniority: int
+            - quarterly_seniority: int
+            - itl: float
+            - discounted_itl: float
+            - resid: float
+            - boss: int
+            - contribution: int
+            # Third, we import social-security information 
+            - retired: bool
+            #- v2_m: float
+            - discounted_v2_m: float
+            #- costo_v2_m: float
+            - disc_cost_v2_m: float
+            # Fourth, we list here identification variables and family links
+            - household_id: int
+            - mother_id:     int
+            - partner_id:    int
+            - father_id: int
+            #Fifth, we add career variables. They are useful for computing both retirement benefits and survivors pensions
+            - car_sal: int
+            - car_ind: int
+            - car_mono_norref: int
+            - sum_rent_aut: float
+            - sum_rent_aut_2: float
+           # - sum_rent_aut_el: float
+            # We include detailed information on the lst 10 years (40 quarters) 
+            - lag_sal_1: float
+            - lag_count_sal_1: int
+            - lag_sal_2: float
+            - lag_count_sal_2: int
+            - lag_sal_3: float
+            - lag_count_sal_3: int
+            - lag_sal_4: float
+            - lag_count_sal_4: int
+            - lag_sal_5: float
+            - lag_count_sal_5: int
+            - lag_sal_6: float
+            - lag_count_sal_6: int
+            - lag_sal_7: float
+            - lag_count_sal_7: int
+            - lag_sal_8: float
+            - lag_count_sal_8: int
+            - lag_sal_9: float
+            - lag_count_sal_9: int
+            - lag_sal_10: float
+            - lag_count_sal_10: int
+            - lag_sal_11: float
+            - lag_count_sal_11: int
+            - lag_sal_12: float
+            - lag_count_sal_12: int
+            - lag_sal_13: float
+            - lag_count_sal_13: int
+            - lag_sal_14: float
+            - lag_count_sal_14: int
+            - lag_sal_15: float
+            - lag_count_sal_15: int
+            - lag_sal_16: float
+            - lag_count_sal_16: int
+            - lag_sal_17: float
+            - lag_count_sal_17: int
+            - lag_sal_18: float
+            - lag_count_sal_18: int
+            - lag_sal_19: float
+            - lag_count_sal_19: int
+            - lag_sal_20: float
+            - lag_count_sal_20: int
+            - lag_sal_21: float
+            - lag_count_sal_21: int
+            - lag_sal_22: float
+            - lag_count_sal_22: int
+            - lag_sal_23: float
+            - lag_count_sal_23: int
+            - lag_sal_24: float
+            - lag_count_sal_24: int
+            - lag_sal_25: float
+            - lag_count_sal_25: int
+            - lag_sal_26: float
+            - lag_count_sal_26: int
+            - lag_sal_27: float
+            - lag_count_sal_27: int
+            - lag_sal_28: float
+            - lag_count_sal_28: int
+            - lag_sal_29: float
+            - lag_count_sal_29: int
+            - lag_sal_30: float
+            - lag_count_sal_30: int
+            - lag_sal_31: float
+            - lag_count_sal_31: int
+            - lag_sal_32: float
+            - lag_count_sal_32: int
+            - lag_sal_33: float
+            - lag_count_sal_33: int
+            - lag_sal_34: float
+            - lag_count_sal_34: int
+            - lag_sal_35: float
+            - lag_count_sal_35: int
+            - lag_sal_36: float
+            - lag_count_sal_36: int
+            - lag_sal_37: float
+            - lag_count_sal_37: int
+            - lag_sal_38: float
+            - lag_count_sal_38: int
+            - lag_sal_39: float
+            - lag_count_sal_39: int
+            - lag_sal_40: float
+            - lag_count_sal_40: int
+            - lag_sal_2_1: float
+        #    - lag_sal_el_1: float
+            - lag_sal_2_2: float
+        #    - lag_sal_el_2: float
+            - lag_sal_2_3: float
+       #     - lag_sal_el_3: float
+            - lag_sal_2_4: float
+        #    - lag_sal_el_4: float
+            - lag_sal_2_5: float
+         #   - lag_sal_el_5: float
+            - lag_sal_2_6: float
+          #  - lag_sal_el_6: float
+            - lag_sal_2_7: float
+           # - lag_sal_el_7: float
+            - lag_sal_2_8: float
+            #- lag_sal_el_8: float
+            - lag_sal_2_9: float
+            #- lag_sal_el_9: float
+            - lag_sal_2_10: float
+       #     - lag_sal_el_10: float
+            - lag_sal_2_11: float
+        #    - lag_sal_el_11: float
+            - lag_sal_2_12: float
+         #   - lag_sal_el_12: float
+            - lag_sal_2_13: float
+          #  - lag_sal_el_13: float
+            - lag_sal_2_14: float
+           # - lag_sal_el_14: float
+            - lag_sal_2_15: float
+            #- lag_sal_el_15: float
+            - lag_sal_2_16: float
+       #     - lag_sal_el_16: float
+            - lag_sal_2_17: float
+        #    - lag_sal_el_17: float
+            - lag_sal_2_18: float
+         #   - lag_sal_el_18: float
+            - lag_sal_2_19: float
+          #  - lag_sal_el_19: float
+            - lag_sal_2_20: float
+           # - lag_sal_el_20: float
+            - lag_sal_2_21: float
+            #- lag_sal_el_21: float
+            - lag_sal_2_22: float
+        #    - lag_sal_el_22: float
+            - lag_sal_2_23: float
+         #   - lag_sal_el_23: float
+            - lag_sal_2_24: float
+          #  - lag_sal_el_24: float
+            - lag_sal_2_25: float
+           # - lag_sal_el_25: float
+            - lag_sal_2_26: float
+            #- lag_sal_el_26: float
+            - lag_sal_2_27: float
+      #      - lag_sal_el_27: float
+            - lag_sal_2_28: float
+       #     - lag_sal_el_28: float
+            - lag_sal_2_29: float
+        #    - lag_sal_el_29: float
+            - lag_sal_2_30: float
+         #   - lag_sal_el_30: float
+            - lag_sal_2_31: float
+          #  - lag_sal_el_31: float
+            - lag_sal_2_32: float
+           # - lag_sal_el_32: float
+            - lag_sal_2_33: float
+       #     - lag_sal_el_33: float
+            - lag_sal_2_34: float
+        #    - lag_sal_el_34: float
+            - lag_sal_2_35: float
+         #   - lag_sal_el_35: float
+            - lag_sal_2_36: float
+          #  - lag_sal_el_36: float
+            - lag_sal_2_37: float
+           # - lag_sal_el_37: float
+            - lag_sal_2_38: float
+            #- lag_sal_el_38: float
+            - lag_sal_2_39: float
+        #    - lag_sal_el_39: float
+            - lag_sal_2_40: float
+         #   - lag_sal_el_40: float
+
+            
+            - lag_ind_1: float
+            - lag_count_ind_1: int
+            - lag_ind_2: float
+            - lag_count_ind_2: int
+            - lag_ind_3: float
+            - lag_count_ind_3: int
+            - lag_ind_4: float
+            - lag_count_ind_4: int
+            - lag_ind_5: float
+            - lag_count_ind_5: int
+            - lag_ind_6: float
+            - lag_count_ind_6: int
+            - lag_ind_7: float
+            - lag_count_ind_7: int
+            - lag_ind_8: float
+            - lag_count_ind_8: int
+            - lag_ind_9: float
+            - lag_count_ind_9: int
+            - lag_ind_10: float
+            - lag_count_ind_10: int
+            - lag_ind_11: float
+            - lag_count_ind_11: int
+            - lag_ind_12: float
+            - lag_count_ind_12: int
+            - lag_ind_13: float
+            - lag_count_ind_13: int
+            - lag_ind_14: float
+            - lag_count_ind_14: int
+            - lag_ind_15: float
+            - lag_count_ind_15: int
+            - lag_ind_16: float
+            - lag_count_ind_16: int
+            - lag_ind_17: float
+            - lag_count_ind_17: int
+            - lag_ind_18: float
+            - lag_count_ind_18: int
+            - lag_ind_19: float
+            - lag_count_ind_19: int
+            - lag_ind_20: float
+            - lag_count_ind_20: int
+            - lag_ind_21: float
+            - lag_count_ind_21: int
+            - lag_ind_22: float
+            - lag_count_ind_22: int
+            - lag_ind_23: float
+            - lag_count_ind_23: int
+            - lag_ind_24: float
+            - lag_count_ind_24: int
+            - lag_ind_25: float
+            - lag_count_ind_25: int
+            - lag_ind_26: float
+            - lag_count_ind_26: int
+            - lag_ind_27: float
+            - lag_count_ind_27: int
+            - lag_ind_28: float
+            - lag_count_ind_28: int
+            - lag_ind_29: float
+            - lag_count_ind_29: int
+            - lag_ind_30: float
+            - lag_count_ind_30: int
+            - lag_ind_31: float
+            - lag_count_ind_31: int
+            - lag_ind_32: float
+            - lag_count_ind_32: int
+            - lag_ind_33: float
+            - lag_count_ind_33: int
+            - lag_ind_34: float
+            - lag_count_ind_34: int
+            - lag_ind_35: float
+            - lag_count_ind_35: int
+            - lag_ind_36: float
+            - lag_count_ind_36: int
+            - lag_ind_37: float
+            - lag_count_ind_37: int
+            - lag_ind_38: float
+            - lag_count_ind_38: int
+            - lag_ind_39: float
+            - lag_count_ind_39: int
+            - lag_ind_40: float
+            - lag_count_ind_40: int
+            
+            - lag_ind_2_1: float
+      #      - lag_ind_el_1: float
+            - lag_ind_2_2: float
+       #     - lag_ind_el_2: float
+            - lag_ind_2_3: float
+        #    - lag_ind_el_3: float
+            - lag_ind_2_4: float
+         #   - lag_ind_el_4: float
+            - lag_ind_2_5: float
+          #  - lag_ind_el_5: float
+            - lag_ind_2_6: float
+           # - lag_ind_el_6: float
+            - lag_ind_2_7: float
+            #- lag_ind_el_7: float
+            - lag_ind_2_8: float
+     #       - lag_ind_el_8: float
+            - lag_ind_2_9: float
+      #      - lag_ind_el_9: float
+            - lag_ind_2_10: float
+       #     - lag_ind_el_10: float
+            - lag_ind_2_11: float
+        #    - lag_ind_el_11: float
+            - lag_ind_2_12: float
+         #   - lag_ind_el_12: float
+            - lag_ind_2_13: float
+          #  - lag_ind_el_13: float
+            - lag_ind_2_14: float
+           # - lag_ind_el_14: float
+            - lag_ind_2_15: float
+            #- lag_ind_el_15: float
+            - lag_ind_2_16: float
+     #       - lag_ind_el_16: float
+            - lag_ind_2_17: float
+      #      - lag_ind_el_17: float
+            - lag_ind_2_18: float
+       #     - lag_ind_el_18: float
+            - lag_ind_2_19: float
+        #    - lag_ind_el_19: float
+            - lag_ind_2_20: float
+         #   - lag_ind_el_20: float
+            - lag_ind_2_21: float
+          #  - lag_ind_el_21: float
+            - lag_ind_2_22: float
+           # - lag_ind_el_22: float
+            - lag_ind_2_23: float
+            #- lag_ind_el_23: float
+            - lag_ind_2_24: float
+     #       - lag_ind_el_24: float
+            - lag_ind_2_25: float
+      #      - lag_ind_el_25: float
+            - lag_ind_2_26: float
+       #     - lag_ind_el_26: float
+            - lag_ind_2_27: float
+        #    - lag_ind_el_27: float
+            - lag_ind_2_28: float
+         #   - lag_ind_el_28: float
+            - lag_ind_2_29: float
+          #  - lag_ind_el_29: float
+            - lag_ind_2_30: float
+           # - lag_ind_el_30: float
+            - lag_ind_2_31: float
+            #- lag_ind_el_31: float
+            - lag_ind_2_32: float
+    #        - lag_ind_el_32: float
+            - lag_ind_2_33: float
+     #       - lag_ind_el_33: float
+            - lag_ind_2_34: float
+      #      - lag_ind_el_34: float
+            - lag_ind_2_35: float
+       #     - lag_ind_el_35: float
+            - lag_ind_2_36: float
+        #    - lag_ind_el_36: float
+            - lag_ind_2_37: float
+         #   - lag_ind_el_37: float
+            - lag_ind_2_38: float
+          #  - lag_ind_el_38: float
+            - lag_ind_2_39: float
+           # - lag_ind_el_39: float
+            - lag_ind_2_40: float
+            #- lag_ind_el_40: float
+            - lag_mono_1: int
+            - lag_mono_2: int
+            - lag_mono_3: int
+            - lag_mono_4: int
+            - lag_mono_5: int
+            - lag_mono_6: int
+            - lag_mono_7: int
+            - lag_mono_8: int
+            - lag_mono_9: int
+            - lag_mono_10: int
+            - lag_mono_11: int
+            - lag_mono_12: int
+            - lag_mono_13: int
+            - lag_mono_14: int
+            - lag_mono_15: int
+            - lag_mono_16: int
+            - lag_mono_17: int
+            - lag_mono_18: int
+            - lag_mono_19: int
+            - lag_mono_20: int
+            - lag_mono_21: int
+            - lag_mono_22: int
+            - lag_mono_23: int
+            - lag_mono_24: int
+            - lag_mono_25: int
+            - lag_mono_26: int
+            - lag_mono_27: int
+            - lag_mono_28: int
+            - lag_mono_29: int
+            - lag_mono_30: int
+            - lag_mono_31: int
+            - lag_mono_32: int
+            - lag_mono_33: int
+            - lag_mono_34: int
+            - lag_mono_35: int
+            - lag_mono_36: int
+            - lag_mono_37: int
+            - lag_mono_38: int
+            - lag_mono_39: int
+            - lag_mono_40: int
+            
+
+        
+        # if you want to keep your csv files intact but you use different names
+        # in your simulation that in the csv files, you can specify name changes
+        # here. The format is: "newname: oldname"
+        oldnames:
+            Year: ano4
+            itl: ITL
+        # if you want to invert the value of some boolean fields (True -> False
+        # and False -> True), add them to the "invert" list below.
+#        invert: [list, of, boolean, fields, to, invert]
