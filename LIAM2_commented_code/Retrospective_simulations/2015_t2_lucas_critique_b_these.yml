@@ -1,0 +1,1036 @@
+# This is a LIAM2 simulation file. To run the simulation, press F6 if you are
+# using the editor bundled with LIAM2, otherwise run the following command in a
+# console: [BUNDLEPATH]\liam2\main run demo07.yml
+
+# In this example, we will model the work state and education level of people.
+# To achieve that we need the following additional features: globals and the
+# logit_score and align functions as a more versatile alternative to the
+# logit_regr function.
+#fluk7
+
+globals:
+    periodic:
+        - GROSS_WAGE_2014_T4: float
+        - ANSES_GROSS_WAGE_2014_T4: float
+        - COEFFICIENT_1_H: float
+        - COEFFICIENT_2_H: float
+        - COEFFICIENT_3_H: float
+        - COEFFICIENT_1_F: float
+        - COEFFICIENT_2_F: float
+        - COEFFICIENT_3_F: float
+        - COEFFICIENT_F: float
+        - COEFFICIENT_H: float
+entities:
+    household:
+        fields:
+            # period and id are implicit
+            - nb_persons:  {type: int, initialdata: false}
+            - nb_children: {type: int, initialdata: false}
+            - nb_lil_children: {type: int, initialdata: false}
+            - id: int
+            - pondera: int
+            - hogar2: int
+
+        links:
+            persons: {type: one2many, target: person, field: hogar}
+
+        processes:
+            household_composition:
+                - nb_persons: persons.count()
+                - nb_children: persons.count(age < 18)
+                - nb_lil_children: persons.count(age < 5)
+
+            clean_empty: remove(nb_persons == 0)
+
+    person:
+        fields:
+            # period and id are implicit
+            - age: int
+            - male:     bool
+            # 1: salarié cotisant, 2: indépendant cotisant,
+            # 3: travailleur au noir, 4: chômeur, 5: inactifs
+            - etat2:  int
+            - formation: int
+            # link fields
+            - mother_id:  int
+            - hogar:      int
+            - partenaire_id: int
+            - civilstate: int
+            - agegroup: int
+            - agetrimestres: int
+            - pondera: int
+            - id2: int
+            - itl: float
+            #- ln_wage: {type: float}
+            - estudiante: bool
+            - polimodal: int
+            - annee_uni: int
+            - father_id: int
+            - resid_back: float 
+            - underage_children: int
+            - little_children: int
+            - ama_de_casa: int
+            - perm_housewife: int
+            - sect_quartile: {type: int, initialdata: false}
+            - out_of_study: {type: int, initialdata: false}
+            - itl_1: {type: float, initialdata: false}
+            - itl_2: {type: float, initialdata: false}    
+            - itl_anses: {type: float, initialdata: false}
+            - itl_anses_1: {type: float, initialdata: false}
+            - itl_anses_2: {type: float, initialdata: false}         
+            - level_second: {type: int, initialdata: false} 
+            - dur_in_couple: {type: int, initialdata: false}
+            - abandon_second: {type: bool, initialdata: false}
+            - fin_etude: {type: int, initialdata: false}
+            - always_celib: {type: bool, initialdata: false}
+            - unborn: {type: bool, initialdata: false}
+            - etat2_lucas: {type: int, initialdata: false}
+            - itl_lc: {type: float, initialdata: false}
+            - itl_lc_anses: {type: float, initialdata: false}
+            - itl_lc_anses_1: {type: float, initialdata: false}
+            - itl_lc_anses_2: {type: float, initialdata: false}   
+            - sect_quartile_lc: {type: int, initialdata: false}
+            - val_trim: {type: int, initialdata: false}
+            - val_trim_lc: {type: int, initialdata: false}
+            - autonomo: {type: int, initialdata: false}
+            - monotributo: {type: int, initialdata: false}
+            
+            # fields not present in input 
+        links:
+            mother: {type: many2one, target: person, field: mother_id}
+            father: {type: many2one, target: person, field: father_id}
+            partenaire: {type: many2one, target: person, field: partenaire_id}            
+            household: {type: many2one, target: household, field: hogar}
+            children: {type: one2many, target: person, field: mother_id}
+            children_bis: {type: one2many, target: person, field: father_id}
+
+        macros:
+            UNSET: -1
+
+            HOMME: True
+            FEMME: False
+            ISHOMME: male
+            ISFEMME: not male
+
+            SALARIE: 1
+            INDEPENDANT: 2
+            AU_NOIR: 3
+            CHOMEUR: 4
+            INACTIF: 5
+            ISSALARIE: etat2 == 1
+            ISINDEPENDANT: etat2 == 2
+            ISAU_NOIR: etat2 == 3
+            ISCHOMEUR: etat2 == 4
+            ISINACTIF: etat2 == 5
+            ISSALARIE_LC: etat2_lucas == 1
+            ISINDEPENDANT_LC: etat2_lucas == 2
+            ISAU_NOIR_LC: etat2_lucas == 3
+            ISCHOMEUR_LC: etat2_lucas == 4
+            ISINACTIF_LC: etat2_lucas == 5            
+            ISSTUDENT: estudiante
+            ISMARRIED: civilstate == 2
+            ISNOTCELIB: civilstate == 1 or civilstate == 2
+            ISDIVORCED: civilstate == 3
+            ISCELIB: civilstate == 5
+            ISWIDOW: civilstate == 4
+            ISCOUPLE: civilstate == 1
+            COUPLED: 1
+            MARRIED: 2
+            DIVORCED: 3
+            WIDOWED: 4
+            FORMATION1: 1
+            FORMATION2: 2
+            FORMATION3: 3
+            IS_FORMATION1: formation == 1
+            IS_FORMATION2: formation == 2
+            IS_FORMATION3: formation == 3
+            ISESTUDIANTE:  estudiante =="True"
+            ISNOTESTUDIANTE: estudiante =="False"
+
+            RETIREMENTAGE: if(male, 65, 60)
+            ACTIVEAGE: (age > 15 and (age < if(male, 65, 60)))
+
+        # possible transitions and regressions
+        processes:
+            ageing: 
+#                - unborn: if(agetrimestres==-1 or lag(agetrimestres)==-1,True, False)
+ #               - remove(unborn)
+                - agetrimestres: agetrimestres - 1
+                - unborn: if(agetrimestres<0, True, False)       
+                - age: trunc(agetrimestres/4) 
+                - remove(unborn)     
+
+
+            agegrouping:
+                - agegroup: 5*trunc(age/5)
+                - agegroup: if(age >15 and age<20, 16, agegroup)
+                 
+            number_children:
+                - underage_children: children.count(age<18) + children_bis.count(age<18)
+                - little_children: children.count(age<5) + children_bis.count(age<5)
+            prelim_in_education:
+    #Avec les informations sur le niveau actuel d'études, le fait d'être en train d'étudier et l'âge (resp estudiante, formation et age)
+    #on essaie de faire une routine pour déterminer qui étudie, en quelle année ils sont, secondaire ou universitaire, s'ils 
+    #réussissent, redoublent ou abandonnent.
+    #D'abord on commence par enlever d'office les gens trop vieux: ceux qui ont 25 ans ou plus on les considère comme pas étudiants,
+    #Ceux qui ont 21 ans ou plus et pas fini l'enseignement secondaire on les enlève aussi. 
+                #- normal_error: normal()
+                - out: if(age>20 and IS_FORMATION1, True, False)
+                - out: if(age>29, True, out)
+                - estudiante: if(ISESTUDIANTE, 
+                                if(out,False,estudiante),
+                                estudiante)
+ #Ensuite on détermine, pour ceux qui viennent d'atteindre 16 ans i.e. l'âge où la scolarisation n'est plus obligatoire en Argentine, 
+ #s'ils continuent pour finir le secondaire ou s'ils entrent dans le marché du travail. On pourrait les aligner avec des fréquences par
+ #trimestre, pour l'instant on fait un choice en fonction du genre, les pourcentages sont les pourcentages de personnes de 16 ans qui 
+ #étudient ou n'étudient pas par genre. 
+    #On va attribuer des niveaux d'éducation aux personnes dans notre base de données en fonction de leur âge et de leur niveau 
+    #de formation déjà atteint. Pour s'assurer qu'on ne le fait qu'à des gens pour lesquels on n'a pas de données précédentes, 
+    # donc que ça ne sera pas refait pour tout le monde chaque année, on ajoute la condition lag(level_second)=UNSET.   
+    #Les coefficients dans choice ont été pour l'instant pris pour avoir des taux de surâge par niveau proches de ceux pour 2009/2010. 
+    #Finalement, on a importé dans la variable polimodal l'année d'étude de la personne enquêtée. Pour ceux qui sont étudiants 
+    #dans le secondaire et qui ont répondu selon la variable ch12=secundario, où les réponses sont incohérentes, on leur attribue 
+    #un niveau d'éducation aléatoirement en fonction de leur âge et en prenant en compte les taux de surâge.
+                - secundario: if(polimodal==UNSET,True,False)
+                - polimodal: if(age <16,0,polimodal)
+                - polimodal: if(ISNOTESTUDIANTE or formation!=1 or secundario==False,polimodal,
+                                        if(age==16,1,
+                                        if(age==17,choice([1, 2], [0.33, 0.67]),
+                                        if(age==18,choice([1, 2, 3], [0.1,0.23, 0.67]),
+                                        if(age==19,choice([ 2, 3], [0.1,0.9]),
+                                        if(age==20,3,
+                                        if(age>20,0,
+                                        polimodal)))))))
+                - polimodal: if(polimodal==-1,0,polimodal)
+    #Ici on prend les individus qui ont fini leurs études: en fonction de leur niveau atteint, on leur donne un âge de fin d'études. 
+    #24 pour les universitaires, 18 pour les bacheliers, 16 pour les sans formation. 
+                - fin_etude: if(formation==3, 24, -1)
+                - fin_etude: if(formation==2 and ISNOTESTUDIANTE, 
+                                if(age>17, 18, 17),fin_etude)
+                - fin_etude: if(formation==1 and ISNOTESTUDIANTE and age>15, 16, fin_etude)
+                - always_celib: if(civilstate==5, True, False)
+                - etat2_lucas: etat2
+                - itl_lc: itl
+                - sect_quartile_lc: sect_quartile
+               # - val_years: 0
+                - val_trim: if(ISSALARIE or ISINDEPENDANT, 1, 0)
+               # - val_years_lc: 0
+                - val_trim_lc: if(ISSALARIE_LC or ISINDEPENDANT_LC, 1, 0)
+                
+                #On ne va pas simuler du matching d'avant, uniquement des changements dans l'état civil. 
+            studying: 
+            #On commence par regrouper en début de code toutes les situations qui feraient entrer ou sortir d'étudiant: ça va déterminer en fait le niveau de formation
+                #Vu qu'ici on est en arrière, backward, les étudiants aujourd'hui à un niveau particulier sont supposés l'avoir été au niveau immédiatement antérieur au 
+                #trimestre précédent. Il n'est donc pas possible d'avoir un étudiant aujourd'hui qui ait abandonné ses études au trimestre antérieur.  
+                #ensuite on détermine qui redouble le secondaire ou approuve le secondaire ou approuve/ne se fait pas virer de l'université. 
+                #il est important que le modulo de la période soit de 0, comme ça on est sûrs qu'une année s'est écoulée. 
+             
+                - modulo_period: (period) % 4 
+                - show('modulo period', modulo_period)
+                - just_ended_education: if(modulo_period==0 and age<fin_etude,True,False)
+                - estudiante: if(just_ended_education, True, estudiante)
+                - etat2: if(just_ended_education, 5, etat2)
+                - formation: if(fin_etude==24, 
+                                if(age<24, 2,
+                                        if(age<18, 1, formation)),formation)
+                - formation: if(fin_etude==18, 
+                                if(age<18, 1,formation),formation)
+                - estudiante: if(age<fin_etude, True, estudiante)
+                - etat2: if(age<fin_etude, 5, etat2)
+                - estudiante: if(age<16, True, estudiante)
+                - etat2: if(age<16, 5, etat2)
+            civilstate:
+            
+            #REGLES ETAT CIVIL À L'ENVERS: 
+                # 2-Les probabilités de divorce se font sur des gens divorcés et donnent des gens mariés, 
+                    #avec un matching qu'il faudra refaire avec des régressions logistiques différentes (la variable
+                    #expliquée ça serait vient de divorcer). 
+                # 3- Les célibataires ont la variable always_celib qui les empêche de se marier, veuver ou divorcer, mais
+                    #pas de se mettre en couple. 
+                # 4- On aligne les veufs par rapport aux probabilités de décès des personnes de sexe opposé de leur 
+                    #âge: le décès simulé correspondra en fait au décès du conjoint, et à ce moment ils deviendront mariés. 
+                # 5- Pour devenir en couple, soit on vient de mariés, soit de couple soit de célibataire. 
+                # 6- On ne fait pas de matching, on n'essaie pas de mettre ensemble des divorcés qui avant auraient pu être mariés. 
+                # On change juste leur état civil. 
+            
+            
+                # 1-Les probabilités de mariage se font sur des gens mariés et donnent des gens en couple. 
+                #De ce fait, al_p_mmkt_caba2_b c'est le nombre de mariages sur le nombre de mariés. 
+                
+    
+## On commence par calculer les probabilités de divorce, veuvage et mariage. Elles assurent un minimmum de cohérence micro au modèle. Nous privilégions néanmoins 
+## l'alignement des valeurs au niveau macro.     
+                
+                - divorce_f: logit_regr(0.0,
+                                      filter = ISFEMME and ISDIVORCED and age>=20 and age<70 ,
+                                      align = 'al_p_divorce_f_caba_b.csv')
+                - divorce_m: logit_regr(0.0,
+                                      filter = ISHOMME and ISDIVORCED and age>=20 and age<70,
+                                      align = 'al_p_divorce_m_caba_b.csv')   
+                - widowed_f: logit_regr(0.0,
+                                      filter = ISFEMME and ISWIDOW and age>=20,
+                                      align = 'p_death_m_b.csv')
+                - widowed_m: logit_regr(0.0,
+                                      filter = ISHOMME and ISWIDOW and age>=20,
+                                      align = 'p_death_f_b.csv')   
+                
+                
+                - marry: if((age >= 20) and (age < 70) and ISMARRIED,
+                                if(ISHOMME,
+                                   logit_regr(0.0, align='al_p_mmkt_m_caba2_b.csv'),
+                                   logit_regr(0.0, align='al_p_mmkt_f_caba2_b.csv')),
+                                False)     
+                 
+                 ##Ensuite nous calculons les scores pour être en couple ou mariés. Nous ne simulons pas de nouveaux divorcés ou veufs.
+                 
+                 
+                - score_couple: if(ISFEMME,
+                                    if(civilstate==1 and partenaire_id!=UNSET, 1000 + uniform(),
+                                        if(marry, 100 + uniform(),
+                                            if(civilstate==1 and partenaire_id==UNSET, 10 + uniform(),
+                                                if(civilstate==4 or civilstate==3 or (civilstate==2 and not marry), -1000 + uniform(),
+                                                    uniform())))), -10000+uniform()) 
+                 
+                - score_married: if(ISFEMME,
+                                    if(civilstate==2 and not marry, 10000+uniform(), 
+                                        if(civilstate==1, -1000 + uniform(),
+                                            if(always_celib or civilstate==5 or civilstate==1, -10000 + uniform(),
+                                                if(divorce_f or widowed_f, 1000+uniform(),
+                                                    if(civilstate==2 and marry and partenaire_id!=UNSET, 100+uniform(),
+                                                       if(civilstate==2 and partenaire_id==UNSET, 10+uniform(),
+                                                          if(civilstate==3 or civilstate==4, -10 + uniform(),
+                                                                uniform()))))))),-100000 + uniform())
+                                                        
+                
+                                       
+                - align_married: if(age<20,False, 
+                                    if(not male,
+                                        align(score_married, 'cal_civ_2_f_b.csv', leave =age<20 or age>=70 or always_celib or civilstate==5 or civilstate==1, take= civilstate==2 and not marry),
+                                        False)) 
+
+                - leave_couple: if(civilstate==4 or civilstate==3 or (civilstate==2 and not marry), True, False)                        
+                - to_couple: if((age >= 16) and (age < 70),
+                                if(ISFEMME,
+                                   align(score_couple,'cal_civ_1_f_b.csv', leave=leave_couple or align_married or civilstate==3 or civilstate==4),
+                                   False),
+                                False)                                         
+               # - score_marry: if(civilstate==2,-1000+uniform(),
+                  #                  if(marry, 1000+uniform(),
+                   #                     uniform()))
+                #- gets_married: if(age>15, 
+                 #                       if(male, align(score_marry, 'cal_civ_2_m_b.csv', leave =agegroup<16 or agegroup>80),align(score_marry, 'cal_civ_2_f_b.csv', leave =agegroup<16 or agegroup>80)),
+                    #                    False)
+                
+                
+                
+                 
+                # Ce score_couple empêche les divorcés et les veufs d'avoir été en couple juste avant, favorise les 
+                #gens déjà en couple, favorise énormément les nouveaux mariés, n'impacte pas les célibataires, défavorise les mariés 
+                #non nouvellement mariés. 
+              
+                # workaround because we can't use macros in combination with
+                # the "other" special link yet
+                
+                #Le set2filter c'est les hommes, donc on doit mettre les coefficients pour la régression menée du 
+                #point de vue des hommes pour le matching (donc mettre une clause where=ISHOMME dans SAS)
+                #On est à l'envers, donc on fera la régression avec, comme variable expliquée, arrêter d'être en couple, et les mêmes variables explicatives. 
+
+                - civilstate: if(align_married,2,civilstate)
+                - civilstate: if(ISFEMME,
+                                if(to_couple, COUPLED,
+                                 if(civilstate!=1,civilstate,5)),civilstate)
+                                 
+                - civilstate: if(age<25, 
+                                    if(civilstate==3 or civilstate==4,2,civilstate)
+                                    ,civilstate)
+                - civilstate: if(age<18, 5, civilstate)
+                - civilstate: if(17<age and age<20,
+                                    if(civilstate!=1 and civilstate!=5,1,civilstate),civilstate)                          
+                                 
+                - civilstate: if(partenaire.civilstate==1,1,civilstate)
+                - civilstate: if(partenaire.civilstate==5,5,civilstate)
+                - civilstate: if(partenaire.civilstate==2,2,civilstate)
+  
+                - partenaire_id: if(civilstate==5,UNSET,partenaire_id)
+                - mark_mar_men: if(ISHOMME and partenaire_id!=UNSET and civilstate==2, True, False)
+                - mark_com_men: if(ISHOMME and partenaire_id!=UNSET and civilstate==1, True, False)
+                - score_married_men: if(ISHOMME,
+                                    if(civilstate==2 and partenaire_id!=UNSET, 10000+uniform(), 
+                                        if(civilstate==2 and partenaire_id==UNSET, 100 + uniform(),
+                                                if(always_celib or civilstate==5 or civilstate==1, -10000 + uniform(),
+                                                    if(divorce_m or widowed_m, 1000+uniform(),
+                                                       uniform())))),-100000 + uniform()) 
+                - align_married_men: if(age<20, False, 
+                                        if(ISHOMME, align(score_married, 'cal_civ_2_h_b.csv', leave =(age<20 or age>=70) or always_celib or civilstate==5  or civilstate==1, take= (civilstate==2 and partenaire_id!=UNSET)),
+                                        False))                      
+                - score_couple_men: if(ISHOMME,
+                                    if(civilstate==1 and partenaire_id!=UNSET, 10000 + uniform(),
+                                        if(marry and partenaire_id==UNSET, 1000 + uniform(),
+                                            if(civilstate==1 and partenaire_id==UNSET, 100 + uniform(),
+                                                if(civilstate==4 or civilstate==3 or (civilstate==2 and not marry) or (civilstate==2 and partenaire_id!=UNSET), -1000 + uniform(),
+                                                    uniform())))), -10000+uniform())                 
+                - leave_couple_men: if(ISHOMME,
+                                        if(civilstate==4 or civilstate==3 or (civilstate==2 and not marry) or (civilstate==2 and partenaire_id!=UNSET), True, False),False)                        
+                - to_couple_men: if((age >= 16) and (age < 70),
+                                if(ISHOMME,
+                                   align(score_couple,'cal_civ_1_h_b.csv', leave=align_married_men or leave_couple_men or civilstate==3 or civilstate==4, take=civilstate==1 and partenaire_id!=UNSET),
+                                   False),
+                                False) 
+
+                - civilstate: if(align_married_men,2,civilstate)
+                - civilstate: if(ISHOMME,
+                                if(to_couple_men, COUPLED,
+                                 if(civilstate!=1,civilstate,5)),civilstate)                
+                #Pour les mariages, en fait ce sont ceux qui étaient divorcés, on leur applique la probabilité de divorcer (donc d'avoir divorcé à la période antérieure). 
+         
+                # EN bas, le monde du divorce à modifier. 
+                #Là, on prend comme alignement le nombre de divorces par divorcés: l'idée est d'identifier les divorcés dans la base qui 
+                #viennent de divorcer. 
+                                    
+                                     #Le not breakup_score: on enlève les nouveaux couples, on donne la priorité à ceux qui étaient couples avant, 
+                                     #la différence est remplie par des célibataires qui sont considérés avoir été  en couple
+               #On rajoute enfin la variable femme au foyer. Si la personne a été femme au foyer sans enfants en bas âge, alors elle garde perm_housewife et ne travaille jamais. 
+                # Si la personne a été femme au foyer avec des enfants en bas âge, elle perd la vairable femme au foyer quand elle n'aura plus d'enfants en bas âge (pas encore nés). 
+                - ama_de_casa: if(perm_housewife==1, 1, 
+                                if(ISHOMME,0, 
+                                    if(little_children==0,0,ama_de_casa)))
+                              
+    
+                #On modifie la variable get_a_life pour simuler le fait qu'un individu en couple aujourd'hui 
+                    #en fait avant il n'était pas en couple et du coup vivait seul. 
+  
+            get_a_life:
+                - alone: household.nb_persons == 1
+                - hogar: if(not ISNOTCELIB and lag(ISNOTCELIB) and not alone and (age >= 24),
+                            new('household'),
+                            hogar)
+               
+
+            simulations:
+                # hommes sans formation
+                
+                - etat2: if(ACTIVEAGE , etat2, INACTIF)
+# Ici en haut, avant de faire les align on copie colle les régressions logistiques avec leurs coefficients telles que 
+#dans le code de démonstation demo07 dans work_score: unemp_score:. On fait les logit pour chaque état de départ et pour 
+#hommes et pour femmes. On le fait en fonction de la formation, de l'âge, plus tard en fonction des liens familiaux. 
+#ça nous donnera les variables de score pour les align. 
+# Considérer ceux qui sortent de leurs études comme un état séparé! On les sépare des autres inactifs, et on leur met leur 
+#propre régression avec leurs propres coefficients. Donc en fait leurs scores distincts pour être salariés, indépendants, 
+#chômeurs, au noir ou inactifs. 
+#Source des équations comportementales: H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres
+                #BON il y a en fait une limite au nombre de "INPUTS" que l'on peut mettre
+                #dans notre logit, 31 d'après le guide d'utilisateur de LIAM2. Ce guide conseille de regrouper certains des termes dans des sommes
+                #afin de contourner ce bug. C'est à ça que servent les variables "temp". De cette façon, nous n'avons pas à modifier nos régressions. 
+                - temp_1: (0.5276)+(age>=25 and age<30)*(1.2663)+(age>=45 and age<50)*(1.1196)+(ISMARRIED)*(0.5134)+(partenaire.etat2==-1)*(-0.1909)+(partenaire.etat2==5)*(-0.0615)+((ISSALARIE) and (sect_quartile==3))*(5.0873)+((ISINDEPENDANT) and (sect_quartile==4))*(0.4588)+((ISAU_NOIR) and (sect_quartile==4))*(0.6433)
+                - temp_2: (IS_FORMATION1)*(-0.4969)+(age>=30 and age<35)*(1.2313)+(age>=50 and age<55)*(0.9908)+(ISDIVORCED)*(0.2683)+(partenaire.etat2==2)*(-0.7685)+(little_children>=2)*(-0.1882)+((ISSALARIE) and (sect_quartile==4))*(5.1321)+((ISAU_NOIR) and (sect_quartile==1))*(-0.2642)+((ISCHOMEUR) and (sect_quartile==0))*(0.6721)
+                - temp_3: (IS_FORMATION2)*(-0.1817)+(age>=35 and age<40)*(1.2148)+(age>=55 and age<60)*(0.966)+(ISCOUPLE)*(0.3293)+(partenaire.etat2==3)*(-0.4941)+((etat2!=1) or (sect_quartile!=1))*(-4.1889)+((ISINDEPENDANT) and (sect_quartile==1))*(-0.2383)+((ISAU_NOIR) and (sect_quartile==2))*(0.1555)
+                - temp_4: (age>=20 and age<25)*(0.8695)+(age>=40 and age<45)*(1.1876)+(age>=60 and age<65)*(0.7417)+(ISWIDOW)*(0.2753)+(partenaire.etat2==4)*(-0.2299)+((ISSALARIE) and (sect_quartile==2))*(4.779)+((ISINDEPENDANT) and (sect_quartile==3))*(0.2589)+((ISAU_NOIR) and (sect_quartile==3))*(0.326)
+                - temp_b_1: (0.9117)+(age>=25 and age<30)*(1.0748)+(age>=45 and age<50)*(1.4295)+(ISDIVORCED)*(-0.0928)+(partenaire.etat2==3)*(-0.4768)+((ISSALARIE) and (sect_quartile==2))*(4.661)+((ISAU_NOIR) and (sect_quartile==1))*(-0.7806)+((ISINACTIF) and (sect_quartile==0))*(-0.9808)
+                - temp_b_2: (IS_FORMATION1)*(-1.0687)+(age>=30 and age<35)*(1.2476)+(age>=50 and age<55)*(1.4181)+(ISWIDOW)*(-0.1743)+(partenaire.etat2==5)*(-0.096)+((ISSALARIE) and (sect_quartile==3))*(4.933)+((ISAU_NOIR) and (sect_quartile==2))*(-0.0913)
+                - temp_b_3: (IS_FORMATION2)*(-0.5266)+(age>=35 and age<40)*(1.3067)+(age>=55 and age<60)*(1.3596)+(partenaire.etat2==-1)*(-0.1129)+(little_children>=2)*(-0.2016)+((ISSALARIE) and (sect_quartile==4))*(4.9772)+((ISAU_NOIR) and (sect_quartile==3))*(0.2553)
+                - temp_b_4: (age>=20 and age<25)*(0.7446)+(age>=40 and age<45)*(1.3424)+(ISMARRIED)*(-0.1126)+(partenaire.etat2==2)*(-0.4831)+((etat2!=1) or (sect_quartile!=1))*(-3.9787)+((ISINDEPENDANT) and (sect_quartile==1))*(-0.7071)+((ISAU_NOIR) and (sect_quartile==4))*(0.7296)
+  #  Ce morceau montre qu'il faut mettre la graine de la procédure aléatoire juste avant l'objet utilisant logit_score pour que le même tirage soit effectué. C'est important pour comparer etat2 et etat2_lucas 
+#(On les compare ainsi à tirage aléatoire égal).   
+                #- seed(17101945)
+                - salarie_score: if(ACTIVEAGE,
+                                    if(ISHOMME,
+                                        logit_score(temp_1+temp_2+temp_3+temp_4
+                                                    ),
+                                        logit_score(temp_b_1+temp_b_2+temp_b_3+temp_b_4
+                                                    )),
+                                        if(ISHOMME  and  age>=65  and  age<70,
+                                            logit_score((-12.5827)+(IS_FORMATION1)*(-0.4391)+(age)*(0.5709)+(age*age)*(-0.00550)+(etat2!=1 or sect_quartile!=1)*(-3.7985)+(etat2==1 and sect_quartile== 2)*(5.0398)
+                                                        +(etat2==1 and sect_quartile== 3)*(4.4160)+(etat2==1 and sect_quartile== 4)*(4.8955)+(etat2==3 and sect_quartile== 3)*(0.3584)
+                                                        +(etat2==3 and sect_quartile== 4)*(0.7388)+(etat2==5)*(-0.6258)),
+                                        if(ISFEMME and age>=60 and age<70,
+                                            logit_score((3.8351)+(IS_FORMATION1)*(-1.1294)+(IS_FORMATION2)*(-0.9058)+(age)*(-0.0330)+(ISMARRIED)*(0.4986)+(ISCOUPLE)*(0.5313)
+                                                        +(partenaire.etat2==2)*(-0.7892)+(partenaire.etat2==3)*(-0.4694)+(partenaire.etat2==5)*(-0.6725)+(etat2!=1 or sect_quartile!=1)*(-4.7967)
+                                                        +(etat2==1 and sect_quartile== 2)*(5.6448)+(etat2==1 and sect_quartile== 3)*(6.1616)+(etat2==1 and sect_quartile== 4)*(5.9224)
+                                                        +(etat2==2 and sect_quartile== 4)*(1.3508)+(etat2==3 and sect_quartile== 2)*(0.6839)+(etat2==3 and sect_quartile== 3)*(1.1643)
+                                                        +(etat2==3 and sect_quartile== 4)*(1.5673)+(etat2==5)*(-0.5468)),
+                                                        -10))) 
+
+ 
+                - temp_b_1: (IS_FORMATION1)*(-1.8104)+(age>=30 and age<35)*(1.2556)+(age>=50 and age<55)*(1.4588)+(partenaire.etat2==3)*(-1.3144)+(little_children>=2)*(0.3316)+((ISINDEPENDANT) and (sect_quartile==3))*(4.9404)+((ISAU_NOIR) and (sect_quartile==3))*(1.7198)
+                - temp_b_2: (IS_FORMATION2)*(-0.8234)+(age>=35 and age<40)*(1.3232)+(age>=55 and age<60)*(1.6578)+(partenaire.etat2==4)*(-1.4437)+((ISSALARIE) and (sect_quartile==4))*(0.2255)+((ISINDEPENDANT) and (sect_quartile==4))*(5.0694)+((ISAU_NOIR) and (sect_quartile==4))*(2.2551)
+                - temp_b_3: (age>=20 and age<25)*(0.4529)+(age>=40 and age<45)*(1.4439)+(partenaire.etat2==-1)*(-0.9384)+(partenaire.etat2==5)*(-1.1126)+((etat2!=2) or (sect_quartile!=1))*(-4.5988)+((ISAU_NOIR) and (sect_quartile==1))*(1.3261)+((ISCHOMEUR) and (sect_quartile==0))*(1.2488)
+                - temp_b_4: (age>=25 and age<30)*(0.9768)+(age>=45 and age<50)*(1.5279)+(partenaire.etat2==1)*(-0.9982)+(little_children==0)*(0.1532)+((ISINDEPENDANT) and (sect_quartile==2))*(4.8289)+((ISAU_NOIR) and (sect_quartile==2))*(1.4622)+((ISINACTIF) and (sect_quartile==0))*(0.5859)
+                - temp_1: (IS_FORMATION1)*(-1.3995)+(age>=30 and age<35)*(1.6923)+(age>=50 and age<55)*(1.9864)+(ISDIVORCED)*(0.1427)+(partenaire.etat2==1)*(-1.2297)+((ISSALARIE) and (sect_quartile==2))*(-0.2787)+((ISINDEPENDANT) and (sect_quartile==3))*(4.559)+((ISAU_NOIR) and (sect_quartile==3))*(1.6573)
+                - temp_2: (IS_FORMATION2)*(-0.7164)+(age>=35 and age<40)*(1.7724)+(age>=55 and age<60)*(1.9567)+(ISCOUPLE)*(0.1921)+(partenaire.etat2==3)*(-1.6413)+((ISSALARIE) and (sect_quartile==3))*(-0.1585)+((ISINDEPENDANT) and (sect_quartile==4))*(4.613)+((ISAU_NOIR) and (sect_quartile==4))*(1.9147)
+                - temp_3: (age>=20 and age<25)*(0.8452)+(age>=40 and age<45)*(1.8067)+(age>=60 and age<65)*(2.0062)+(ISWIDOW)*(0.2236)+(partenaire.etat2==4)*(-1.7739)+((etat2!=2) or (sect_quartile!=1))*(-4.1203)+((ISAU_NOIR) and (sect_quartile==1))*(1.207)+((ISCHOMEUR) and (sect_quartile==0))*(1.1013)
+                - temp_4: (age>=25 and age<30)*(1.4622)+(age>=45 and age<50)*(1.9367)+(ISMARRIED)*(0.2867)+(partenaire.etat2==-1)*(-1.2421)+(partenaire.etat2==5)*(-1.2701)+((ISINDEPENDANT) and (sect_quartile==2))*(4.3689)+((ISAU_NOIR) and (sect_quartile==2))*(1.432)+((ISINACTIF) and (sect_quartile==0))*(0.5522)
+                         
+                - temp_70_h: (IS_FORMATION1)*(-1.6582)+(IS_FORMATION2)*(-0.8147)+(age)*(0.0433)+(ISMARRIED)*(0.7580)+(ISCOUPLE)*(1.1563)+(ISWIDOW)*(0.7290)
+                            +(partenaire.etat2==-1)*(-1.1592)+(partenaire.etat2==1)*(-0.7147)+(partenaire.etat2==3)*(-1.4051)+(partenaire.etat2==4)*(-0.8499)
+                            +(partenaire.etat2==5)*(-1.3501)+(etat2==1 and sect_quartile== 2)*(-1.5398)+(etat2!=2 or sect_quartile!=1)*(-3.5062)
+                            +(etat2==2 and sect_quartile== 2)*(4.3237)+(etat2==2 and sect_quartile== 3)*(4.4411)+(etat2==2 and sect_quartile== 4)*(4.4841)
+                            +(etat2==3 and sect_quartile== 1)*(1.0635)+(etat2==3 and sect_quartile== 2)*(1.4922)+(etat2==3 and sect_quartile== 3)*(1.5454)
+                            +(etat2==3 and sect_quartile== 4)*(1.7353)+(etat2==4)*(0.8191)
+                - temp_70_f: (1.9350)+(IS_FORMATION1)*(-1.9071)+(IS_FORMATION2)*(-1.0457)+(partenaire.etat2==-1)*(-1.0525)+(partenaire.etat2==1)*(-1.2309)
+                             +(partenaire.etat2==3)*(-1.6277)+(partenaire.etat2==4)*(-1.2958)+(partenaire.etat2==5)*(-1.4159)+(etat2!=2 or sect_quartile!=1)*(-4.6637)
+                             +(etat2!=2 and sect_quartile== 2)*(4.6978)+(etat2==2 and sect_quartile== 3)*(4.9216)+(etat2==2 and sect_quartile== 4)*(4.5218)
+                             +(etat2==3 and sect_quartile== 1)*(0.9785)+(etat2==3 and sect_quartile== 2)*(1.3565)+(etat2==3 and sect_quartile== 3)*(1.7137)
+                             +(etat2==3 and sect_quartile== 4)*(2.6051)+(etat2==4)*(1.4994)+(etat2==5)*(0.4391)                                       
+                                            
+                #- seed(17101945)
+                - independant_score: if(ACTIVEAGE,
+                                        if(ISHOMME,
+                                        logit_score(temp_1+temp_2+temp_3+temp_4
+                                                    ),
+                                        logit_score(temp_b_1+temp_b_2+temp_b_3+temp_b_4
+                                                    )),
+                                        if(ISHOMME  and  age>=65  and  age<70,
+                                            logit_score(temp_70_h),
+                                        if(ISFEMME and age>=60 and age<70,
+                                            logit_score(temp_70_f),
+                                                        -10)))
+                                                        
+                - temp_1: (-0.1323)+(age>=25 and age<30)*(0.6697)+(age>=45 and age<50)*(0.6149)+(ISMARRIED)*(-0.2188)+(partenaire.etat2==-1)*(-0.3272)+(partenaire.etat2==5)*(-0.357)+((ISSALARIE) and (sect_quartile==3))*(-1.0852)+((ISINDEPENDANT) and (sect_quartile==3))*(0.8598)+((ISAU_NOIR) and (sect_quartile==3))*(2.9079)
+                - temp_2: (IS_FORMATION1)*(1.0329)+(age>=30 and age<35)*(0.6212)+(age>=50 and age<55)*(0.6006)+(ISDIVORCED)*(-0.0944)+(partenaire.etat2==1)*(-0.6644)+(little_children==0)*(-0.0752)+((ISSALARIE) and (sect_quartile==4))*(-1.3042)+((ISINDEPENDANT) and (sect_quartile==4))*(0.452)+((ISAU_NOIR) and (sect_quartile==4))*(2.8454)
+                - temp_3: (IS_FORMATION2)*(0.6523)+(age>=35 and age<40)*(0.6767)+(age>=55 and age<60)*(0.519)+(ISCELIB)*(-0.3021)+(partenaire.etat2==2)*(-0.9978)+(little_children>=2)*(0.1131)+((ISINDEPENDANT) and (sect_quartile==1))*(1.342)+((etat2!=3) or (sect_quartile!=1))*(-2.4969)+((ISCHOMEUR) and (sect_quartile==0))*(1.224)
+                - temp_4: (age>=20 and age<25)*(0.5993)+(age>=40 and age<45)*(0.6182)+(age>=60 and age<65)*(0.4418)+(ISWIDOW)*(-0.3042)+(partenaire.etat2==4)*(-0.3055)+((ISSALARIE) and (sect_quartile==2))*(-0.6602)+((ISINDEPENDANT) and (sect_quartile==2))*(1.1725)+((ISAU_NOIR) and (sect_quartile==2))*(2.7553)+((ISINACTIF) and (sect_quartile==0))*(0.1422)
+                - temp_b_1: (-0.874)+(age>=25 and age<30)*(0.9225)+(age>=45 and age<50)*(0.8624)+(ISDIVORCED)*(0.2688)+(partenaire.etat2==2)*(-0.4775)+(little_children>=2)*(-0.1474)+((ISSALARIE) and (sect_quartile==4))*(-1.9122)+((etat2!=3) or (sect_quartile!=1))*(-2.0774)+((ISCHOMEUR) and (sect_quartile==0))*(0.3574)
+                - temp_b_2: (IS_FORMATION1)*(0.7518)+(age>=30 and age<35)*(0.9962)+(age>=50 and age<55)*(0.7539)+(ISWIDOW)*(0.1413)+(partenaire.etat2==4)*(-0.1744)+((ISSALARIE) and (sect_quartile==1))*(-0.1784)+((ISINDEPENDANT) and (sect_quartile==1))*(0.8153)+((ISAU_NOIR) and (sect_quartile==2))*(2.4738)+((ISINACTIF) and (sect_quartile==0))*(-0.3995)
+                - temp_b_3: (IS_FORMATION2)*(0.4697)+(age>=35 and age<40)*(0.9831)+(age>=55 and age<60)*(0.686)+(partenaire.etat2==-1)*(-0.1654)+(partenaire.etat2==5)*(-0.2448)+((ISSALARIE) and (sect_quartile==2))*(-1.0235)+((ISINDEPENDANT) and (sect_quartile==2))*(0.664)+((ISAU_NOIR) and (sect_quartile==3))*(2.5947)
+                - temp_b_4: (age>=20 and age<25)*(0.679)+(age>=40 and age<45)*(0.9416)+(ISMARRIED)*(-0.0865)+(partenaire.etat2==1)*(-0.5137)+(little_children==0)*(0.1684)+((ISSALARIE) and (sect_quartile==3))*(-1.4999)+((ISINDEPENDANT) and (sect_quartile==3))*(0.4175)+((ISAU_NOIR) and (sect_quartile==4))*(2.3995)
+
+                #- seed(17101945)          
+                - au_noir_score: if(ACTIVEAGE,
+                                        if(ISHOMME,
+                                        logit_score(temp_1+temp_2+temp_3+temp_4
+                                                    ),
+                                        logit_score(temp_b_1+temp_b_2+temp_b_3+temp_b_4
+                                                    )),
+                                        if(ISHOMME  and  age>=65  and  age<70,
+                                            logit_score((-6.2676)+(IS_FORMATION1)*(0.6665)+(IS_FORMATION2)*(0.3575)+(age)*(0.2689)+(age*age)*(-0.00252)+(ISMARRIED)*(-0.2508)
+                                                        +(partenaire.etat2==-1)*(-0.9115)+(partenaire.etat2==1)*(-0.6033)+(partenaire.etat2==2)*(-1.4885)+(partenaire.etat2==4)*(-1.4515)
+                                                        +(partenaire.etat2==5)*(-0.7886)+(etat2==1 and sect_quartile== 1)*(-0.5514)+(etat2==1 and sect_quartile== 2)*(-1.3926)
+                                                        +(etat2==1 and sect_quartile== 3)*(-0.8188)+(etat2==1 and sect_quartile== 4)*(-1.5754)+(etat2==2 and sect_quartile== 1)*(0.4760)
+                                                        +(etat2!=3 or sect_quartile!=1)*(-1.4448)+(etat2==3 and sect_quartile== 2)*(1.8238)+(etat2==3 and sect_quartile== 3)*(1.7426)
+                                                        +(etat2==3 and sect_quartile== 4)*(1.8114)+(etat2==5)*(-0.8823)),
+                                        if(ISFEMME and age>=60 and age<70,
+                                            logit_score((IS_FORMATION1)*(0.8336)+(IS_FORMATION2)*(0.6496)+(age*age)*(-0.00062)+(ISMARRIED)*(-0.2352)+(ISWIDOW)*(-0.3727)+(partenaire.etat2==-1)*(-0.2690)
+                                                        +(partenaire.etat2==1)*(-0.4845)+(partenaire.etat2==2)*(-0.4169)+(partenaire.etat2==5)*(-0.8123)+(etat2==1 and sect_quartile== 1)*(-0.5647)
+                                                        +(etat2==1 and sect_quartile== 2)*(-1.4566)+(etat2==1 and sect_quartile== 3)*(-2.7458)+(etat2==1 and sect_quartile== 4)*(-2.6077)
+                                                        +(etat2!=3 or sect_quartile!=1)*(-1.3898)+(etat2==3 and sect_quartile== 2)*(1.7797)+(etat2==3 and sect_quartile== 3)*(1.9865)
+                                                        +(etat2==3 and sect_quartile== 4)*(1.7151)+(etat2==5)*(-1.5997)),
+                                                        -10)))
+   
+                - temp_1: (-0.4743)+(age>=35 and age<40)*(-0.3903)+(age>=55 and age<60)*(-0.2027)+(ISCOUPLE)*(-0.4243)+(partenaire.etat2==2)*(-0.6602)+((ISSALARIE) and (sect_quartile==3))*(-0.575)+((ISINDEPENDANT) and (sect_quartile==3))*(0.2649)+((ISAU_NOIR) and (sect_quartile==4))*(1.2575)
+                - temp_2: (age>=16 and age<20)*(-0.4634)+(age>=40 and age<45)*(-0.3076)+(age>=60 and age<65)*(-0.2645)+(ISWIDOW)*(-0.4704)+(partenaire.etat2==3)*(0.2385)+((ISSALARIE) and (sect_quartile==4))*(-0.9706)+((ISAU_NOIR) and (sect_quartile==1))*(2.2478)+((etat2!=4) or (sect_quartile!=0))*(-3.4959)
+                - temp_3: (age>=25 and age<30)*(-0.1666)+(age>=45 and age<50)*(-0.3431)+(ISMARRIED)*(-0.5379)+(partenaire.etat2==-1)*(0.1804)+(partenaire.etat2==4)*(0.826)+((ISINDEPENDANT) and (sect_quartile==1))*(1.5927)+((ISAU_NOIR) and (sect_quartile==2))*(1.9061)+((ISINACTIF) and (sect_quartile==0))*(1.6644)
+                - temp_4: (age>=30 and age<35)*(-0.0782)+(age>=50 and age<55)*(-0.2433)+(ISDIVORCED)*(-0.2337)+(partenaire.etat2==1)*(0.4587)+((ISSALARIE) and (sect_quartile==1))*(0.6436)+((ISINDEPENDANT) and (sect_quartile==2))*(0.7461)+((ISAU_NOIR) and (sect_quartile==3))*(1.6268)
+                - temp_b_1: (-0.5057)+(age>=30 and age<35)*(-0.1519)+(age>=50 and age<55)*(-0.5601)+(ISCOUPLE)*(-0.3482)+(partenaire.etat2==2)*(-0.2036)+(little_children>=2)*(-0.1773)+((ISINDEPENDANT) and (sect_quartile==2))*(0.7832)+((ISAU_NOIR) and (sect_quartile==3))*(2.0115)
+                - temp_b_2: (IS_FORMATION1)*(-0.481)+(age>=35 and age<40)*(-0.1713)+(age>=55 and age<60)*(-0.8796)+(ISWIDOW)*(-0.1309)+(partenaire.etat2==3)*(0.3378)+((ISSALARIE) and (sect_quartile==1))*(1.0684)+((ISINDEPENDANT) and (sect_quartile==3))*(1.1695)+((ISAU_NOIR) and (sect_quartile==4))*(1.8154)
+                - temp_b_3: (IS_FORMATION2)*(-0.2163)+(age>=40 and age<45)*(-0.3789)+(ISMARRIED)*(-0.3948)+(partenaire.etat2==-1)*(0.3312)+(partenaire.etat2==4)*(1.0351)+((ISSALARIE) and (sect_quartile==2))*(0.4336)+((ISAU_NOIR) and (sect_quartile==1))*(2.6266)+((etat2!=4) or (sect_quartile!=0))*(-4.2678)
+                - temp_b_4: (age>=16 and age<20)*(-0.4367)+(age>=45 and age<50)*(-0.391)+(ISDIVORCED)*(0.1582)+(partenaire.etat2==1)*(0.2955)+(little_children==0)*(0.1824)+((ISINDEPENDANT) and (sect_quartile==1))*(2.1303)+((ISAU_NOIR) and (sect_quartile==2))*(2.2341)+((ISINACTIF) and (sect_quartile==0))*(2.4214)
+                #- seed(17101945)             
+                - chomeur_score: if(ACTIVEAGE,
+                                        if(ISHOMME,
+                                        logit_score(temp_1+temp_2+temp_3+temp_4
+                                                    ),
+                                        logit_score(temp_b_1+temp_b_2+temp_b_3+temp_b_4
+                                                    )),
+                                        if(ISHOMME  and  age>=65  and  age<70,
+                                            logit_score((-2.1667)+(ISMARRIED)*(0.7818)+(ISDIVORCED)*(0.6036)+(ISCOUPLE)*(1.1826)+(partenaire.etat2==-1)*(0.9499)+(partenaire.etat2==3)*(0.7254)
+                                                        +(partenaire.etat2==4)*(1.8501)+(etat2!=4)*(-2.6441)),
+                                        if(ISFEMME and age>=60 and age<70,
+                                            logit_score((-8.1499)+(age)*(0.2589)+(age*age)*(-0.00255)+(ISMARRIED)*(-0.7177)+(ISWIDOW)*(-0.3927)+(partenaire.etat2==-1)*(1.0024)
+                                                        +(partenaire.etat2==1)*(0.8866)+(partenaire.etat2==2)*(0.8861)+(partenaire.etat2==4)*(1.6624)+(etat2==1 and sect_quartile== 1)*(2.8025)
+                                                        +(etat2==2 and sect_quartile== 1)*(4.1551)+(etat2==2 and sect_quartile== 2)*(3.5763)+(etat2==3 and sect_quartile== 1)*(4.5434)
+                                                        +(etat2==3 and sect_quartile== 2)*(4.2286)+(etat2==3 and sect_quartile== 3)*(4.4858)+(etat2!=4)*(-6.5962)+(etat2==5)*(3.9308)),
+                                                        -10)))
+                                           
+              #  - temp_1: (0.182)+(age>=25 and age<30)*(-1.2544)+(age>=45 and age<50)*(-1.0063)+(ISCELIB)*(0.6854)+(partenaire.etat2==2)*(-0.7414)+(little_children==0)*(0.5987)+((ISSALARIE) and (sect_quartile==4))*(-0.8104)+((ISAU_NOIR) and (sect_quartile==2))*(1.4039)+((etat2!=5) or (sect_quartile!=0))*(-4.3708)
+              #  - temp_2: (IS_FORMATION1)*(0.3768)+(age>=30 and age<35)*(-1.444)+(age>=50 and age<55)*(-0.7219)+(ISCOUPLE)*(-0.1164)+(partenaire.etat2==3)*(-0.3587)+(little_children>=2)*(0.2228)+((ISINDEPENDANT) and (sect_quartile==1))*(1.4897)+((ISAU_NOIR) and (sect_quartile==3))*(0.9776)
+               # - temp_3: (IS_FORMATION2)*(0.5099)+(age>=35 and age<40)*(-1.4838)+(age>=55 and age<60)*(-0.3847)+(ISWIDOW)*(0.2673)+(partenaire.etat2==4)*(-0.8255)+((ISSALARIE) and (sect_quartile==1))*(0.415)+((ISINDEPENDANT) and (sect_quartile==2))*(0.8264)+((ISAU_NOIR) and (sect_quartile==4))*(0.6352)
+              #  - temp_4: (age>=20 and age<25)*(-0.8659)+(age>=40 and age<45)*(-1.1753)+(ISDIVORCED)*(-0.1621)+(partenaire.etat2==1)*(-0.1837)+(partenaire.etat2==5)*(-0.2548)+((ISSALARIE) and (sect_quartile==3))*(-0.3548)+((ISAU_NOIR) and (sect_quartile==1))*(1.8235)+((ISCHOMEUR) and (sect_quartile==0))*(2.1579)
+               # - temp_b_1: (1.9847)+(age>=25 and age<30)*(-1.1279)+(age>=45 and age<50)*(-1.1192)+(ISCELIB)*(-0.4117)+(partenaire.etat2==2)*(0.1974)+(little_children>=2)*(0.1616)+((ISINDEPENDANT) and (sect_quartile==1))*(2.9344)+((ISAU_NOIR) and (sect_quartile==1))*(3.2023)+((ISCHOMEUR) and (sect_quartile==0))*(3.7807)
+                #- temp_b_2: (IS_FORMATION1)*(0.7347)+(age>=30 and age<35)*(-1.213)+(age>=50 and age<55)*(-0.9028)+(ISCOUPLE)*(-0.1798)+(partenaire.etat2==4)*(-0.347)+((ISSALARIE) and (sect_quartile==1))*(1.48)+((ISINDEPENDANT) and (sect_quartile==2))*(2.2431)+((ISAU_NOIR) and (sect_quartile==2))*(2.6699)+((etat2!=5) or (sect_quartile!=0))*(-5.5474)
+              #  - temp_b_3: (IS_FORMATION2)*(0.6387)+(age>=35 and age<40)*(-1.2309)+(age>=55 and age<60)*(-0.7452)+(ISWIDOW)*(-0.3264)+(partenaire.etat2==5)*(0.1532)+((ISSALARIE) and (sect_quartile==2))*(0.8679)+((ISINDEPENDANT) and (sect_quartile==3))*(1.5071)+((ISAU_NOIR) and (sect_quartile==3))*(2.3591)
+               # - temp_b_4: (age>=20 and age<25)*(-0.728)+(age>=40 and age<45)*(-1.1517)+(ISDIVORCED)*(-0.8717)+(partenaire.etat2==1)*(0.2823)+(little_children==0)*(-0.278)+((ISSALARIE) and (sect_quartile==3))*(0.3653)+((ISINDEPENDANT) and (sect_quartile==4))*(1.6539)+((ISAU_NOIR) and (sect_quartile==4))*(2.1664)
+
+                #- seed(17101945)         
+              #  - inactif_score: if(ACTIVEAGE,
+              #                          if(ISHOMME,
+               #                         logit_score(temp_1+temp_2+temp_3+temp_4
+                #                                    ),
+                 #                       logit_score(temp_b_1+temp_b_2+temp_b_3+temp_b_4
+                  #                                  )
+                   #                         ),-10)            
+                                 
+                #On rajoute une correction pour forcer les femmes au foyer de rester inactives, histoire d'avoir moins de dispersion des carrières et une plus grande polarisation entre
+                #contributrices et non contributrices.
+                - salarie_score: if(age>15 and age <70,
+                                        if(ISFEMME, 
+                                            if(ama_de_casa==1,-10, salarie_score),salarie_score)
+                                            ,-10)
+                - independant_score: if(age>15 and age <70,
+                                        if(ISFEMME, 
+                                            if(ama_de_casa==1, -10, independant_score),independant_score)
+                                            ,-10)
+                - au_noir_score: if(age>15 and age <70,
+                                        if(ISFEMME, 
+                                            if(ama_de_casa==1, -10, au_noir_score),au_noir_score)
+                                            ,-10)
+                - chomeur_score: if(age>15 and age <70,
+                                        if(ISFEMME, 
+                                            if(ama_de_casa==1, -10, chomeur_score),chomeur_score)
+                                            ,-10)  
+               
+                - salarie_align: if(age>15 and age <70,
+                                    if(ISHOMME,
+                                        align(salarie_score,'cal_sal_h_b.csv'),
+                                        align(salarie_score,'cal_sal_f_b.csv'))
+                                  ,False)                               
+                - independant_align: if(age>15 and age <70,
+                                    if(ISHOMME,
+                                        align(independant_score,'cal_ind_h_b.csv',leave=salarie_align),
+                                        align(independant_score, 'cal_ind_f_b.csv',leave=salarie_align))
+                                  ,False)                               
+                - au_noir_align: if(age>15 and age <70,
+                                    if(ISHOMME,
+                                        align(au_noir_score,'cal_aun_h_b.csv',leave=salarie_align or independant_align),
+                                        align(au_noir_score, 'cal_aun_f_b.csv',leave=salarie_align or independant_align))
+                                  ,False)                               
+                - chomeur_align: if(age>15 and age <70,
+                                    if(ISHOMME,
+                                        align(chomeur_score,'cal_cho_h_b.csv',leave=salarie_align or independant_align or au_noir_align),
+                                        align(chomeur_score, 'cal_cho_f_b.csv',leave=salarie_align or independant_align or au_noir_align))
+                                  ,False)                               
+                - etat2: if(salarie_align,
+                                SALARIE,
+                                if(independant_align,
+                                    INDEPENDANT,
+                                    if(au_noir_align,
+                                        AU_NOIR,
+                                        if(chomeur_align,
+                                            CHOMEUR,
+                                            INACTIF
+                                           )
+                                       )
+                                   )
+                            )  
+                - val_trim: if(etat2==1 or etat2==2, val_trim+1, val_trim)             
+#Ici on va calculer de façon alternative l'état dans le marché du travail en respectant la critique de Lucas émise par Rapoport concernant l'impact des moratoires sur les décisions 
+#de cotiser ou pas à la Sécu. De ce fait, nous utilisons les paramètres estimés pré troisième trimestre 2006 pour simuler les périodes antérieures au troisième trimestre 2006, 
+#et post-troisième trimestre 2006 pour simuler ces périodes-ci. Il est à noter que nous n'appliquons pas cette démarche aux équations de salaire à la Mincer, car il n'y a pas a priori 
+#de raison que la rémunération des travailleurs ait changé du fait de l'introduction du premier moratoire de retraites au troisième trimestre 2006. 
+                - temp_1_a_1: (0.4002)+(age>=30 and age<35)*(1.0706)+(age>=50 and age<55)*(0.9934)+(ISDIVORCED)*(0.1674)+(partenaire.etat2_lucas==5)*(-0.1672)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(5.8523)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(0.5477)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(0.3943)
+                - temp_1_a_2: (IS_FORMATION1)*(-0.3575)+(age>=35 and age<40)*(1.129)+(age>=55 and age<60)*(0.982)+(ISCOUPLE)*(0.4048)+(little_children>=2)*(-0.3261)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(5.7429)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(0.7453)
+                - temp_1_a_3: (age>=20 and age<25)*(0.7512)+(age>=40 and age<45)*(1.0361)+(age>=60 and age<65)*(0.8496)+(partenaire.etat2_lucas==2)*(-0.5776)+((etat2_lucas!=1) or (sect_quartile_lc!=1))*(-4.9057)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(0.958)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(1.3006)
+                - temp_1_a_4: (age>=25 and age<30)*(1.1269)+(age>=45 and age<50)*(1.1229)+(ISMARRIED)*(0.6308)+(partenaire.etat2_lucas==3)*(-0.5372)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(5.5334)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(1.299)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(0.9162)
+                - temp_1_b_1: (1.1415)+(age>=25 and age<30)*(0.9513)+(age>=45 and age<50)*(1.3136)+(partenaire.etat2_lucas==3)*(-0.4056)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(5.913)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(1.3785)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(0.5815)
+                - temp_1_b_2: (IS_FORMATION1)*(-1.0824)+(age>=30 and age<35)*(0.9578)+(age>=50 and age<55)*(1.1723)+(partenaire.etat2_lucas==4)*(0.2122)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(6.1505)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(0.4009)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(-0.2264)
+                - temp_1_b_3: (IS_FORMATION2)*(-0.4861)+(age>=35 and age<40)*(0.968)+(age>=55 and age<60)*(1.0045)+(little_children==0)*(-0.1409)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(6.3209)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(0.9667)
+                - temp_1_b_4: (age>=20 and age<25)*(0.6436)+(age>=40 and age<45)*(1.1378)+(partenaire.etat2_lucas==2)*(-0.3984)+((etat2_lucas!=1) or (sect_quartile_lc!=1))*(-5.2594)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(1.026)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(1.743)
+                - temp_2_a_1: (0.6073)+(age>=25 and age<30)*(1.2334)+(age>=45 and age<50)*(1.0442)+(ISMARRIED)*(0.4857)+(partenaire.etat2_lucas==-1)*(-0.2214)+(little_children==0)*(0.0519)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(5.0767)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(0.4482)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(0.8343)
+                - temp_2_a_2: (IS_FORMATION1)*(-0.5462)+(age>=30 and age<35)*(1.2239)+(age>=50 and age<55)*(0.9334)+(ISDIVORCED)*(0.3108)+(partenaire.etat2_lucas==2)*(-0.8914)+(little_children>=2)*(-0.1532)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(5.0944)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(0.1363)
+                - temp_2_a_3: (IS_FORMATION2)*(-0.2095)+(age>=35 and age<40)*(1.1015)+(age>=55 and age<60)*(0.883)+(ISCOUPLE)*(0.2877)+(partenaire.etat2_lucas==3)*(-0.4725)+((etat2_lucas!=1) or (sect_quartile_lc!=1))*(-4.1321)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(-0.1687)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(0.3759)
+                - temp_2_a_4: (age>=20 and age<25)*(0.8318)+(age>=40 and age<45)*(1.1677)+(age>=60 and age<65)*(0.6918)+(ISWIDOW)*(0.3742)+(partenaire.etat2_lucas==4)*(-0.3264)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(4.7151)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(0.2912)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(0.6546)
+                - temp_2_b_1: (0.9866)+(age>=25 and age<30)*(1.0239)+(age>=45 and age<50)*(1.3407)+(ISWIDOW)*(-0.1481)+(little_children==0)*(0.0867)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(4.8101)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(-0.7415)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(-1.0132)
+                - temp_2_b_2: (IS_FORMATION1)*(-1.0251)+(age>=30 and age<35)*(1.1383)+(age>=50 and age<55)*(1.3032)+(partenaire.etat2_lucas==-1)*(-0.2164)+(little_children>=2)*(-0.2851)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(4.8172)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(-0.1097)
+                - temp_2_b_3: (IS_FORMATION2)*(-0.5025)+(age>=35 and age<40)*(1.2338)+(age>=55 and age<60)*(1.2787)+(partenaire.etat2_lucas==2)*(-0.5017)+((etat2_lucas!=1) or (sect_quartile_lc!=1))*(-3.8191)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(-0.673)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(0.2489)
+                - temp_2_b_4: (age>=20 and age<25)*(0.6344)+(age>=40 and age<45)*(1.258)+(ISMARRIED)*(-0.1462)+(partenaire.etat2_lucas==3)*(-0.4854)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(4.5515)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(0.1871)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(0.7369)
+                #- seed(17101945)
+                - salarie_score_2: if(ACTIVEAGE,
+                                    if(period>38,                                    
+                                        if(ISHOMME,
+                                            logit_score(temp_1_a_1+temp_1_a_2+temp_1_a_3+temp_1_a_4
+                                                        ),
+                                            logit_score(temp_1_b_1+temp_1_b_2+temp_1_b_3+temp_1_b_4
+                                                        )),
+                                        if(ISHOMME,
+                                            logit_score(temp_2_a_1+temp_2_a_2+temp_2_a_3+temp_2_a_4
+                                                        ),
+                                            logit_score(temp_2_b_1+temp_2_b_2+temp_2_b_3+temp_2_b_4
+                                                        ))),-10)
+
+                                                        
+                - temp_2_a_1: (IS_FORMATION1)*(-1.3563)+(age>=30 and age<35)*(1.7769)+(age>=50 and age<55)*(2.0919)+(ISCOUPLE)*(0.304)+(partenaire.etat2_lucas==3)*(-1.6419)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(0.2662)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(4.7917)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(2.2018)
+                - temp_2_a_2: (IS_FORMATION2)*(-0.6764)+(age>=35 and age<40)*(1.913)+(age>=55 and age<60)*(2.057)+(ISWIDOW)*(0.3214)+(partenaire.etat2_lucas==4)*(-1.7798)+((etat2_lucas!=2) or (sect_quartile_lc!=1))*(-4.329)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(1.4868)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(1.372)
+                - temp_2_a_3: (age>=20 and age<25)*(0.9072)+(age>=40 and age<45)*(1.9093)+(age>=60 and age<65)*(2.0646)+(partenaire.etat2_lucas==-1)*(-1.0871)+(partenaire.etat2_lucas==5)*(-1.2255)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(4.5551)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(1.6768)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(0.8751)
+                - temp_2_a_4: (age>=25 and age<30)*(1.6107)+(age>=45 and age<50)*(2.1049)+(ISMARRIED)*(0.3917)+(partenaire.etat2_lucas==1)*(-1.2442)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(0.2087)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(4.798)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(1.9287)
+                - temp_2_b_1: (IS_FORMATION1)*(-1.7102)+(age>=30 and age<35)*(1.5697)+(age>=50 and age<55)*(1.6905)+(partenaire.etat2_lucas==1)*(-1.0719)+(little_children==0)*(0.2125)+((etat2_lucas!=2) or (sect_quartile_lc!=1))*(-4.472)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(1.228)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(1.0943)
+                - temp_2_b_2: (IS_FORMATION2)*(-0.8355)+(age>=35 and age<40)*(1.5019)+(age>=55 and age<60)*(1.8522)+(partenaire.etat2_lucas==3)*(-1.2213)+(little_children>=2)*(0.3535)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(4.6637)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(1.2968)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(0.539)
+                - temp_2_b_3: (age>=20 and age<25)*(0.6899)+(age>=40 and age<45)*(1.6444)+(ISCOUPLE)*(-0.2099)+(partenaire.etat2_lucas==4)*(-1.6739)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(-0.225)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(4.6492)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(1.6434)
+                - temp_2_b_4: (age>=25 and age<30)*(1.2669)+(age>=45 and age<50)*(1.6623)+(partenaire.etat2_lucas==-1)*(-1.1126)+(partenaire.etat2_lucas==5)*(-1.1833)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(-0.2506)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(4.8677)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(2.1931)
+                - temp_1_b_1: (IS_FORMATION1)*(-1.9929)+(age>=35 and age<40)*(1.1224)+(age>=55 and age<60)*(1.3765)+(partenaire.etat2_lucas==4)*(-1.0806)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(4.8606)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(1.4682)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(0.4445)
+                - temp_1_b_2: (IS_FORMATION2)*(-0.9383)+(age>=40 and age<45)*(1.0452)+(partenaire.etat2_lucas==-1)*(-1.0463)+(partenaire.etat2_lucas==5)*(-1.1079)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(5.0328)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(1.5645)
+                - temp_1_b_3: (age>=25 and age<30)*(0.7782)+(age>=45 and age<50)*(1.0781)+(partenaire.etat2_lucas==1)*(-0.8924)+(little_children==0)*(0.2507)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(4.917)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(2.0484)
+                - temp_1_b_4: (age>=30 and age<35)*(1.0835)+(age>=50 and age<55)*(1.0786)+(partenaire.etat2_lucas==3)*(-1.4439)+((etat2_lucas!=2) or (sect_quartile_lc!=1))*(-4.6429)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(1.1858)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(1.3106)
+                - temp_1_a_1: (IS_FORMATION1)*(-1.4437)+(age>=30 and age<35)*(1.4844)+(age>=50 and age<55)*(1.6055)+(partenaire.etat2_lucas==-1)*(-1.3229)+(partenaire.etat2_lucas==5)*(-1.1921)+((etat2_lucas!=2) or (sect_quartile_lc!=1))*(-4.3157)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(1.2218)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(1.1267)
+                - temp_1_a_2: (IS_FORMATION2)*(-0.6961)+(age>=35 and age<40)*(1.4659)+(age>=55 and age<60)*(1.601)+(partenaire.etat2_lucas==1)*(-1.2488)+(little_children==0)*(0.1931)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(4.6127)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(1.383)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(0.652)
+                - temp_1_a_3: (age>=20 and age<25)*(0.6027)+(age>=40 and age<45)*(1.4735)+(age>=60 and age<65)*(1.5393)+(partenaire.etat2_lucas==3)*(-1.6113)+(little_children>=2)*(0.2283)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(4.7558)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(1.6078)
+                - temp_1_a_4: (age>=25 and age<30)*(1.0916)+(age>=45 and age<50)*(1.5702)+(ISMARRIED)*(0.3274)+(partenaire.etat2_lucas==4)*(-1.7209)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(0.2999)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(4.7861)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(1.9802)
+                #- seed(17101945)                                                        
+                - independant_score_2: if(ACTIVEAGE,
+                                    if(period>38,                                    
+                                        if(ISHOMME,
+                                            logit_score(temp_1_a_1+temp_1_a_2+temp_1_a_3+temp_1_a_4
+                                                        ),
+                                            logit_score(temp_1_b_1+temp_1_b_2+temp_1_b_3+temp_1_b_4
+                                                        )),
+                                        if(ISHOMME,
+                                            logit_score(temp_2_a_1+temp_2_a_2+temp_2_a_3+temp_2_a_4
+                                                        ),
+                                            logit_score(temp_2_b_1+temp_2_b_2+temp_2_b_3+temp_2_b_4
+                                                        ))),-10)                                 
+                - temp_2_b_1: (-0.9868)+(age>=25 and age<30)*(0.959)+(age>=45 and age<50)*(0.8976)+(ISDIVORCED)*(0.2326)+(partenaire.etat2_lucas==2)*(-0.4819)+(little_children>=2)*(-0.2502)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(1.0056)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(2.5785)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(-0.2294)
+                - temp_2_b_2: (IS_FORMATION1)*(0.7508)+(age>=30 and age<35)*(1.0368)+(age>=50 and age<55)*(0.7972)+(ISWIDOW)*(0.1087)+(partenaire.etat2_lucas==4)*(-0.1781)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(-0.9585)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(0.9146)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(2.668)
+                - temp_2_b_3: (IS_FORMATION2)*(0.5119)+(age>=35 and age<40)*(1.0311)+(age>=55 and age<60)*(0.7235)+(partenaire.etat2_lucas==-1)*(-0.1131)+(partenaire.etat2_lucas==5)*(-0.2342)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(-1.3864)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(0.5232)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(2.4255)
+                - temp_2_b_4: (age>=20 and age<25)*(0.7084)+(age>=40 and age<45)*(0.9439)+(ISMARRIED)*(-0.0869)+(partenaire.etat2_lucas==1)*(-0.464)+(little_children==0)*(0.1806)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(-1.6593)+((etat2_lucas!=3) or (sect_quartile_lc!=1))*(-2.2299)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(0.4521)
+                - temp_1_a_1: (IS_FORMATION1)*(0.8957)+(age>=30 and age<35)*(0.5902)+(age>=50 and age<55)*(0.5497)+(ISCELIB)*(-0.4522)+(partenaire.etat2_lucas==2)*(-1.1592)+(little_children>=2)*(0.1578)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(2.2848)+((etat2_lucas!=3) or (sect_quartile_lc!=1))*(-3.5157)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(2.2788)
+                - temp_1_a_2: (IS_FORMATION2)*(0.5158)+(age>=35 and age<40)*(0.7066)+(age>=55 and age<60)*(0.3991)+(ISWIDOW)*(-0.2735)+(partenaire.etat2_lucas==4)*(-0.4267)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(1.1468)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(2.3298)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(3.8967)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(1.2123)
+                - temp_1_a_3: (age>=20 and age<25)*(0.6359)+(age>=40 and age<45)*(0.6336)+(age>=60 and age<65)*(0.3422)+(partenaire.etat2_lucas==-1)*(-0.1798)+(partenaire.etat2_lucas==5)*(-0.3116)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(0.4729)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(1.9348)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(4.0907)
+                - temp_1_a_4: (age>=25 and age<30)*(0.747)+(age>=45 and age<50)*(0.5909)+(ISMARRIED)*(-0.2699)+(partenaire.etat2_lucas==1)*(-0.6582)+(little_children==0)*(-0.11)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(0.1688)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(1.4196)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(3.9832)
+                - temp_1_b_1: (-0.6371)+(age>=25 and age<30)*(0.8827)+(age>=45 and age<50)*(0.8157)+(ISDIVORCED)*(0.2048)+(partenaire.etat2_lucas==5)*(-0.2385)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(-1.3916)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(0.5604)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(2.5623)
+                - temp_1_b_2: (IS_FORMATION1)*(0.7437)+(age>=30 and age<35)*(1.0425)+(age>=50 and age<55)*(0.7956)+(partenaire.etat2_lucas==1)*(-0.5589)+(little_children==0)*(0.1174)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(-1.8548)+((etat2_lucas!=3) or (sect_quartile_lc!=1))*(-2.08)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(0.3292)
+                - temp_1_b_3: (IS_FORMATION2)*(0.3912)+(age>=35 and age<40)*(1.0322)+(age>=55 and age<60)*(0.6913)+(partenaire.etat2_lucas==2)*(-0.3533)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(-0.3308)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(0.7578)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(2.5683)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(-0.4942)
+                - temp_1_b_4: (age>=20 and age<25)*(0.7119)+(age>=40 and age<45)*(0.9875)+(ISMARRIED)*(-0.1713)+(partenaire.etat2_lucas==4)*(-0.2162)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(-0.9929)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(0.592)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(2.6779)
+                - temp_2_a_1: (-0.1756)+(age>=25 and age<30)*(0.6749)+(age>=45 and age<50)*(0.6748)+(ISMARRIED)*(-0.2322)+(partenaire.etat2_lucas==1)*(-0.6527)+(little_children==0)*(-0.0669)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(-1.3026)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(0.6669)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(2.7217)
+                - temp_2_a_2: (IS_FORMATION1)*(1.0651)+(age>=30 and age<35)*(0.6674)+(age>=50 and age<55)*(0.6731)+(ISCELIB)*(-0.2252)+(partenaire.etat2_lucas==2)*(-0.9371)+(little_children>=2)*(0.1091)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(-1.5001)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(0.3675)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(2.6435)
+                - temp_2_a_3: (IS_FORMATION2)*(0.6565)+(age>=35 and age<40)*(0.7715)+(age>=55 and age<60)*(0.6191)+(ISWIDOW)*(-0.3078)+(partenaire.etat2_lucas==4)*(-0.1903)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(-0.1258)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(1.219)+((etat2_lucas!=3) or (sect_quartile_lc!=1))*(-2.3807)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(1.0614)
+                - temp_2_a_4: (age>=20 and age<25)*(0.6369)+(age>=40 and age<45)*(0.6655)+(age>=60 and age<65)*(0.5119)+(partenaire.etat2_lucas==-1)*(-0.3946)+(partenaire.etat2_lucas==5)*(-0.3797)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(-0.8061)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(1.0604)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(2.6065)
+
+                #- seed(17101945)  
+                - au_noir_score_2: if(ACTIVEAGE,
+                                    if(period>38,                                    
+                                        if(ISHOMME,
+                                            logit_score(temp_1_a_1+temp_1_a_2+temp_1_a_3+temp_1_a_4
+                                                        ),
+                                            logit_score(temp_1_b_1+temp_1_b_2+temp_1_b_3+temp_1_b_4
+                                                        )),
+                                        if(ISHOMME,
+                                            logit_score(temp_2_a_1+temp_2_a_2+temp_2_a_3+temp_2_a_4
+                                                        ),
+                                            logit_score(temp_2_b_1+temp_2_b_2+temp_2_b_3+temp_2_b_4
+                                                        ))),-10)        
+                                                        
+                - temp_1_a_1: (age>=16 and age<20)*(-0.4205)+(age>=45 and age<50)*(-0.2199)+(ISWIDOW)*(-0.8252)+(partenaire.etat2_lucas==4)*(0.8134)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(2.3501)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(3.2857)+((etat2_lucas!=4) or (sect_quartile_lc!=0))*(-4.412)
+                - temp_1_a_2: (age>=25 and age<30)*(-0.1165)+(ISMARRIED)*(-0.6124)+(partenaire.etat2_lucas==1)*(0.4057)+(little_children>=2)*(-0.2761)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(1.7272)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(2.7602)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(2.6202)
+                - temp_1_a_3: (age>=30 and age<35)*(0.1267)+(ISDIVORCED)*(-0.3587)+(partenaire.etat2_lucas==2)*(-0.5108)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(1.4751)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(1.1255)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(2.4968)
+                - temp_1_a_4: (age>=35 and age<40)*(-0.3241)+(ISCOUPLE)*(-0.5794)+(partenaire.etat2_lucas==3)*(0.2326)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(0.6589)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(0.666)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(2.0262)
+                - temp_1_b_1: (-0.6384)+(age>=30 and age<35)*(-0.2416)+(age>=50 and age<55)*(-0.5493)+(ISCOUPLE)*(-0.2933)+(partenaire.etat2_lucas==3)*(0.559)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(1.0762)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(1.229)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(1.6267)
+                - temp_1_b_2: (IS_FORMATION1)*(-0.4677)+(age>=35 and age<40)*(-0.1637)+(age>=55 and age<60)*(-0.8478)+(ISWIDOW)*(-0.217)+(partenaire.etat2_lucas==4)*(1.2131)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(-0.5171)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(2.3114)+((etat2_lucas!=4) or (sect_quartile_lc!=0))*(-3.9853)
+                - temp_1_b_3: (IS_FORMATION2)*(-0.2147)+(age>=40 and age<45)*(-0.3731)+(ISMARRIED)*(-0.4296)+(partenaire.etat2_lucas==-1)*(0.4955)+(little_children==0)*(0.3267)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(1.9433)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(1.9109)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(2.3015)
+                - temp_1_b_4: (age>=16 and age<20)*(-0.4473)+(age>=45 and age<50)*(-0.4528)+(ISDIVORCED)*(0.1397)+(partenaire.etat2_lucas==1)*(0.5056)+(little_children>=2)*(-0.4495)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(1.2309)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(1.9185)
+                - temp_2_b_1: (-0.5319)+(age>=30 and age<35)*(-0.1137)+(age>=50 and age<55)*(-0.6125)+(ISCOUPLE)*(-0.3888)+(partenaire.etat2_lucas==4)*(1.0102)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(-0.2628)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(2.1875)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(2.2697)
+                - temp_2_b_2: (IS_FORMATION1)*(-0.5317)+(age>=35 and age<40)*(-0.226)+(age>=55 and age<60)*(-0.8629)+(partenaire.etat2_lucas==-1)*(0.3226)+(little_children==0)*(0.1739)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(2.0216)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(1.9484)
+                - temp_2_b_3: (IS_FORMATION2)*(-0.2787)+(age>=40 and age<45)*(-0.3702)+(ISMARRIED)*(-0.4382)+(partenaire.etat2_lucas==1)*(0.3257)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(1.0436)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(0.7571)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(1.5484)
+                - temp_2_b_4: (age>=16 and age<20)*(-0.3833)+(age>=45 and age<50)*(-0.3997)+(ISDIVORCED)*(0.2254)+(partenaire.etat2_lucas==3)*(0.3489)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(0.4316)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(2.5413)+((etat2_lucas!=4) or (sect_quartile_lc!=0))*(-4.1435)
+                - temp_2_a_1: (-0.6264)+(age>=35 and age<40)*(-0.5419)+(age>=55 and age<60)*(-0.3553)+(ISCOUPLE)*(-0.2952)+(partenaire.etat2_lucas==2)*(-0.4554)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(-0.5416)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(0.3019)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(1.229)
+                - temp_2_a_2: (age>=16 and age<20)*(-0.4828)+(age>=40 and age<45)*(-0.5771)+(age>=60 and age<65)*(-0.4786)+(ISWIDOW)*(-0.2212)+(partenaire.etat2_lucas==3)*(0.281)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(-1.0346)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(2.032)+((etat2_lucas!=4) or (sect_quartile_lc!=0))*(-3.3153)
+                - temp_2_a_3: (age>=25 and age<30)*(-0.2412)+(age>=45 and age<50)*(-0.5185)+(ISMARRIED)*(-0.4739)+(partenaire.etat2_lucas==-1)*(0.314)+(partenaire.etat2_lucas==4)*(0.746)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(1.5882)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(1.835)+((ISINACTIF_LC) and (sect_quartile_lc==0))*(1.492)
+                - temp_2_a_4: (age>=30 and age<35)*(-0.2899)+(age>=50 and age<55)*(-0.414)+(ISDIVORCED)*(-0.1571)+(partenaire.etat2_lucas==1)*(0.5654)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(0.5241)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(0.5769)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(1.5281)
+
+                #- seed(17101945) 
+                - chomeur_score_2: if(ACTIVEAGE,
+                                    if(period>38,                                    
+                                        if(ISHOMME,
+                                            logit_score(temp_1_a_1+temp_1_a_2+temp_1_a_3+temp_1_a_4
+                                                        ),
+                                            logit_score(temp_1_b_1+temp_1_b_2+temp_1_b_3+temp_1_b_4
+                                                        )),
+                                        if(ISHOMME,
+                                            logit_score(temp_2_a_1+temp_2_a_2+temp_2_a_3+temp_2_a_4
+                                                        ),
+                                            logit_score(temp_2_b_1+temp_2_b_2+temp_2_b_3+temp_2_b_4
+                                                        ))),-10)
+
+
+                - temp_1_a_1: (IS_FORMATION1)*(0.1729)+(age>=30 and age<35)*(-1.5437)+(age>=50 and age<55)*(-0.7205)+(partenaire.etat2_lucas==2)*(-0.5877)+(little_children>=2)*(0.5784)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(1.7667)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(2.6397)+((etat2_lucas!=5) or (sect_quartile_lc!=0))*(-5.6983)
+                - temp_1_a_2: (IS_FORMATION2)*(0.4123)+(age>=35 and age<40)*(-1.4802)+(age>=55 and age<60)*(-0.1747)+(partenaire.etat2_lucas==3)*(-0.2992)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(1.589)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(1.1795)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(2.1733)
+                - temp_1_a_3: (age>=20 and age<25)*(-0.8683)+(age>=40 and age<45)*(-1.1005)+(ISCELIB)*(0.8923)+(partenaire.etat2_lucas==4)*(-1.0754)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(1.1659)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(0.68)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(1.8732)
+                - temp_1_a_4: (age>=25 and age<30)*(-1.2396)+(age>=45 and age<50)*(-0.9101)+(ISWIDOW)*(0.6946)+(little_children==0)*(0.6059)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(3.4238)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(3.0327)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(3.3867)
+                - temp_1_b_1: (1.8249)+(age>=25 and age<30)*(-1.1461)+(age>=45 and age<50)*(-0.9173)+(ISCELIB)*(-0.3933)+(partenaire.etat2_lucas==2)*(0.3046)+(little_children>=2)*(0.1815)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(2.3526)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(2.7274)+((etat2_lucas!=5) or (sect_quartile_lc!=0))*(-5.6913)
+                - temp_1_b_2: (IS_FORMATION1)*(0.6762)+(age>=30 and age<35)*(-1.1461)+(age>=50 and age<55)*(-0.7629)+(ISCOUPLE)*(-0.2946)+(partenaire.etat2_lucas==4)*(-0.3526)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(1.4119)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(1.6342)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(2.3966)
+                - temp_1_b_3: (IS_FORMATION2)*(0.678)+(age>=35 and age<40)*(-1.1939)+(age>=55 and age<60)*(-0.5588)+(ISWIDOW)*(-0.2706)+(partenaire.etat2_lucas==5)*(0.3192)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(0.8696)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(2.0698)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(2.0092)
+                - temp_1_b_4: (age>=20 and age<25)*(-0.7772)+(age>=40 and age<45)*(-1.0766)+(ISDIVORCED)*(-1.0358)+(partenaire.etat2_lucas==1)*(0.4472)+(little_children==0)*(-0.2995)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(3.2439)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(3.283)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(3.9484)
+                - temp_2_b_1: (2.0468)+(age>=25 and age<30)*(-1.1334)+(age>=45 and age<50)*(-1.1159)+(ISCELIB)*(-0.4158)+(partenaire.etat2_lucas==2)*(0.0953)+(little_children>=2)*(0.2288)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(1.8578)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(2.4213)+((etat2_lucas!=5) or (sect_quartile_lc!=0))*(-5.2599)
+                - temp_2_b_2: (IS_FORMATION1)*(0.7584)+(age>=30 and age<35)*(-1.2351)+(age>=50 and age<55)*(-0.9234)+(ISCOUPLE)*(-0.137)+(partenaire.etat2_lucas==4)*(-0.2948)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(1.2284)+((ISINDEPENDANT_LC) and (sect_quartile_lc==3))*(1.3529)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(2.1122)
+                - temp_2_b_3: (IS_FORMATION2)*(0.6287)+(age>=35 and age<40)*(-1.2207)+(age>=55 and age<60)*(-0.7819)+(ISWIDOW)*(-0.3343)+(partenaire.etat2_lucas==5)*(0.1161)+((ISSALARIE_LC) and (sect_quartile_lc==2))*(0.6208)+((ISINDEPENDANT_LC) and (sect_quartile_lc==4))*(1.6218)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(2.0112)
+                - temp_2_b_4: (age>=20 and age<25)*(-0.6892)+(age>=40 and age<45)*(-1.1365)+(ISDIVORCED)*(-0.8639)+(partenaire.etat2_lucas==1)*(0.2099)+(little_children==0)*(-0.3091)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(2.4997)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(2.9076)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(3.5465)
+                - temp_2_a_1: (0.2851)+(age>=25 and age<30)*(-1.2483)+(age>=45 and age<50)*(-1.0605)+(ISCELIB)*(0.6296)+(partenaire.etat2_lucas==3)*(-0.3424)+((ISSALARIE_LC) and (sect_quartile_lc==1))*(0.4412)+((ISINDEPENDANT_LC) and (sect_quartile_lc==2))*(0.8988)+((ISAU_NOIR_LC) and (sect_quartile_lc==4))*(0.7081)
+                - temp_2_a_2: (IS_FORMATION1)*(0.4305)+(age>=30 and age<35)*(-1.3785)+(age>=50 and age<55)*(-0.7831)+(ISCOUPLE)*(-0.172)+(partenaire.etat2_lucas==4)*(-0.6416)+((ISSALARIE_LC) and (sect_quartile_lc==3))*(-0.3196)+((ISAU_NOIR_LC) and (sect_quartile_lc==1))*(1.8355)+((ISCHOMEUR_LC) and (sect_quartile_lc==0))*(2.2581)
+                - temp_2_a_3: (IS_FORMATION2)*(0.553)+(age>=35 and age<40)*(-1.4843)+(age>=55 and age<60)*(-0.4628)+(partenaire.etat2_lucas==1)*(-0.1843)+(partenaire.etat2_lucas==5)*(-0.2705)+((ISSALARIE_LC) and (sect_quartile_lc==4))*(-0.707)+((ISAU_NOIR_LC) and (sect_quartile_lc==2))*(1.4338)+((etat2_lucas!=5) or (sect_quartile_lc!=0))*(-4.3903)
+                - temp_2_a_4: (age>=20 and age<25)*(-0.912)+(age>=40 and age<45)*(-1.1234)+(ISDIVORCED)*(-0.2986)+(partenaire.etat2_lucas==2)*(-0.7283)+(little_children==0)*(0.5392)+((ISINDEPENDANT_LC) and (sect_quartile_lc==1))*(1.2606)+((ISAU_NOIR_LC) and (sect_quartile_lc==3))*(1.0416)
+                
+                #- seed(17101945) 
+                - inactif_score_2: if(ACTIVEAGE,
+                                    if(period>38,                                    
+                                        if(ISHOMME,
+                                            logit_score(temp_1_a_1+temp_1_a_2+temp_1_a_3+temp_1_a_4
+                                                        ),
+                                            logit_score(temp_1_b_1+temp_1_b_2+temp_1_b_3+temp_1_b_4
+                                                        )),
+                                        if(ISHOMME,
+                                            logit_score(temp_2_a_1+temp_2_a_2+temp_2_a_3+temp_2_a_4
+                                                        ),
+                                            logit_score(temp_2_b_1+temp_2_b_2+temp_2_b_3+temp_2_b_4
+                                                        ))),-10)
+                                                        
+                - salarie_score_2: if(ACTIVEAGE,
+                                        if(ISFEMME, 
+                                            if(ama_de_casa==1,-10, salarie_score_2),salarie_score_2)
+                                            ,-10)
+                - independant_score_2: if(ACTIVEAGE,
+                                        if(ISFEMME, 
+                                            if(ama_de_casa==1, -10, independant_score_2),independant_score_2)
+                                            ,-10)
+                - au_noir_score_2: if(ACTIVEAGE,
+                                        if(ISFEMME, 
+                                            if(ama_de_casa==1, -10, au_noir_score_2),au_noir_score_2)
+                                            ,-10)
+                - chomeur_score_2: if(ACTIVEAGE,
+                                        if(ISFEMME, 
+                                            if(ama_de_casa==1, -10, chomeur_score_2),chomeur_score_2)
+                                            ,-10)  
+
+                - salarie_align_2: if(ACTIVEAGE,
+                                    if(ISHOMME,
+                                        align(salarie_score_2,'cal_sal_h_b.csv'),
+                                        align(salarie_score_2,'cal_sal_f_b.csv')
+                                    ),
+                                  False)
+                                  
+                - independant_align_2: if(ACTIVEAGE,
+                                    if(ISHOMME,
+                                        align(independant_score_2,'cal_ind_h_b.csv',leave=salarie_align_2),
+                                        align(independant_score_2, 'cal_ind_f_b.csv',leave=salarie_align_2)
+                                    ),
+                                  False)   
+                - au_noir_align_2: if(ACTIVEAGE,
+                                    if(ISHOMME,
+                                        align(au_noir_score_2,'cal_aun_h_b.csv',leave=salarie_align_2 or independant_align_2),
+                                        align(au_noir_score_2, 'cal_aun_f_b.csv',leave=salarie_align_2 or independant_align_2)
+                                    ),
+                                  False) 
+                - chomeur_align_2: if(ACTIVEAGE,
+                                    if(ISHOMME,
+                                        align(chomeur_score_2,'cal_cho_h_b.csv',leave=salarie_align_2 or independant_align_2 or au_noir_align_2),
+                                        align(chomeur_score_2, 'cal_cho_f_b.csv',leave=salarie_align_2 or independant_align_2 or au_noir_align_2)
+                                    ),
+                                  False)       
+                - etat2_lucas: if(salarie_align_2,
+                                1,
+                                if(independant_align_2,
+                                    2,
+                                    if(au_noir_align_2,
+                                        3,
+                                        if(chomeur_align_2,
+                                            4,
+                                            5
+                                           )
+                                       )
+                                   )
+                            ) 
+                  
+                - val_trim_lc: if(etat2_lucas==1 or etat2_lucas==2, val_trim_lc+1, val_trim_lc)
+            revenus: #donc on ferait les logit des salaires en fonction de l'âge, etat2, formation, séparément pour hommes
+            #et femmes.   
+            
+           
+             #   - ln_wage: if(ISHOMME,
+              #                      if(ISSALARIE, log(lag(itl)/Corrected_wage_1_h), 
+               #                         if(ISINDEPENDANT, log(lag(itl)/Corrected_wage_2_h), 
+                #                            if(ISAU_NOIR, log(lag(itl)/Corrected_wage_3_h),-500))),
+                 #                   if(ISSALARIE, log(itl/Corrected_wage_1_f), 
+                  #                      if(ISINDEPENDANT, log(lag(itl)/Corrected_wage_2_f), 
+                   #                         if(ISAU_NOIR, log(lag(itl)/Corrected_wage_3_f),-500))))   
+                                                                                        
+#ces régressions sont totalement bidon, histoire juste d'avoir un début de quelque chose pour faire tourner le modèle
+#On les change par les régressions que nous avons déterminées par la 10-fold cross validation, et on change par le rapport ITL sur salaires, avec le coefficient. 
+#Source équations de salaire: H:\Leonardo_orléans\Sorties_SAS\régressions\csv
+                - temp_42: (-0.338495)+(age>=40 and age<45 and ISINDEPENDANT)*(-0.244427)+(age>=30 and age<35 and IS_FORMATION3)*(0.272622)+
+                                                        (age>=16 and age<20 and ISINDEPENDANT)*(-0.927349)+(age>=40 and age<45 and ISAU_NOIR)*(-0.982245)+(age>=35 and age<40 and IS_FORMATION1)*(-0.265817)+
+                                                        (age>=16 and age<20 and ISAU_NOIR)*(-0.969731)+(age>=45 and age<50 and ISINDEPENDANT)*(-0.212609)+(age>=35 and age<40 and IS_FORMATION3)*(0.239900)+
+                                                        (age>=20 and age<25 and ISINDEPENDANT)*(-0.762135)+(age>=45 and age<50 and ISAU_NOIR)*(-0.971356)+(age>=40 and age<45 and IS_FORMATION1)*(-0.255235)+
+                                                        (age>=20 and age<25 and ISAU_NOIR)*(-0.876890)+(age>=50 and age<55 and ISINDEPENDANT)*(-0.225404)+(age>=40 and age<45 and IS_FORMATION3)*(0.265124)+
+                                                        (age>=25 and age<30 and ISSALARIE)*(-0.148110)+(age>=50 and age<55 and ISAU_NOIR)*(-0.949373)+(age>=45 and age<50 and IS_FORMATION1)*(-0.258699)+
+                                                        (age>=25 and age<30 and ISINDEPENDANT)*(-0.579787)+(age>=55 and age<60 and ISINDEPENDANT)*(-0.252723)+(age>=45 and age<50 and IS_FORMATION3)*(0.279927)+
+                                                        (age>=25 and age<30 and ISAU_NOIR)*(-1.043151)+(age>=55 and age<60 and ISAU_NOIR)*(-0.975866)+(age>=50 and age<55 and IS_FORMATION1)*(-0.286072)+
+                                                        (age>=30 and age<35 and ISSALARIE)*(-0.069209)+(age>=16 and age<20 and IS_FORMATION1)*(-0.595628)+(age>=50 and age<55 and IS_FORMATION3)*(0.330371)+
+                                                        (age>=30 and age<35 and ISINDEPENDANT)*(-0.395679)+(age>=16 and age<20 and IS_FORMATION2)*(-0.348878)+(age>=55 and age<60 and IS_FORMATION1)*(-0.295741)+
+                                                        (age>=30 and age<35 and ISAU_NOIR)*(-1.042030)+(age>=20 and age<25 and IS_FORMATION1)*(-0.442623)+(age>=55 and age<60 and IS_FORMATION3)*(0.308477)+
+                                                        (age>=35 and age<40 and ISSALARIE)*(-0.029459)+(age>=20 and age<25 and IS_FORMATION2)*(-0.260007)+
+                                                        (age>=35 and age<40 and ISINDEPENDANT)*(-0.287461)+(age>=25 and age<30 and IS_FORMATION1)*(-0.267775)+
+                                                        (age>=35 and age<40 and ISAU_NOIR)*(-0.986964)+(age>=25 and age<30 and IS_FORMATION3)*(0.247218)+
+                                                        (age>=40 and age<45 and ISSALARIE)*(-0.029692)+(age>=30 and age<35 and IS_FORMATION1)*(-0.245070)
+                - ln_wage_true: if(age>=16 and age<70 and ISHOMME,
+                                    if(age<65,log_regr((-0.521115)+(age>=40 and age<45 and ISINDEPENDANT)*(-0.076763)+(age>=25 and age<30 and IS_FORMATION1)*(-0.144183)+(age>=55 and age<60 and IS_FORMATION3)*(0.500037)+
+                                                       (age>=16 and age<20 and ISSALARIE)*(-0.220813)+(age>=40 and age<45 and ISAU_NOIR)*(-0.685832)+(age>=25 and age<30 and IS_FORMATION3)*(0.206708)+(age>=60 and age<65 and IS_FORMATION1)*(-0.016238)+
+                                                       (age>=16 and age<20 and ISINDEPENDANT)*(-0.922619)+(age>=45 and age<50 and ISSALARIE)*(0.029422)+(age>=30 and age<35 and IS_FORMATION1)*(-0.025079)+(age>=60 and age<65 and IS_FORMATION2)*(0.257602)+
+                                                       (age>=16 and age<20 and ISAU_NOIR)*(-1.061647)+(age>=45 and age<50 and ISINDEPENDANT)*(-0.080122)+(age>=30 and age<35 and IS_FORMATION2)*(0.136250)+(age>=60 and age<65 and IS_FORMATION3)*(0.480750)+
+                                                       (age>=20 and age<25 and ISSALARIE)*(0.072100)+(age>=45 and age<50 and ISAU_NOIR)*(-0.711298)+(age>=30 and age<35 and IS_FORMATION3)*(0.387723)+
+                                                       (age>=20 and age<25 and ISINDEPENDANT)*(-0.449996)+(age>=50 and age<55 and ISINDEPENDANT)*(-0.094559)+(age>=35 and age<40 and IS_FORMATION2)*(0.196927)+
+                                                       (age>=20 and age<25 and ISAU_NOIR)*(-0.650222)+(age>=50 and age<55 and ISAU_NOIR)*(-0.738455)+(age>=35 and age<40 and IS_FORMATION3)*(0.434350)+
+                                                       (age>=25 and age<30 and ISINDEPENDANT)*(-0.248352)+(age>=55 and age<60 and ISINDEPENDANT)*(-0.122326)+(age>=40 and age<45 and IS_FORMATION2)*(0.189445)+
+                                                       (age>=25 and age<30 and ISAU_NOIR)*(-0.659357)+(age>=55 and age<60 and ISAU_NOIR)*(-0.776263)+(age>=40 and age<45 and IS_FORMATION3)*(0.419548)+
+                                                       (age>=30 and age<35 and ISINDEPENDANT)*(-0.174357)+(age>=60 and age<65 and ISINDEPENDANT)*(-0.122496)+(age>=45 and age<50 and IS_FORMATION2)*(0.217063)+
+                                                       (age>=30 and age<35 and ISAU_NOIR)*(-0.686849)+(age>=60 and age<65 and ISAU_NOIR)*(-0.807726)+(age>=45 and age<50 and IS_FORMATION3)*(0.464767)+
+                                                       (age>=35 and age<40 and ISINDEPENDANT)*(-0.124567)+(age>=16 and age<20 and IS_FORMATION1)*(-0.164159)+(age>=50 and age<55 and IS_FORMATION2)*(0.267474)+
+                                                       (age>=35 and age<40 and ISAU_NOIR)*(-0.692476)+(age>=20 and age<25 and IS_FORMATION1)*(-0.286429)+(age>=50 and age<55 and IS_FORMATION3)*(0.493715)+
+                                                       (age>=40 and age<45 and ISSALARIE)*(0.031023)+(age>=20 and age<25 and IS_FORMATION2)*(-0.198596)+(age>=55 and age<60 and IS_FORMATION2)*(0.256907)
+                                                       ,filter= ISHOMME and (ISSALARIE or ISINDEPENDANT or ISAU_NOIR), error_var="resid_back"),
+                                            log_regr((-0.306073)+(age==65 and  etat2==3)*(-0.854072)+(age==66 and  etat2==2)*(-0.107882)+(age==66 and  etat2==3)*(-0.832911)
+                                                        +(age==67 and  etat2==2)*(-0.207766)+(age==67 and  etat2==3)*(-0.898882)+(age==68 and  etat2==1)*(0.136674)+(age==68 and  etat2==3)*(-0.827139)
+                                                        +(age==69 and  etat2==2)*(-0.216034)+(age==69 and  etat2==3)*(-1.009800)+(age==65 and  formation==1)*(-0.295363)+(age==65 and  formation==3)*(0.172847)
+                                                        +(age==66 and  formation==1)*(-0.347607)+(age==66 and  formation==3)*(0.140001)+(age==67 and  formation==1)*(-0.284293)
+                                                        +(age==67 and  formation==3)*(0.218057)+(age==68 and  formation==1)*(-0.491713)+(age==68 and  formation==2)*(-0.223984)
+                                                        +(age==69 and  formation==1)*(-0.290140)+(age==69 and  formation==3)*(0.153883)
+                                                        ,filter= ISHOMME and (ISSALARIE or ISINDEPENDANT or ISAU_NOIR), error_var="resid_back")),
+                                if(age>=16 and age<70 and ISFEMME,
+                                    if(age<60,log_regr(temp_42
+                                                        , filter= ISFEMME and (ISSALARIE or ISINDEPENDANT or ISAU_NOIR), error_var="resid_back"),
+                                            log_regr((-1.591622)+(age==60 and  etat2==1)*(0.943453)+(age==60 and  etat2==2)*(0.776734)+(age==61 and  etat2==1)*(0.911161)+(age==61 and  etat2==2)*(0.796114)
+                                                    +(age==62 and  etat2==1)*(0.990238)+(age==62 and  etat2==2)*(0.704343)+(age==63 and  etat2==1)*(0.970349)+(age==63 and  etat2==2)*(0.813016)
+                                                    +(age==63 and  etat2==3)*(-0.102817)+(age==64 and  etat2==1)*(1.231571)+(age==64 and  etat2==2)*(0.782904)+(age==65 and  etat2==1)*(1.253209)
+                                                    +(age==65 and  etat2==2)*(0.790963)+(age==66 and  etat2==1)*(1.169145)+(age==66 and  etat2==2)*(0.574793)+(age==67 and  etat2==1)*(1.192556)
+                                                    +(age==67 and  etat2==2)*(0.585450)+(age==68 and  etat2==1)*(1.254222)+(age==68 and  etat2==2)*(1.038754)+(age==69 and  etat2==1)*(1.278628)
+                                                    +(age==69 and  etat2==2)*(0.919121)+(age==60 and  formation==2)*(0.279157)+(age==60 and  formation==3)*(0.606020)+(age==61 and  formation==2)*(0.310220)
+                                                    +(age==61 and  formation==3)*(0.645368)+(age==62 and  formation==2)*(0.274457)+(age==62 and  formation==3)*(0.534429)+(age==63 and  formation==2)*(0.312767)
+                                                    +(age==63 and  formation==3)*(0.575643)+(age==64 and  formation==1)*(-0.135180)+(age==64 and  formation==2)*(0.142008)
+                                                    +(age==64 and  formation==3)*(0.381300)+(age==65 and  formation==1)*(-0.192599)+(age==65 and  formation==3)*(0.305086)
+                                                    +(age==66 and  formation==1)*(-0.174769)+(age==66 and  formation==3)*(0.487652)+(age==67 and  formation==1)*(-0.217159)
+                                                    +(age==67 and  formation==3)*(0.400284)+(age==68 and  formation==1)*(-0.152874)+(age==69 and  formation==1)*(-0.310087)
+                                                    +(age==69 and  formation==3)*(0.327427), filter= ISFEMME and (ISSALARIE or ISINDEPENDANT or ISAU_NOIR), error_var="resid_back"))
+                                    ,-10))
+                
+                - itl: if(etat2!=4 and etat2!=5,
+                            if(ISHOMME,
+                                        (ln_wage_true) * COEFFICIENT_H * GROSS_WAGE_2014_T4 , 
+                                        (ln_wage_true) * COEFFICIENT_F * GROSS_WAGE_2014_T4),0)
+                - itl_1: if(ISSALARIE, itl, 0)
+                - itl_2: if(ISINDEPENDANT, itl, 0)  
+                - itl_anses: if(etat2!=4 and etat2!=5,
+                                if(ISHOMME,
+                                        (ln_wage_true) * COEFFICIENT_H * ANSES_GROSS_WAGE_2014_T4/0.83 , 
+                                        (ln_wage_true) * COEFFICIENT_F * ANSES_GROSS_WAGE_2014_T4/0.83),0)               
+                - itl_anses_1: if(ISSALARIE, itl_anses, 0)
+                - itl_anses_2: if(ISINDEPENDANT, itl_anses, 0)      
+                - fluk: GROSS_WAGE_2014_T4
+                - sect_quartile: if(itl==0, 0, 
+                                    if(ISSALARIE,
+                                        if(itl<=percentile(itl,25,filter=ISSALARIE),1,
+                                        if(itl<=percentile(itl,50,filter=ISSALARIE),2,
+                                        if(itl<=percentile(itl,75,filter=ISSALARIE),3,4))), 
+                                    if(ISINDEPENDANT,                                       
+                                        if(itl<=percentile(itl,25,filter=ISINDEPENDANT),1,
+                                        if(itl<=percentile(itl,50,filter=ISINDEPENDANT),2,
+                                        if(itl<=percentile(itl,75,filter=ISINDEPENDANT),3,4))),
+                                    if(ISAU_NOIR,                                       
+                                        if(itl<=percentile(itl,25,filter=ISAU_NOIR),1,
+                                        if(itl<=percentile(itl,50,filter=ISAU_NOIR),2,
+                                        if(itl<=percentile(itl,75,filter=ISAU_NOIR),3,4))),sect_quartile))))           
+#########################################################################
+                - ln_wage_true_lc: if(ISHOMME, log_regr((-0.521115)+(age>=40 and age<45 and ISINDEPENDANT_LC)*(-0.076763)+(age>=25 and age<30 and IS_FORMATION1)*(-0.144183)+(age>=55 and age<60 and IS_FORMATION3)*(0.500037)+
+                            (age>=16 and age<20 and ISSALARIE_LC)*(-0.220813)+(age>=40 and age<45 and ISAU_NOIR_LC)*(-0.685832)+(age>=25 and age<30 and IS_FORMATION3)*(0.206708)+(age>=60 and age<65 and IS_FORMATION1)*(-0.016238)+
+                            (age>=16 and age<20 and ISINDEPENDANT_LC)*(-0.922619)+(age>=45 and age<50 and ISSALARIE_LC)*(0.029422)+(age>=30 and age<35 and IS_FORMATION1)*(-0.025079)+(age>=60 and age<65 and IS_FORMATION2)*(0.257602)+
+                            (age>=16 and age<20 and ISAU_NOIR_LC)*(-1.061647)+(age>=45 and age<50 and ISINDEPENDANT_LC)*(-0.080122)+(age>=30 and age<35 and IS_FORMATION2)*(0.136250)+(age>=60 and age<65 and IS_FORMATION3)*(0.480750)+
+                            (age>=20 and age<25 and ISSALARIE_LC)*(0.072100)+(age>=45 and age<50 and ISAU_NOIR_LC)*(-0.711298)+(age>=30 and age<35 and IS_FORMATION3)*(0.387723)+
+                            (age>=20 and age<25 and ISINDEPENDANT_LC)*(-0.449996)+(age>=50 and age<55 and ISINDEPENDANT_LC)*(-0.094559)+(age>=35 and age<40 and IS_FORMATION2)*(0.196927)+
+                            (age>=20 and age<25 and ISAU_NOIR_LC)*(-0.650222)+(age>=50 and age<55 and ISAU_NOIR_LC)*(-0.738455)+(age>=35 and age<40 and IS_FORMATION3)*(0.434350)+
+                            (age>=25 and age<30 and ISINDEPENDANT_LC)*(-0.248352)+(age>=55 and age<60 and ISINDEPENDANT_LC)*(-0.122326)+(age>=40 and age<45 and IS_FORMATION2)*(0.189445)+
+                            (age>=25 and age<30 and ISAU_NOIR_LC)*(-0.659357)+(age>=55 and age<60 and ISAU_NOIR_LC)*(-0.776263)+(age>=40 and age<45 and IS_FORMATION3)*(0.419548)+
+                            (age>=30 and age<35 and ISINDEPENDANT_LC)*(-0.174357)+(age>=60 and age<65 and ISINDEPENDANT_LC)*(-0.122496)+(age>=45 and age<50 and IS_FORMATION2)*(0.217063)+
+                            (age>=30 and age<35 and ISAU_NOIR_LC)*(-0.686849)+(age>=60 and age<65 and ISAU_NOIR_LC)*(-0.807726)+(age>=45 and age<50 and IS_FORMATION3)*(0.464767)+
+                            (age>=35 and age<40 and ISINDEPENDANT_LC)*(-0.124567)+(age>=16 and age<20 and IS_FORMATION1)*(-0.164159)+(age>=50 and age<55 and IS_FORMATION2)*(0.267474)+
+                            (age>=35 and age<40 and ISAU_NOIR_LC)*(-0.692476)+(age>=20 and age<25 and IS_FORMATION1)*(-0.286429)+(age>=50 and age<55 and IS_FORMATION3)*(0.493715)+
+                            (age>=40 and age<45 and ISSALARIE_LC)*(0.031023)+(age>=20 and age<25 and IS_FORMATION2)*(-0.198596)+(age>=55 and age<60 and IS_FORMATION2)*(0.256907)
+                            , filter= ISHOMME and (ISSALARIE_LC or ISINDEPENDANT_LC or ISAU_NOIR_LC), error_var="resid_back"),
+                    log_regr((-0.338495)+(age>=40 and age<45 and ISINDEPENDANT_LC)*(-0.244427)+(age>=30 and age<35 and IS_FORMATION3)*(0.272622)+
+                            (age>=16 and age<20 and ISINDEPENDANT_LC)*(-0.927349)+(age>=40 and age<45 and ISAU_NOIR_LC)*(-0.982245)+(age>=35 and age<40 and IS_FORMATION1)*(-0.265817)+
+                            (age>=16 and age<20 and ISAU_NOIR_LC)*(-0.969731)+(age>=45 and age<50 and ISINDEPENDANT_LC)*(-0.212609)+(age>=35 and age<40 and IS_FORMATION3)*(0.239900)+
+                            (age>=20 and age<25 and ISINDEPENDANT_LC)*(-0.762135)+(age>=45 and age<50 and ISAU_NOIR_LC)*(-0.971356)+(age>=40 and age<45 and IS_FORMATION1)*(-0.255235)+
+                            (age>=20 and age<25 and ISAU_NOIR_LC)*(-0.876890)+(age>=50 and age<55 and ISINDEPENDANT_LC)*(-0.225404)+(age>=40 and age<45 and IS_FORMATION3)*(0.265124)+
+                            (age>=25 and age<30 and ISSALARIE_LC)*(-0.148110)+(age>=50 and age<55 and ISAU_NOIR_LC)*(-0.949373)+(age>=45 and age<50 and IS_FORMATION1)*(-0.258699)+
+                            (age>=25 and age<30 and ISINDEPENDANT_LC)*(-0.579787)+(age>=55 and age<60 and ISINDEPENDANT_LC)*(-0.252723)+(age>=45 and age<50 and IS_FORMATION3)*(0.279927)+
+                            (age>=25 and age<30 and ISAU_NOIR_LC)*(-1.043151)+(age>=55 and age<60 and ISAU_NOIR_LC)*(-0.975866)+(age>=50 and age<55 and IS_FORMATION1)*(-0.286072)+
+                            (age>=30 and age<35 and ISSALARIE_LC)*(-0.069209)+(age>=16 and age<20 and IS_FORMATION1)*(-0.595628)+(age>=50 and age<55 and IS_FORMATION3)*(0.330371)+
+                            (age>=30 and age<35 and ISINDEPENDANT_LC)*(-0.395679)+(age>=16 and age<20 and IS_FORMATION2)*(-0.348878)+(age>=55 and age<60 and IS_FORMATION1)*(-0.295741)+
+                            (age>=30 and age<35 and ISAU_NOIR_LC)*(-1.042030)+(age>=20 and age<25 and IS_FORMATION1)*(-0.442623)+(age>=55 and age<60 and IS_FORMATION3)*(0.308477)+
+                            (age>=35 and age<40 and ISSALARIE_LC)*(-0.029459)+(age>=20 and age<25 and IS_FORMATION2)*(-0.260007)+
+                            (age>=35 and age<40 and ISINDEPENDANT_LC)*(-0.287461)+(age>=25 and age<30 and IS_FORMATION1)*(-0.267775)+
+                            (age>=35 and age<40 and ISAU_NOIR_LC)*(-0.986964)+(age>=25 and age<30 and IS_FORMATION3)*(0.247218)+
+                            (age>=40 and age<45 and ISSALARIE_LC)*(-0.029692)+(age>=30 and age<35 and IS_FORMATION1)*(-0.245070)
+                            , filter= ISFEMME and (ISSALARIE_LC or ISINDEPENDANT_LC or ISAU_NOIR_LC), error_var="resid_back"))
+                            
+                - itl_lc: if(etat2_lucas!=4 and etat2_lucas!=5,
+                            if(ISHOMME,
+                                        (ln_wage_true_lc) * COEFFICIENT_H * GROSS_WAGE_2014_T4 , 
+                                        (ln_wage_true_lc) * COEFFICIENT_F * GROSS_WAGE_2014_T4),0)
+                - itl_lc_1: if(ISSALARIE_LC, itl_lc, 0)
+                - itl_lc_2: if(ISINDEPENDANT_LC, itl_lc, 0)  
+                - itl_lc_anses: if(etat2_lucas!=4 and etat2_lucas!=5,
+                            if(ISHOMME,
+                                        (ln_wage_true_lc) * COEFFICIENT_H * ANSES_GROSS_WAGE_2014_T4/0.83 , 
+                                        (ln_wage_true_lc) * COEFFICIENT_F * ANSES_GROSS_WAGE_2014_T4/0.83),0)               
+                - itl_lc_anses_1: if(ISSALARIE_LC, itl_lc_anses, 0)
+                - itl_lc_anses_2: if(ISINDEPENDANT_LC, itl_lc_anses, 0)             
+                - sect_quartile_lc: if(itl_lc==0, 0, 
+                                    if(ISSALARIE_LC,
+                                        if(itl_lc<=percentile(itl_lc,25,filter=ISSALARIE_LC),1,
+                                        if(itl_lc<=percentile(itl_lc,50,filter=ISSALARIE_LC),2,
+                                        if(itl_lc<=percentile(itl_lc,75,filter=ISSALARIE_LC),3,4))), 
+                                    if(ISINDEPENDANT_LC,                                       
+                                        if(itl_lc<=percentile(itl_lc,25,filter=ISINDEPENDANT_LC),1,
+                                        if(itl_lc<=percentile(itl_lc,50,filter=ISINDEPENDANT_LC),2,
+                                        if(itl_lc<=percentile(itl_lc,75,filter=ISINDEPENDANT_LC),3,4))),
+                                    if(ISAU_NOIR_LC,                                       
+                                        if(itl_lc<=percentile(itl_lc,25,filter=ISAU_NOIR_LC),1,
+                                        if(itl_lc<=percentile(itl_lc,50,filter=ISAU_NOIR_LC),2,
+                                        if(itl_lc<=percentile(itl_lc,75,filter=ISAU_NOIR_LC),3,4))),sect_quartile_lc))))        
+                                       ###########################################################################################
+                - score_autonomos: if(etat2!=2, -10, 
+                                        itl + uniform())
+                - not_indep_reg: if(etat2!=2, True, False)
+                - autonomos_align: if(age>15 and age<70,
+                                    if(ISHOMME,
+                                        align(score_autonomos,'cal_auton_h_b.csv', leave=not_indep_reg or etat2==1),
+                                        align(score_autonomos,'cal_auton_f_b.csv', leave=not_indep_reg or etat2==1)
+                                    ),
+                                  False)
+                - score_monotributo: if(etat2==2 and autonomos_align==False, 10000000 + uniform(), 
+                                        if(autonomos_align==True, -1000, 
+                                            if(etat2==3, itl + uniform(), 
+                                                -100)))
+                                            
+                - monotributo_align: if(age>15 and age<70,
+                                    if(ISHOMME,
+                                        align(score_monotributo,'cal_mono_h_b.csv',leave=autonomos_align or etat2==1),
+                                        align(score_monotributo, 'cal_mono_f_b.csv',leave=autonomos_align or etat2==1)
+                                    ),
+                                  False)   
+                - autonomo: if(autonomos_align, 1, 0)
+                - monotributo: if(monotributo_align, 1, 0)
+               # - patron: if(autonomo, 
+                #                choice([0, 1], [0.5, 0.5]),
+                 #               0)
+            compute_dump_all: 
+                - dump_all: csv(dump(itl_anses,itl,itl_lc_anses,itl_lc,id2,etat2,etat2_lucas,period,unborn,male,agetrimestres,val_trim,val_trim_lc,autonomo,monotributo))                      
+simulation:
+    processes:          
+        - household: [household_composition]
+        - person: [ageing,agegrouping,number_children,civilstate,get_a_life] 
+        - household: [household_composition]
+        - person: [[prelim_in_education, 1000],studying]
+        - person: [simulations,revenus,compute_dump_all]
+        - household: [household_composition,clean_empty]
+    # logging:
+        #level: "processes"
+         
+    input:
+        file: H:\Tout_Liam2\code\EPH_input\liam_brux_eph_2015_t2_b.h5  
+    output:
+        file: H:\Tout_LIAM2\code\EPH_output\fluk.h5
+#Il faut commencer la simulation une période après celle de la base. Comme ça par exemple le salaire net moyen sera celui de 2015_t1
+    start_period: 1001   
+    periods: 243
+    
+    
+    #243
+    random_seed: 17101945 
+    skip_shows: True
+    
+    default_entity: person

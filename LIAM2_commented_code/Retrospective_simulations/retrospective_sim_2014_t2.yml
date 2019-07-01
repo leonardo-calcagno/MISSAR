@@ -1,0 +1,676 @@
+# This is a LIAM2 simulation file. To run the simulation, press F6 if you are
+# using the editor bundled with LIAM2, otherwise run the following command in a
+# console: [BUNDLEPATH]\liam2\main run demo07.yml
+
+globals:
+    periodic:
+        path: H:\LIAM2_commented_code\globals\globals_retrospective_simulations.csv
+        transposed: true
+        fields: 
+    #A large part of our economic scenarios revolve around fixed values of global variables. These change following historically observed values
+            #and our economic scenarios. 
+        #First, we list global variables related to real wages as estimated following the Consumer Price Index or
+                #ANSES actualisation indexes. All our real income variables are expressed in November 2014 pesos. 
+        - GROSS_WAGE_2014_T4: float
+        - ANSES_GROSS_WAGE_2014_T4: float
+        #The coefficient variables (h for men, f for women) are computed following Duc et. al. 2013
+        - COEFFICIENT_WOMEN: float
+        - COEFFICIENT_MEN: float
+entities:
+    household:
+        fields:
+            # period and id are implicit
+    # Regarding households, almost all variables are created during the simulation. Only the pre-existing weighting variable (pondera) and id variable (household_id) 
+            # work at the household level.  
+            - nb_persons:  {type: int, initialdata: false}
+            - nb_children: {type: int, initialdata: false}
+            - nb_lil_children: {type: int, initialdata: false}
+            - id: int
+            - pondera: int
+            - household_id2: int
+
+        links:
+            persons: {type: one2many, target: person, field: household_id}
+
+        processes:
+        #We carry out two processes: we count the number of dwellers (adult, children, and little children) and clear empty households. Households empty out in these
+                #backward simulations (where people rejuvenate instead of ageing) when people become too young to be born.
+            household_composition():
+                - nb_persons: persons.count()
+                - nb_children: persons.count(age < 18)
+                - nb_lil_children: persons.count(age < 5)
+
+            clean_empty(): 
+                - remove(nb_persons == 0)
+
+    person:
+        fields:
+            # period and id are implicit
+    # We need to declare first all the person-related variables we previously imported. 
+            - pondera: int
+        # First, here are the socio-demographic variables
+            - age: int
+            - age_quarters: int
+            - agegroup: int
+            - male:     bool
+            - marital_status: int
+            - underage_children: int
+            - little_children: int
+            # Second, we list here education variables
+            - formation: int
+            - student: bool
+            - polimodal: int
+            - university_year: int
+            # Third, we import labour-market related variables 
+            - labour_market_state:  int 
+                # 1: formal wage-earner; 2: formal sector independent worker;
+                # 3: informal worker; 4: unemployed; 5: inactive
+            - resid_back: float 
+            - itl: float
+            # Fourth, we list here identification variables and family links
+            - mother_id:  int
+            - household_id:      int
+            - partner_id: int
+            - father_id: int
+            - housewife: int
+            - perm_housewife: int
+            #Finally, we list variables not present in the starting dataset
+            - sect_quartile: {type: int, initialdata: false}
+            - out_of_study: {type: int, initialdata: false}
+            - itl_1: {type: float, initialdata: false}
+            - itl_2: {type: float, initialdata: false}    
+            - itl_anses: {type: float, initialdata: false}
+            - itl_anses_1: {type: float, initialdata: false}
+            - itl_anses_2: {type: float, initialdata: false}         
+            - level_second: {type: int, initialdata: false} 
+            - dur_in_couple: {type: int, initialdata: false}
+            - abandon_second: {type: bool, initialdata: false}
+            - end_of_studies: {type: int, initialdata: false}
+            - always_single: {type: bool, initialdata: false}
+            - unborn: {type: bool, initialdata: false}
+            - autonomo: {type: int, initialdata: false}
+            - monotributo: {type: int, initialdata: false}
+            - validated_quarters: {type: int, initialdata: false}
+            
+        links:
+            mother: {type: many2one, target: person, field: mother_id}
+            father: {type: many2one, target: person, field: father_id}
+            partner: {type: many2one, target: person, field: partner_id}            
+            household: {type: many2one, target: household, field: household_id}
+            children: {type: one2many, target: person, field: mother_id}
+            children_bis: {type: one2many, target: person, field: father_id}
+
+        macros:
+         #Bug: when combined with link variables, macro variables do not work. For instance, partner.labour_market_state==1 equals having a registered wage-earner partner and works. 
+        # Typing partner.IS_WAGE_EARNER does not work
+            UNSET: -1
+            ISMALE: male
+            ISFEMALE: not male
+
+            WAGE_EARNER: 1
+            INDEPENDENT: 2
+            INFORMAL: 3
+            UNEMPLOYED: 4
+            INACTIVE: 5
+            IS_WAGE_EARNER: labour_market_state == 1
+            IS_INDEPENDENT: labour_market_state == 2
+            IS_INFORMAL: labour_market_state == 3
+            IS_UNEMPLOYED: labour_market_state == 4
+            IS_INACTIVE: labour_market_state == 5    
+            IS_MARRIED: marital_status == 2
+            IN_RELATIONSHIP: marital_status == 1 or marital_status == 2
+            IS_DIVORCED: marital_status == 3
+            IS_SINGLE: marital_status == 5
+            IS_WIDOW: marital_status == 4
+            IS_IN_COUPLE: marital_status == 1
+            COUPLED: 1
+            MARRIED: 2
+            DIVORCED: 3
+            WIDOWED: 4
+            IS_FORMATION1: formation == 1
+            IS_FORMATION2: formation == 2
+            IS_FORMATION3: formation == 3
+            IS_STUDENT:  student ==True
+            IS_NOT_STUDENT: student ==False
+            ACTIVEAGE: (age > 15 and (age < if(male, 65, 60)))
+
+        processes:
+            ageing(): 
+    #Here, the ageing process is actually inverted. We go back in time, so we rejuvenate individuals one quarter at a time.       
+                - age_quarters: age_quarters - 1
+    #People with negative age were not actually yet born during that period. These are thus simply taken out of the dataset.
+                - unborn: if(age_quarters<0, True,
+                            False)       
+                - age: trunc(age_quarters/4) 
+                - remove(unborn)     
+
+            agegrouping():
+                - agegroup: 5*trunc(age/5)
+                - agegroup: if(age >15 and age<20, 16, agegroup)
+                 
+            number_children():
+                - underage_children: children.count(age<18) + children_bis.count(age<18)
+                - little_children: children.count(age<5) + children_bis.count(age<5)
+            one_time_runs():
+#Here, we put the instructions we want to run only one time, at the very first iteration of our model. 
+        #1- We introduce the validated quarters variable, which will track the accumulation of contributed quarters.
+                - validated_quarters: if(IS_WAGE_EARNER or IS_INDEPENDENT, 1, 0)
+        #2- Single respondents in 2014 are flagged as having always been single in the past. They can be simulated as having been in an unmarried couple, but by 
+                #definition they can never have been married, divorced or widowed. 
+                - always_single: if(IS_SINGLE, True,
+                                    False)
+    #Then, we carry out various preliminary operations related to students and education. 
+        #1- Self-declared students we deem are too old are forced not to be students. People aged 21 or more with incomplete secondary education cannot be students. 
+                #Also, people aged 30 or more cannot be students. 
+                - out: if(age>20 and IS_FORMATION1, True,
+                            False)
+                - out: if(age>29, True, 
+                            out)
+                - student: if(IS_STUDENT, 
+                                if(out,False,student),
+                                    student)
+                                    
+        #2- For secondary students who have not reported their year of studies, we determine what is their secondary school year based on their ages. We have in 
+                #our SAS code determined a secondary school year for most students anyway, so this arbitrary assignment of a school year is only relevant for a minority
+                #of students. 
+            #We selected the coefficients in the choice[] instructions in order to have proportions of students too old for the school year they are attending that are
+                    #close to those measured in the 2009-2010 period. 
+                - secundario: if(polimodal==UNSET,True,False)
+                - polimodal: if(age <16,0,polimodal)
+                - polimodal: if(IS_NOT_STUDENT or formation!=1 or secundario==False,polimodal,
+                                        if(age==16,1,
+                                        if(age==17,choice([1, 2], [0.33, 0.67]),
+                                        if(age==18,choice([1, 2, 3], [0.1,0.23, 0.67]),
+                                        if(age==19,choice([ 2, 3], [0.1,0.9]),
+                                        if(age==20,3,
+                                        if(age>20,0,
+                                        polimodal)))))))
+                - polimodal: if(polimodal==-1,0,polimodal)
+        #3- We take older individuals, who are not students. Depending on their attained level of education, we give them an end of studies age. It is 24 for those 
+                #with a university degree, 18 for those with full secondary education and 16 for those with incomplete secondary education. 
+                - end_of_studies: if(formation==3, 24, -1)
+                - end_of_studies: if(formation==2 and IS_NOT_STUDENT, 
+                                if(age>17, 18, 17),end_of_studies)
+                - end_of_studies: if(formation==1 and IS_NOT_STUDENT and age>15, 16, end_of_studies)
+            students_module(): 
+#In our backwards simulations, the main point of the education module is determining the end of studies age, which depends on the respondent's education level 
+        #when surveyed
+    #Every year, people that become younger than their end of studies age are considered students. They exit the labour market (thus becoming inactive) and see
+            # their education level downgraded. 
+                - modulo_period: (period) % 4 
+                - just_ended_education: if(modulo_period==0 and age<end_of_studies,True,False)
+                - student: if(just_ended_education, True, student)
+                - labour_market_state: if(just_ended_education, 5, labour_market_state)
+                - formation: if(end_of_studies==24, 
+                                if(age<24, 2,
+                                        if(age<18, 1, formation)),formation)
+                - formation: if(end_of_studies==18, 
+                                if(age<18, 1,formation),formation)
+                - student: if(age<end_of_studies, True, student)
+                - labour_market_state: if(age<end_of_studies, 5, labour_market_state)
+                - student: if(age<16, True, student)
+                - labour_market_state: if(age<16, 5, labour_market_state)
+            marital_status():
+#Our marital status module follows some rules, more explicitly laid out in section 2.4.2. of the thesis. 
+    #A- Divorce transitions are first computed. The alignment by sorting procedure is carried out with individual divorce probabilities, among married individuals.
+    #B- People that were single in the starting dataset are flagged as always single. This makes them unable to have been married, divorced or widowed in the past. 
+           #They however still can enter a common-law union. 
+    #C- To determine when a surveyed widowed individual had been married, we carry out an alignemnt by sorting procedure with the death probabilities of people of 
+            #the opposite sex of their age. This gives us the period where the surveyed individual widowed. At that point, he/she becomes married. 
+    #D- People in a non-married couple are selected through an alignment by sorting procedure that reproduces aggregate marial status proportions. Are selected in 
+            #priority people already in a common-law union, then people we simulate as having just married (thus downgraded from a married to an unmarried couple), 
+            #then people reportedly in a common-law union but with an unknown partner, then if needed single people. Just married couples are selected through 
+            #marriage probabilities.
+    #E- For the sake of simplicity, we do not carry out a matching procedure in this module. For instance, if we take two divorced individuals, simulate them as +
+            #having divorced in a precise quarter (and thus as having been married before that quarter), we do not try to re-create their couple and match them together. 
+    #F- The proportions of married people are obtained through an alignment by sorting procedure that reproduces aggregate proportions. Married couples that are not 
+            #considered newly-weds are always considered as being married. If need be, some divorced or widowed individuals are selected as having been married 
+            #during this period. The total simulated divorces or spouses' deaths in a given period are nevertheless limited in step 1- of the module. 
+    
+    #1- We compute individual probabilities of divorce, widowing and marriage. They give the module some consistancy at the micro level (ensuring for instance only 
+            #a limited number of couples divorce in a given period). The macro-level alignment by sorting procedures are nevertheless prioritised by this module. 
+        #We opted not to compute divorce or marriage equations for the backward module for the sake of simplicity. This could be done nevertheless in a similar way 
+                #than in our prospective module. The equations would need to be entered in place of the 0.0 values of the logit_regr instruction. This is left for 
+                        #future work. 
+                - divorce_f: logit_regr(0.0,
+                                      filter = ISFEMALE and IS_DIVORCED and age>=20 and age<70 ,
+                                      align = 'al_p_divorce_f_caba_b.csv')
+                - divorce_m: logit_regr(0.0,
+                                      filter = ISMALE and IS_DIVORCED and age>=20 and age<70,
+                                      align = 'al_p_divorce_m_caba_b.csv')   
+                - widowed_f: logit_regr(0.0,
+                                      filter = ISFEMALE and IS_WIDOW and age>=20,
+                                      align = 'p_death_m_b.csv')
+                - widowed_m: logit_regr(0.0,
+                                      filter = ISMALE and IS_WIDOW and age>=20,
+                                      align = 'p_death_f_b.csv')   
+                
+                - marry: if((age >= 20) and (age < 70) and IS_MARRIED,
+                                if(ISMALE,
+                                   logit_regr(0.0, align='al_p_mmkt_m_caba2_b.csv'),
+                                   logit_regr(0.0, align='al_p_mmkt_f_caba2_b.csv')),
+                                False)               
+    #2- We compute the propensity scores of having been in a common-law or in a married union during the simulated period, first only among women.  See rules 
+            #D and F for the logic behind these scores. Keep also in mind people tagged as always single cannot be simulated as having been married in the past.  
+                 
+                - score_couple: if(ISFEMALE,
+                                    if(marital_status==1 and partner_id!=UNSET, 1000 + uniform(),
+                                        if(marry, 100 + uniform(),
+                                            if(marital_status==1 and partner_id==UNSET, 10 + uniform(),
+                                                if(marital_status==4 or marital_status==3 or (marital_status==2 and not marry), -1000 + uniform(),
+                                                    uniform())))), -10000+uniform()) 
+                 
+                - score_married: if(ISFEMALE,
+                                    if(marital_status==2 and not marry, 10000+uniform(), 
+                                        if(marital_status==1, -1000 + uniform(),
+                                            if(always_single or marital_status==5 or marital_status==1, -10000 + uniform(),
+                                                if(divorce_f or widowed_f, 1000+uniform(),
+                                                    if(marital_status==2 and marry and partner_id!=UNSET, 100+uniform(),
+                                                       if(marital_status==2 and partner_id==UNSET, 10+uniform(),
+                                                          if(marital_status==3 or marital_status==4, -10 + uniform(),
+                                                                uniform()))))))),-100000 + uniform())
+                                                        
+                
+    #3- We carry out the macro-level alignment by sorting procedures to get people in married an unmarried couples.                                    
+                - align_married: if(age<20,False, 
+                                    if(not male,
+                                        align(score_married, 'cal_civ_2_f_b.csv', leave =age<20 or age>=70 or always_single or marital_status==5 or marital_status==1, take= marital_status==2 and not marry),
+                                        False)) 
+
+                - leave_couple: if(marital_status==4 or marital_status==3 or (marital_status==2 and not marry), True, False)             
+
+        #The to_couple instruction bars divorced and widowed people in t to have been in a common-law union in t-1. It also stops people already selected as being 
+                #married in t, but not just married in t-1, from being in a common-law union in t-1.                
+                - to_couple: if((age >= 16) and (age < 70),
+                                if(ISFEMALE,
+                                   align(score_couple,'cal_civ_1_f_b.csv', leave=leave_couple or align_married or marital_status==3 or marital_status==4),
+                                   False),
+                                False)       
+              
+                - marital_status: if(align_married,2,marital_status)
+                - marital_status: if(ISFEMALE,
+                                if(to_couple, COUPLED,
+                                 if(marital_status!=1,marital_status,5)),marital_status)
+        #We force divorced or widowed people that become younger than 25 to have been married at 24. We also force minors to be single. Finally, people aged 18 or 19 
+                #can only be single or in a common-law union. 
+                - marital_status: if(age<25, 
+                                    if(marital_status==3 or marital_status==4,2,marital_status)
+                                    ,marital_status)
+                - marital_status: if(age<18, 5, marital_status)
+                - marital_status: if(17<age and age<20,
+                                    if(marital_status!=1 and marital_status!=5,1,marital_status),marital_status)                          
+    #4- We make it so that the marital status of both members of a couple are consistent. We also break couples where one of the members was single in the simulated
+            #period (which means the couple had not yet been formed). 
+                - marital_status: if(partner.marital_status==1,1,marital_status)
+                - marital_status: if(partner.marital_status==5,5,marital_status)
+                - marital_status: if(partner.marital_status==2,2,marital_status)
+  
+                - partner_id: if(marital_status==5,UNSET,partner_id)
+                - mark_mar_men: if(ISMALE and partner_id!=UNSET and marital_status==2, True, False)
+                - mark_com_men: if(ISMALE and partner_id!=UNSET and marital_status==1, True, False)
+    #5- We carry out the alignment by sorting procedure for men. We use men with unknown partners if needed to reproduce the historical marital status proportions. 
+            #Men with known partners who had been earlier simulated as being in a married or unmarried couple do not see their marital status change at this point. 
+                - score_married_men: if(ISMALE,
+                                    if(marital_status==2 and partner_id!=UNSET, 10000+uniform(), 
+                                        if(marital_status==2 and partner_id==UNSET, 100 + uniform(),
+                                                if(always_single or marital_status==5 or marital_status==1, -10000 + uniform(),
+                                                    if(divorce_m or widowed_m, 1000+uniform(),
+                                                       uniform())))),-100000 + uniform()) 
+                - align_married_men: if(age<20, False, 
+                                        if(ISMALE, align(score_married, 'cal_civ_2_h_b.csv', leave =(age<20 or age>=70) or always_single or marital_status==5  or marital_status==1, take= (marital_status==2 and partner_id!=UNSET)),
+                                        False))                      
+                - score_couple_men: if(ISMALE,
+                                    if(marital_status==1 and partner_id!=UNSET, 10000 + uniform(),
+                                        if(marry and partner_id==UNSET, 1000 + uniform(),
+                                            if(marital_status==1 and partner_id==UNSET, 100 + uniform(),
+                                                if(marital_status==4 or marital_status==3 or (marital_status==2 and not marry) or (marital_status==2 and partner_id!=UNSET), -1000 + uniform(),
+                                                    uniform())))), -10000+uniform())                 
+                - leave_couple_men: if(ISMALE,
+                                        if(marital_status==4 or marital_status==3 or (marital_status==2 and not marry) or (marital_status==2 and partner_id!=UNSET), True, False),False)                        
+                - to_couple_men: if((age >= 16) and (age < 70),
+                                if(ISMALE,
+                                   align(score_couple,'cal_civ_1_h_b.csv', leave=align_married_men or leave_couple_men or marital_status==3 or marital_status==4, take=marital_status==1 and partner_id!=UNSET),
+                                   False),
+                                False) 
+
+                - marital_status: if(align_married_men,2,marital_status)
+                - marital_status: if(ISMALE,
+                                if(to_couple_men, COUPLED,
+                                 if(marital_status!=1,marital_status,5)),marital_status)                
+    #6- We update the housewife variable. When a woman that is not a permanent housewife is simulated at a period where she did not yet have children aged 4 or less, 
+            #she stops being a housewife and can stop being inactive. 
+                - housewife: if(perm_housewife==1, 1, 
+                                if(ISMALE,0, 
+                                    if(little_children==0,0,housewife)))
+                              
+  
+            get_a_life():
+#Here, the get_a_life procedure keeps the name it has in the prospective module. In this case however, we change the household name 
+        # of people over 24 but that are simulated as having been single in the past. 
+                - alone: household.nb_persons == 1
+                - household_id: if(not IN_RELATIONSHIP and lag(IN_RELATIONSHIP) and not alone and (age >= 24),
+                            new('household'),
+                            household_id)
+               
+
+            labour_market_module():
+               
+                - labour_market_state: if(ACTIVEAGE , labour_market_state,
+                                            INACTIVE)
+#We first carry out the labour-market behavioural equations. These are computed separately by gender, and for people above the legal retirement age. 
+    #The coefficients are taken from our backwards behavioural equations, listed in Appendix L of the thesis. 
+        #There is a maximum of 31 variables that can be input in LIAM2 under a logit_score instruction. We thus sum these in temporary variables that are then combined
+                #in the behavioural equation. 
+                - wage_earners_men_1: (0.5276)+(age>=25 and age<30)*(1.2663)+(age>=45 and age<50)*(1.1196)+(IS_MARRIED)*(0.5134)+(partner.labour_market_state==-1)*(-0.1909)+(partner.labour_market_state==5)*(-0.0615)+((IS_WAGE_EARNER) and (sect_quartile==3))*(5.0873)+((IS_INDEPENDENT) and (sect_quartile==4))*(0.4588)+((IS_INFORMAL) and (sect_quartile==4))*(0.6433)
+                - wage_earners_men_2: (IS_FORMATION1)*(-0.4969)+(age>=30 and age<35)*(1.2313)+(age>=50 and age<55)*(0.9908)+(IS_DIVORCED)*(0.2683)+(partner.labour_market_state==2)*(-0.7685)+(little_children>=2)*(-0.1882)+((IS_WAGE_EARNER) and (sect_quartile==4))*(5.1321)+((IS_INFORMAL) and (sect_quartile==1))*(-0.2642)+((IS_UNEMPLOYED) and (sect_quartile==0))*(0.6721)
+                - wage_earners_men_3: (IS_FORMATION2)*(-0.1817)+(age>=35 and age<40)*(1.2148)+(age>=55 and age<60)*(0.966)+(IS_IN_COUPLE)*(0.3293)+(partner.labour_market_state==3)*(-0.4941)+((labour_market_state!=1) or (sect_quartile!=1))*(-4.1889)+((IS_INDEPENDENT) and (sect_quartile==1))*(-0.2383)+((IS_INFORMAL) and (sect_quartile==2))*(0.1555)
+                - wage_earners_men_4: (age>=20 and age<25)*(0.8695)+(age>=40 and age<45)*(1.1876)+(age>=60 and age<65)*(0.7417)+(IS_WIDOW)*(0.2753)+(partner.labour_market_state==4)*(-0.2299)+((IS_WAGE_EARNER) and (sect_quartile==2))*(4.779)+((IS_INDEPENDENT) and (sect_quartile==3))*(0.2589)+((IS_INFORMAL) and (sect_quartile==3))*(0.326)
+                - wage_earners_women_1: (0.9117)+(age>=25 and age<30)*(1.0748)+(age>=45 and age<50)*(1.4295)+(IS_DIVORCED)*(-0.0928)+(partner.labour_market_state==3)*(-0.4768)+((IS_WAGE_EARNER) and (sect_quartile==2))*(4.661)+((IS_INFORMAL) and (sect_quartile==1))*(-0.7806)+((IS_INACTIVE) and (sect_quartile==0))*(-0.9808)
+                - wage_earners_women_2: (IS_FORMATION1)*(-1.0687)+(age>=30 and age<35)*(1.2476)+(age>=50 and age<55)*(1.4181)+(IS_WIDOW)*(-0.1743)+(partner.labour_market_state==5)*(-0.096)+((IS_WAGE_EARNER) and (sect_quartile==3))*(4.933)+((IS_INFORMAL) and (sect_quartile==2))*(-0.0913)
+                - wage_earners_women_3: (IS_FORMATION2)*(-0.5266)+(age>=35 and age<40)*(1.3067)+(age>=55 and age<60)*(1.3596)+(partner.labour_market_state==-1)*(-0.1129)+(little_children>=2)*(-0.2016)+((IS_WAGE_EARNER) and (sect_quartile==4))*(4.9772)+((IS_INFORMAL) and (sect_quartile==3))*(0.2553)
+                - wage_earners_women_4: (age>=20 and age<25)*(0.7446)+(age>=40 and age<45)*(1.3424)+(IS_MARRIED)*(-0.1126)+(partner.labour_market_state==2)*(-0.4831)+((labour_market_state!=1) or (sect_quartile!=1))*(-3.9787)+((IS_INDEPENDENT) and (sect_quartile==1))*(-0.7071)+((IS_INFORMAL) and (sect_quartile==4))*(0.7296)
+                - wage_earner_score: if(ACTIVEAGE,
+                                    if(ISMALE,
+                                        logit_score(wage_earners_men_1+wage_earners_men_2+wage_earners_men_3+wage_earners_men_4
+                                                    ),
+                                        logit_score(wage_earners_women_1+wage_earners_women_2+wage_earners_women_3+wage_earners_women_4
+                                                    )),
+                                        if(ISMALE  and  age>=65  and  age<70,
+                                            logit_score((-12.5827)+(IS_FORMATION1)*(-0.4391)+(age)*(0.5709)+(age*age)*(-0.00550)+(labour_market_state!=1 or sect_quartile!=1)*(-3.7985)+(labour_market_state==1 and sect_quartile== 2)*(5.0398)
+                                                        +(labour_market_state==1 and sect_quartile== 3)*(4.4160)+(labour_market_state==1 and sect_quartile== 4)*(4.8955)+(labour_market_state==3 and sect_quartile== 3)*(0.3584)
+                                                        +(labour_market_state==3 and sect_quartile== 4)*(0.7388)+(labour_market_state==5)*(-0.6258)),
+                                        if(ISFEMALE and age>=60 and age<70,
+                                            logit_score((3.8351)+(IS_FORMATION1)*(-1.1294)+(IS_FORMATION2)*(-0.9058)+(age)*(-0.0330)+(IS_MARRIED)*(0.4986)+(IS_IN_COUPLE)*(0.5313)
+                                                        +(partner.labour_market_state==2)*(-0.7892)+(partner.labour_market_state==3)*(-0.4694)+(partner.labour_market_state==5)*(-0.6725)+(labour_market_state!=1 or sect_quartile!=1)*(-4.7967)
+                                                        +(labour_market_state==1 and sect_quartile== 2)*(5.6448)+(labour_market_state==1 and sect_quartile== 3)*(6.1616)+(labour_market_state==1 and sect_quartile== 4)*(5.9224)
+                                                        +(labour_market_state==2 and sect_quartile== 4)*(1.3508)+(labour_market_state==3 and sect_quartile== 2)*(0.6839)+(labour_market_state==3 and sect_quartile== 3)*(1.1643)
+                                                        +(labour_market_state==3 and sect_quartile== 4)*(1.5673)+(labour_market_state==5)*(-0.5468)),
+                                                        -10))) 
+        
+ 
+                - independent_wom_1: (IS_FORMATION1)*(-1.8104)+(age>=30 and age<35)*(1.2556)+(age>=50 and age<55)*(1.4588)+(partner.labour_market_state==3)*(-1.3144)+(little_children>=2)*(0.3316)+((IS_INDEPENDENT) and (sect_quartile==3))*(4.9404)+((IS_INFORMAL) and (sect_quartile==3))*(1.7198)
+                - independent_wom_2: (IS_FORMATION2)*(-0.8234)+(age>=35 and age<40)*(1.3232)+(age>=55 and age<60)*(1.6578)+(partner.labour_market_state==4)*(-1.4437)+((IS_WAGE_EARNER) and (sect_quartile==4))*(0.2255)+((IS_INDEPENDENT) and (sect_quartile==4))*(5.0694)+((IS_INFORMAL) and (sect_quartile==4))*(2.2551)
+                - independent_wom_3: (age>=20 and age<25)*(0.4529)+(age>=40 and age<45)*(1.4439)+(partner.labour_market_state==-1)*(-0.9384)+(partner.labour_market_state==5)*(-1.1126)+((labour_market_state!=2) or (sect_quartile!=1))*(-4.5988)+((IS_INFORMAL) and (sect_quartile==1))*(1.3261)+((IS_UNEMPLOYED) and (sect_quartile==0))*(1.2488)
+                - independent_wom_4: (age>=25 and age<30)*(0.9768)+(age>=45 and age<50)*(1.5279)+(partner.labour_market_state==1)*(-0.9982)+(little_children==0)*(0.1532)+((IS_INDEPENDENT) and (sect_quartile==2))*(4.8289)+((IS_INFORMAL) and (sect_quartile==2))*(1.4622)+((IS_INACTIVE) and (sect_quartile==0))*(0.5859)
+                - independent_men_1: (IS_FORMATION1)*(-1.3995)+(age>=30 and age<35)*(1.6923)+(age>=50 and age<55)*(1.9864)+(IS_DIVORCED)*(0.1427)+(partner.labour_market_state==1)*(-1.2297)+((IS_WAGE_EARNER) and (sect_quartile==2))*(-0.2787)+((IS_INDEPENDENT) and (sect_quartile==3))*(4.559)+((IS_INFORMAL) and (sect_quartile==3))*(1.6573)
+                - independent_men_2: (IS_FORMATION2)*(-0.7164)+(age>=35 and age<40)*(1.7724)+(age>=55 and age<60)*(1.9567)+(IS_IN_COUPLE)*(0.1921)+(partner.labour_market_state==3)*(-1.6413)+((IS_WAGE_EARNER) and (sect_quartile==3))*(-0.1585)+((IS_INDEPENDENT) and (sect_quartile==4))*(4.613)+((IS_INFORMAL) and (sect_quartile==4))*(1.9147)
+                - independent_men_3: (age>=20 and age<25)*(0.8452)+(age>=40 and age<45)*(1.8067)+(age>=60 and age<65)*(2.0062)+(IS_WIDOW)*(0.2236)+(partner.labour_market_state==4)*(-1.7739)+((labour_market_state!=2) or (sect_quartile!=1))*(-4.1203)+((IS_INFORMAL) and (sect_quartile==1))*(1.207)+((IS_UNEMPLOYED) and (sect_quartile==0))*(1.1013)
+                - independent_men_4: (age>=25 and age<30)*(1.4622)+(age>=45 and age<50)*(1.9367)+(IS_MARRIED)*(0.2867)+(partner.labour_market_state==-1)*(-1.2421)+(partner.labour_market_state==5)*(-1.2701)+((IS_INDEPENDENT) and (sect_quartile==2))*(4.3689)+((IS_INFORMAL) and (sect_quartile==2))*(1.432)+((IS_INACTIVE) and (sect_quartile==0))*(0.5522)
+                         
+                - independent_70_men: (IS_FORMATION1)*(-1.6582)+(IS_FORMATION2)*(-0.8147)+(age)*(0.0433)+(IS_MARRIED)*(0.7580)+(IS_IN_COUPLE)*(1.1563)+(IS_WIDOW)*(0.7290)
+                            +(partner.labour_market_state==-1)*(-1.1592)+(partner.labour_market_state==1)*(-0.7147)+(partner.labour_market_state==3)*(-1.4051)+(partner.labour_market_state==4)*(-0.8499)
+                            +(partner.labour_market_state==5)*(-1.3501)+(labour_market_state==1 and sect_quartile== 2)*(-1.5398)+(labour_market_state!=2 or sect_quartile!=1)*(-3.5062)
+                            +(labour_market_state==2 and sect_quartile== 2)*(4.3237)+(labour_market_state==2 and sect_quartile== 3)*(4.4411)+(labour_market_state==2 and sect_quartile== 4)*(4.4841)
+                            +(labour_market_state==3 and sect_quartile== 1)*(1.0635)+(labour_market_state==3 and sect_quartile== 2)*(1.4922)+(labour_market_state==3 and sect_quartile== 3)*(1.5454)
+                            +(labour_market_state==3 and sect_quartile== 4)*(1.7353)+(labour_market_state==4)*(0.8191)
+                - independent_70_wom: (1.9350)+(IS_FORMATION1)*(-1.9071)+(IS_FORMATION2)*(-1.0457)+(partner.labour_market_state==-1)*(-1.0525)+(partner.labour_market_state==1)*(-1.2309)
+                             +(partner.labour_market_state==3)*(-1.6277)+(partner.labour_market_state==4)*(-1.2958)+(partner.labour_market_state==5)*(-1.4159)+(labour_market_state!=2 or sect_quartile!=1)*(-4.6637)
+                             +(labour_market_state!=2 and sect_quartile== 2)*(4.6978)+(labour_market_state==2 and sect_quartile== 3)*(4.9216)+(labour_market_state==2 and sect_quartile== 4)*(4.5218)
+                             +(labour_market_state==3 and sect_quartile== 1)*(0.9785)+(labour_market_state==3 and sect_quartile== 2)*(1.3565)+(labour_market_state==3 and sect_quartile== 3)*(1.7137)
+                             +(labour_market_state==3 and sect_quartile== 4)*(2.6051)+(labour_market_state==4)*(1.4994)+(labour_market_state==5)*(0.4391)                                       
+                                            
+                #- seed(17101945)
+                - independent_score: if(ACTIVEAGE,
+                                        if(ISMALE,
+                                        logit_score(independent_men_1+independent_men_2+independent_men_3+independent_men_4
+                                                    ),
+                                        logit_score(independent_wom_1+independent_wom_2+independent_wom_3+independent_wom_4
+                                                    )),
+                                        if(ISMALE  and  age>=65  and  age<70,
+                                            logit_score(independent_70_men),
+                                        if(ISFEMALE and age>=60 and age<70,
+                                            logit_score(independent_70_wom),
+                                                        -10)))
+                                                        
+                - informal_men_1: (-0.1323)+(age>=25 and age<30)*(0.6697)+(age>=45 and age<50)*(0.6149)+(IS_MARRIED)*(-0.2188)+(partner.labour_market_state==-1)*(-0.3272)+(partner.labour_market_state==5)*(-0.357)+((IS_WAGE_EARNER) and (sect_quartile==3))*(-1.0852)+((IS_INDEPENDENT) and (sect_quartile==3))*(0.8598)+((IS_INFORMAL) and (sect_quartile==3))*(2.9079)
+                - informal_men_2: (IS_FORMATION1)*(1.0329)+(age>=30 and age<35)*(0.6212)+(age>=50 and age<55)*(0.6006)+(IS_DIVORCED)*(-0.0944)+(partner.labour_market_state==1)*(-0.6644)+(little_children==0)*(-0.0752)+((IS_WAGE_EARNER) and (sect_quartile==4))*(-1.3042)+((IS_INDEPENDENT) and (sect_quartile==4))*(0.452)+((IS_INFORMAL) and (sect_quartile==4))*(2.8454)
+                - informal_men_3: (IS_FORMATION2)*(0.6523)+(age>=35 and age<40)*(0.6767)+(age>=55 and age<60)*(0.519)+(IS_SINGLE)*(-0.3021)+(partner.labour_market_state==2)*(-0.9978)+(little_children>=2)*(0.1131)+((IS_INDEPENDENT) and (sect_quartile==1))*(1.342)+((labour_market_state!=3) or (sect_quartile!=1))*(-2.4969)+((IS_UNEMPLOYED) and (sect_quartile==0))*(1.224)
+                - informal_men_4: (age>=20 and age<25)*(0.5993)+(age>=40 and age<45)*(0.6182)+(age>=60 and age<65)*(0.4418)+(IS_WIDOW)*(-0.3042)+(partner.labour_market_state==4)*(-0.3055)+((IS_WAGE_EARNER) and (sect_quartile==2))*(-0.6602)+((IS_INDEPENDENT) and (sect_quartile==2))*(1.1725)+((IS_INFORMAL) and (sect_quartile==2))*(2.7553)+((IS_INACTIVE) and (sect_quartile==0))*(0.1422)
+                - informal_wom_1: (-0.874)+(age>=25 and age<30)*(0.9225)+(age>=45 and age<50)*(0.8624)+(IS_DIVORCED)*(0.2688)+(partner.labour_market_state==2)*(-0.4775)+(little_children>=2)*(-0.1474)+((IS_WAGE_EARNER) and (sect_quartile==4))*(-1.9122)+((labour_market_state!=3) or (sect_quartile!=1))*(-2.0774)+((IS_UNEMPLOYED) and (sect_quartile==0))*(0.3574)
+                - informal_wom_2: (IS_FORMATION1)*(0.7518)+(age>=30 and age<35)*(0.9962)+(age>=50 and age<55)*(0.7539)+(IS_WIDOW)*(0.1413)+(partner.labour_market_state==4)*(-0.1744)+((IS_WAGE_EARNER) and (sect_quartile==1))*(-0.1784)+((IS_INDEPENDENT) and (sect_quartile==1))*(0.8153)+((IS_INFORMAL) and (sect_quartile==2))*(2.4738)+((IS_INACTIVE) and (sect_quartile==0))*(-0.3995)
+                - informal_wom_3: (IS_FORMATION2)*(0.4697)+(age>=35 and age<40)*(0.9831)+(age>=55 and age<60)*(0.686)+(partner.labour_market_state==-1)*(-0.1654)+(partner.labour_market_state==5)*(-0.2448)+((IS_WAGE_EARNER) and (sect_quartile==2))*(-1.0235)+((IS_INDEPENDENT) and (sect_quartile==2))*(0.664)+((IS_INFORMAL) and (sect_quartile==3))*(2.5947)
+                - informal_wom_4: (age>=20 and age<25)*(0.679)+(age>=40 and age<45)*(0.9416)+(IS_MARRIED)*(-0.0865)+(partner.labour_market_state==1)*(-0.5137)+(little_children==0)*(0.1684)+((IS_WAGE_EARNER) and (sect_quartile==3))*(-1.4999)+((IS_INDEPENDENT) and (sect_quartile==3))*(0.4175)+((IS_INFORMAL) and (sect_quartile==4))*(2.3995)
+
+                #- seed(17101945)          
+                - informal_score: if(ACTIVEAGE,
+                                        if(ISMALE,
+                                        logit_score(informal_men_1+informal_men_2+informal_men_3+informal_men_4
+                                                    ),
+                                        logit_score(informal_wom_1+informal_wom_2+informal_wom_3+informal_wom_4
+                                                    )),
+                                        if(ISMALE  and  age>=65  and  age<70,
+                                            logit_score((-6.2676)+(IS_FORMATION1)*(0.6665)+(IS_FORMATION2)*(0.3575)+(age)*(0.2689)+(age*age)*(-0.00252)+(IS_MARRIED)*(-0.2508)
+                                                        +(partner.labour_market_state==-1)*(-0.9115)+(partner.labour_market_state==1)*(-0.6033)+(partner.labour_market_state==2)*(-1.4885)+(partner.labour_market_state==4)*(-1.4515)
+                                                        +(partner.labour_market_state==5)*(-0.7886)+(labour_market_state==1 and sect_quartile== 1)*(-0.5514)+(labour_market_state==1 and sect_quartile== 2)*(-1.3926)
+                                                        +(labour_market_state==1 and sect_quartile== 3)*(-0.8188)+(labour_market_state==1 and sect_quartile== 4)*(-1.5754)+(labour_market_state==2 and sect_quartile== 1)*(0.4760)
+                                                        +(labour_market_state!=3 or sect_quartile!=1)*(-1.4448)+(labour_market_state==3 and sect_quartile== 2)*(1.8238)+(labour_market_state==3 and sect_quartile== 3)*(1.7426)
+                                                        +(labour_market_state==3 and sect_quartile== 4)*(1.8114)+(labour_market_state==5)*(-0.8823)),
+                                        if(ISFEMALE and age>=60 and age<70,
+                                            logit_score((IS_FORMATION1)*(0.8336)+(IS_FORMATION2)*(0.6496)+(age*age)*(-0.00062)+(IS_MARRIED)*(-0.2352)+(IS_WIDOW)*(-0.3727)+(partner.labour_market_state==-1)*(-0.2690)
+                                                        +(partner.labour_market_state==1)*(-0.4845)+(partner.labour_market_state==2)*(-0.4169)+(partner.labour_market_state==5)*(-0.8123)+(labour_market_state==1 and sect_quartile== 1)*(-0.5647)
+                                                        +(labour_market_state==1 and sect_quartile== 2)*(-1.4566)+(labour_market_state==1 and sect_quartile== 3)*(-2.7458)+(labour_market_state==1 and sect_quartile== 4)*(-2.6077)
+                                                        +(labour_market_state!=3 or sect_quartile!=1)*(-1.3898)+(labour_market_state==3 and sect_quartile== 2)*(1.7797)+(labour_market_state==3 and sect_quartile== 3)*(1.9865)
+                                                        +(labour_market_state==3 and sect_quartile== 4)*(1.7151)+(labour_market_state==5)*(-1.5997)),
+                                                        -10)))
+   
+                - unemployed_men_1: (-0.4743)+(age>=35 and age<40)*(-0.3903)+(age>=55 and age<60)*(-0.2027)+(IS_IN_COUPLE)*(-0.4243)+(partner.labour_market_state==2)*(-0.6602)+((IS_WAGE_EARNER) and (sect_quartile==3))*(-0.575)+((IS_INDEPENDENT) and (sect_quartile==3))*(0.2649)+((IS_INFORMAL) and (sect_quartile==4))*(1.2575)
+                - unemployed_men_2: (age>=16 and age<20)*(-0.4634)+(age>=40 and age<45)*(-0.3076)+(age>=60 and age<65)*(-0.2645)+(IS_WIDOW)*(-0.4704)+(partner.labour_market_state==3)*(0.2385)+((IS_WAGE_EARNER) and (sect_quartile==4))*(-0.9706)+((IS_INFORMAL) and (sect_quartile==1))*(2.2478)+((labour_market_state!=4) or (sect_quartile!=0))*(-3.4959)
+                - unemployed_men_3: (age>=25 and age<30)*(-0.1666)+(age>=45 and age<50)*(-0.3431)+(IS_MARRIED)*(-0.5379)+(partner.labour_market_state==-1)*(0.1804)+(partner.labour_market_state==4)*(0.826)+((IS_INDEPENDENT) and (sect_quartile==1))*(1.5927)+((IS_INFORMAL) and (sect_quartile==2))*(1.9061)+((IS_INACTIVE) and (sect_quartile==0))*(1.6644)
+                - unemployed_men_4: (age>=30 and age<35)*(-0.0782)+(age>=50 and age<55)*(-0.2433)+(IS_DIVORCED)*(-0.2337)+(partner.labour_market_state==1)*(0.4587)+((IS_WAGE_EARNER) and (sect_quartile==1))*(0.6436)+((IS_INDEPENDENT) and (sect_quartile==2))*(0.7461)+((IS_INFORMAL) and (sect_quartile==3))*(1.6268)
+                - unemployed_wom_1: (-0.5057)+(age>=30 and age<35)*(-0.1519)+(age>=50 and age<55)*(-0.5601)+(IS_IN_COUPLE)*(-0.3482)+(partner.labour_market_state==2)*(-0.2036)+(little_children>=2)*(-0.1773)+((IS_INDEPENDENT) and (sect_quartile==2))*(0.7832)+((IS_INFORMAL) and (sect_quartile==3))*(2.0115)
+                - unemployed_wom_2: (IS_FORMATION1)*(-0.481)+(age>=35 and age<40)*(-0.1713)+(age>=55 and age<60)*(-0.8796)+(IS_WIDOW)*(-0.1309)+(partner.labour_market_state==3)*(0.3378)+((IS_WAGE_EARNER) and (sect_quartile==1))*(1.0684)+((IS_INDEPENDENT) and (sect_quartile==3))*(1.1695)+((IS_INFORMAL) and (sect_quartile==4))*(1.8154)
+                - unemployed_wom_3: (IS_FORMATION2)*(-0.2163)+(age>=40 and age<45)*(-0.3789)+(IS_MARRIED)*(-0.3948)+(partner.labour_market_state==-1)*(0.3312)+(partner.labour_market_state==4)*(1.0351)+((IS_WAGE_EARNER) and (sect_quartile==2))*(0.4336)+((IS_INFORMAL) and (sect_quartile==1))*(2.6266)+((labour_market_state!=4) or (sect_quartile!=0))*(-4.2678)
+                - unemployed_wom_4: (age>=16 and age<20)*(-0.4367)+(age>=45 and age<50)*(-0.391)+(IS_DIVORCED)*(0.1582)+(partner.labour_market_state==1)*(0.2955)+(little_children==0)*(0.1824)+((IS_INDEPENDENT) and (sect_quartile==1))*(2.1303)+((IS_INFORMAL) and (sect_quartile==2))*(2.2341)+((IS_INACTIVE) and (sect_quartile==0))*(2.4214)
+                #- seed(17101945)             
+                - unemployed_score: if(ACTIVEAGE,
+                                        if(ISMALE,
+                                        logit_score(unemployed_men_1+unemployed_men_2+unemployed_men_3+unemployed_men_4
+                                                    ),
+                                        logit_score(unemployed_wom_1+unemployed_wom_2+unemployed_wom_3+unemployed_wom_4
+                                                    )),
+                                        if(ISMALE  and  age>=65  and  age<70,
+                                            logit_score((-2.1667)+(IS_MARRIED)*(0.7818)+(IS_DIVORCED)*(0.6036)+(IS_IN_COUPLE)*(1.1826)+(partner.labour_market_state==-1)*(0.9499)+(partner.labour_market_state==3)*(0.7254)
+                                                        +(partner.labour_market_state==4)*(1.8501)+(labour_market_state!=4)*(-2.6441)),
+                                        if(ISFEMALE and age>=60 and age<70,
+                                            logit_score((-8.1499)+(age)*(0.2589)+(age*age)*(-0.00255)+(IS_MARRIED)*(-0.7177)+(IS_WIDOW)*(-0.3927)+(partner.labour_market_state==-1)*(1.0024)
+                                                        +(partner.labour_market_state==1)*(0.8866)+(partner.labour_market_state==2)*(0.8861)+(partner.labour_market_state==4)*(1.6624)+(labour_market_state==1 and sect_quartile== 1)*(2.8025)
+                                                        +(labour_market_state==2 and sect_quartile== 1)*(4.1551)+(labour_market_state==2 and sect_quartile== 2)*(3.5763)+(labour_market_state==3 and sect_quartile== 1)*(4.5434)
+                                                        +(labour_market_state==3 and sect_quartile== 2)*(4.2286)+(labour_market_state==3 and sect_quartile== 3)*(4.4858)+(labour_market_state!=4)*(-6.5962)+(labour_market_state==5)*(3.9308)),
+                                                        -10)))
+#Here, we force housewives to be inactive. To do so, we correct their propensity scores.
+                - wage_earner_score: if(age>15 and age <70,
+                                        if(ISFEMALE, 
+                                            if(housewife==1,-10, wage_earner_score),wage_earner_score)
+                                            ,-10)
+                - independent_score: if(age>15 and age <70,
+                                        if(ISFEMALE, 
+                                            if(housewife==1, -10, independent_score),independent_score)
+                                            ,-10)
+                - informal_score: if(age>15 and age <70,
+                                        if(ISFEMALE, 
+                                            if(housewife==1, -10, informal_score),informal_score)
+                                            ,-10)
+                - unemployed_score: if(age>15 and age <70,
+                                        if(ISFEMALE, 
+                                            if(housewife==1, -10, unemployed_score),unemployed_score)
+                                            ,-10)  
+#Here we carry out the alignment by sorting procedure, to reproduce aggregato proportions by labour-market state.                
+                - wage_earner_align: if(age>15 and age <70,
+                                    if(ISMALE,
+                                        align(wage_earner_score,'cal_sal_h_b.csv'),
+                                        align(wage_earner_score,'cal_sal_f_b.csv'))
+                                  ,False)                               
+                - independent_align: if(age>15 and age <70,
+                                    if(ISMALE,
+                                        align(independent_score,'cal_ind_h_b.csv',leave=wage_earner_align),
+                                        align(independent_score, 'cal_ind_f_b.csv',leave=wage_earner_align))
+                                  ,False)                               
+                - informal_align: if(age>15 and age <70,
+                                    if(ISMALE,
+                                        align(informal_score,'cal_aun_h_b.csv',leave=wage_earner_align or independent_align),
+                                        align(informal_score, 'cal_aun_f_b.csv',leave=wage_earner_align or independent_align))
+                                  ,False)                               
+                - unemployed_align: if(age>15 and age <70,
+                                    if(ISMALE,
+                                        align(unemployed_score,'cal_cho_h_b.csv',leave=wage_earner_align or independent_align or informal_align),
+                                        align(unemployed_score, 'cal_cho_f_b.csv',leave=wage_earner_align or independent_align or informal_align))
+                                  ,False)                               
+                - labour_market_state: if(wage_earner_align,
+                                WAGE_EARNER,
+                                if(independent_align,
+                                    INDEPENDENT,
+                                    if(informal_align,
+                                        INFORMAL,
+                                        if(unemployed_align,
+                                            UNEMPLOYED,
+                                            INACTIVE
+                                           )
+                                       )
+                                   )
+                            )  
+#Finally, we increment the validated quarters variable when needed. 
+                - validated_quarters: if(labour_market_state==1 or labour_market_state==2, validated_quarters+1, validated_quarters)          
+            labour_income(): 
+#Here we simulate past labour income, follwoing the Mincer wage equations listed in Apendix M of the thesis. These are computed separately by gender, and for people under
+        #70 but above the minimum retirement age. 
+                - temp_42: (-0.338495)+(age>=40 and age<45 and IS_INDEPENDENT)*(-0.244427)+(age>=30 and age<35 and IS_FORMATION3)*(0.272622)+
+                                                        (age>=16 and age<20 and IS_INDEPENDENT)*(-0.927349)+(age>=40 and age<45 and IS_INFORMAL)*(-0.982245)+(age>=35 and age<40 and IS_FORMATION1)*(-0.265817)+
+                                                        (age>=16 and age<20 and IS_INFORMAL)*(-0.969731)+(age>=45 and age<50 and IS_INDEPENDENT)*(-0.212609)+(age>=35 and age<40 and IS_FORMATION3)*(0.239900)+
+                                                        (age>=20 and age<25 and IS_INDEPENDENT)*(-0.762135)+(age>=45 and age<50 and IS_INFORMAL)*(-0.971356)+(age>=40 and age<45 and IS_FORMATION1)*(-0.255235)+
+                                                        (age>=20 and age<25 and IS_INFORMAL)*(-0.876890)+(age>=50 and age<55 and IS_INDEPENDENT)*(-0.225404)+(age>=40 and age<45 and IS_FORMATION3)*(0.265124)+
+                                                        (age>=25 and age<30 and IS_WAGE_EARNER)*(-0.148110)+(age>=50 and age<55 and IS_INFORMAL)*(-0.949373)+(age>=45 and age<50 and IS_FORMATION1)*(-0.258699)+
+                                                        (age>=25 and age<30 and IS_INDEPENDENT)*(-0.579787)+(age>=55 and age<60 and IS_INDEPENDENT)*(-0.252723)+(age>=45 and age<50 and IS_FORMATION3)*(0.279927)+
+                                                        (age>=25 and age<30 and IS_INFORMAL)*(-1.043151)+(age>=55 and age<60 and IS_INFORMAL)*(-0.975866)+(age>=50 and age<55 and IS_FORMATION1)*(-0.286072)+
+                                                        (age>=30 and age<35 and IS_WAGE_EARNER)*(-0.069209)+(age>=16 and age<20 and IS_FORMATION1)*(-0.595628)+(age>=50 and age<55 and IS_FORMATION3)*(0.330371)+
+                                                        (age>=30 and age<35 and IS_INDEPENDENT)*(-0.395679)+(age>=16 and age<20 and IS_FORMATION2)*(-0.348878)+(age>=55 and age<60 and IS_FORMATION1)*(-0.295741)+
+                                                        (age>=30 and age<35 and IS_INFORMAL)*(-1.042030)+(age>=20 and age<25 and IS_FORMATION1)*(-0.442623)+(age>=55 and age<60 and IS_FORMATION3)*(0.308477)+
+                                                        (age>=35 and age<40 and IS_WAGE_EARNER)*(-0.029459)+(age>=20 and age<25 and IS_FORMATION2)*(-0.260007)+
+                                                        (age>=35 and age<40 and IS_INDEPENDENT)*(-0.287461)+(age>=25 and age<30 and IS_FORMATION1)*(-0.267775)+
+                                                        (age>=35 and age<40 and IS_INFORMAL)*(-0.986964)+(age>=25 and age<30 and IS_FORMATION3)*(0.247218)+
+                                                        (age>=40 and age<45 and IS_WAGE_EARNER)*(-0.029692)+(age>=30 and age<35 and IS_FORMATION1)*(-0.245070)
+                - ln_wage_true: if(age>=16 and age<70 and ISMALE,
+                                    if(age<65,log_regr((-0.521115)+(age>=40 and age<45 and IS_INDEPENDENT)*(-0.076763)+(age>=25 and age<30 and IS_FORMATION1)*(-0.144183)+(age>=55 and age<60 and IS_FORMATION3)*(0.500037)+
+                                                       (age>=16 and age<20 and IS_WAGE_EARNER)*(-0.220813)+(age>=40 and age<45 and IS_INFORMAL)*(-0.685832)+(age>=25 and age<30 and IS_FORMATION3)*(0.206708)+(age>=60 and age<65 and IS_FORMATION1)*(-0.016238)+
+                                                       (age>=16 and age<20 and IS_INDEPENDENT)*(-0.922619)+(age>=45 and age<50 and IS_WAGE_EARNER)*(0.029422)+(age>=30 and age<35 and IS_FORMATION1)*(-0.025079)+(age>=60 and age<65 and IS_FORMATION2)*(0.257602)+
+                                                       (age>=16 and age<20 and IS_INFORMAL)*(-1.061647)+(age>=45 and age<50 and IS_INDEPENDENT)*(-0.080122)+(age>=30 and age<35 and IS_FORMATION2)*(0.136250)+(age>=60 and age<65 and IS_FORMATION3)*(0.480750)+
+                                                       (age>=20 and age<25 and IS_WAGE_EARNER)*(0.072100)+(age>=45 and age<50 and IS_INFORMAL)*(-0.711298)+(age>=30 and age<35 and IS_FORMATION3)*(0.387723)+
+                                                       (age>=20 and age<25 and IS_INDEPENDENT)*(-0.449996)+(age>=50 and age<55 and IS_INDEPENDENT)*(-0.094559)+(age>=35 and age<40 and IS_FORMATION2)*(0.196927)+
+                                                       (age>=20 and age<25 and IS_INFORMAL)*(-0.650222)+(age>=50 and age<55 and IS_INFORMAL)*(-0.738455)+(age>=35 and age<40 and IS_FORMATION3)*(0.434350)+
+                                                       (age>=25 and age<30 and IS_INDEPENDENT)*(-0.248352)+(age>=55 and age<60 and IS_INDEPENDENT)*(-0.122326)+(age>=40 and age<45 and IS_FORMATION2)*(0.189445)+
+                                                       (age>=25 and age<30 and IS_INFORMAL)*(-0.659357)+(age>=55 and age<60 and IS_INFORMAL)*(-0.776263)+(age>=40 and age<45 and IS_FORMATION3)*(0.419548)+
+                                                       (age>=30 and age<35 and IS_INDEPENDENT)*(-0.174357)+(age>=60 and age<65 and IS_INDEPENDENT)*(-0.122496)+(age>=45 and age<50 and IS_FORMATION2)*(0.217063)+
+                                                       (age>=30 and age<35 and IS_INFORMAL)*(-0.686849)+(age>=60 and age<65 and IS_INFORMAL)*(-0.807726)+(age>=45 and age<50 and IS_FORMATION3)*(0.464767)+
+                                                       (age>=35 and age<40 and IS_INDEPENDENT)*(-0.124567)+(age>=16 and age<20 and IS_FORMATION1)*(-0.164159)+(age>=50 and age<55 and IS_FORMATION2)*(0.267474)+
+                                                       (age>=35 and age<40 and IS_INFORMAL)*(-0.692476)+(age>=20 and age<25 and IS_FORMATION1)*(-0.286429)+(age>=50 and age<55 and IS_FORMATION3)*(0.493715)+
+                                                       (age>=40 and age<45 and IS_WAGE_EARNER)*(0.031023)+(age>=20 and age<25 and IS_FORMATION2)*(-0.198596)+(age>=55 and age<60 and IS_FORMATION2)*(0.256907)
+                                                       ,filter= ISMALE and (IS_WAGE_EARNER or IS_INDEPENDENT or IS_INFORMAL), error_var="resid_back"),
+                                            log_regr((-0.306073)+(age==65 and  IS_INFORMAL)*(-0.854072)+(age==66 and  IS_INDEPENDENT)*(-0.107882)+(age==66 and  IS_INFORMAL)*(-0.832911)
+                                                        +(age==67 and  IS_INDEPENDENT)*(-0.207766)+(age==67 and  IS_INFORMAL)*(-0.898882)+(age==68 and  IS_WAGE_EARNER)*(0.136674)+(age==68 and  IS_INFORMAL)*(-0.827139)
+                                                        +(age==69 and  IS_INDEPENDENT)*(-0.216034)+(age==69 and  IS_INFORMAL)*(-1.009800)+(age==65 and  formation==1)*(-0.295363)+(age==65 and  formation==3)*(0.172847)
+                                                        +(age==66 and  formation==1)*(-0.347607)+(age==66 and  formation==3)*(0.140001)+(age==67 and  formation==1)*(-0.284293)
+                                                        +(age==67 and  formation==3)*(0.218057)+(age==68 and  formation==1)*(-0.491713)+(age==68 and  formation==2)*(-0.223984)
+                                                        +(age==69 and  formation==1)*(-0.290140)+(age==69 and  formation==3)*(0.153883)
+                                                        ,filter= ISMALE and (IS_WAGE_EARNER or IS_INDEPENDENT or IS_INFORMAL), error_var="resid_back")),
+                                if(age>=16 and age<70 and ISFEMALE,
+                                    if(age<60,log_regr(temp_42
+                                                        , filter= ISFEMALE and (IS_WAGE_EARNER or IS_INDEPENDENT or IS_INFORMAL), error_var="resid_back"),
+                                            log_regr((-1.591622)+(age==60 and  IS_WAGE_EARNER)*(0.943453)+(age==60 and  IS_INDEPENDENT)*(0.776734)+(age==61 and  IS_WAGE_EARNER)*(0.911161)+(age==61 and  IS_INDEPENDENT)*(0.796114)
+                                                    +(age==62 and  IS_WAGE_EARNER)*(0.990238)+(age==62 and  IS_INDEPENDENT)*(0.704343)+(age==63 and  IS_WAGE_EARNER)*(0.970349)+(age==63 and  IS_INDEPENDENT)*(0.813016)
+                                                    +(age==63 and  IS_INFORMAL)*(-0.102817)+(age==64 and  IS_WAGE_EARNER)*(1.231571)+(age==64 and  IS_INDEPENDENT)*(0.782904)+(age==65 and  IS_WAGE_EARNER)*(1.253209)
+                                                    +(age==65 and  IS_INDEPENDENT)*(0.790963)+(age==66 and  IS_WAGE_EARNER)*(1.169145)+(age==66 and  IS_INDEPENDENT)*(0.574793)+(age==67 and  IS_WAGE_EARNER)*(1.192556)
+                                                    +(age==67 and  IS_INDEPENDENT)*(0.585450)+(age==68 and  IS_WAGE_EARNER)*(1.254222)+(age==68 and  IS_INDEPENDENT)*(1.038754)+(age==69 and  IS_WAGE_EARNER)*(1.278628)
+                                                    +(age==69 and  IS_INDEPENDENT)*(0.919121)+(age==60 and  formation==2)*(0.279157)+(age==60 and  formation==3)*(0.606020)+(age==61 and  formation==2)*(0.310220)
+                                                    +(age==61 and  formation==3)*(0.645368)+(age==62 and  formation==2)*(0.274457)+(age==62 and  formation==3)*(0.534429)+(age==63 and  formation==2)*(0.312767)
+                                                    +(age==63 and  formation==3)*(0.575643)+(age==64 and  formation==1)*(-0.135180)+(age==64 and  formation==2)*(0.142008)
+                                                    +(age==64 and  formation==3)*(0.381300)+(age==65 and  formation==1)*(-0.192599)+(age==65 and  formation==3)*(0.305086)
+                                                    +(age==66 and  formation==1)*(-0.174769)+(age==66 and  formation==3)*(0.487652)+(age==67 and  formation==1)*(-0.217159)
+                                                    +(age==67 and  formation==3)*(0.400284)+(age==68 and  formation==1)*(-0.152874)+(age==69 and  formation==1)*(-0.310087)
+                                                    +(age==69 and  formation==3)*(0.327427), filter= ISFEMALE and (IS_WAGE_EARNER or IS_INDEPENDENT or IS_INFORMAL), error_var="resid_back"))
+                                    ,-10))
+                
+                - itl: if(IS_WAGE_EARNER or IS_INDEPENDENT or IS_INFORMAL,
+                            if(ISMALE,
+                                        (ln_wage_true) * COEFFICIENT_MEN * GROSS_WAGE_2014_T4 , 
+                                        (ln_wage_true) * COEFFICIENT_WOMEN * GROSS_WAGE_2014_T4),0)
+                - itl_1: if(IS_WAGE_EARNER, itl, 0)
+                - itl_2: if(IS_INDEPENDENT, itl, 0)  
+                - itl_anses: if(IS_WAGE_EARNER or IS_INDEPENDENT or IS_INFORMAL,
+                                if(ISMALE,
+                                        (ln_wage_true) * COEFFICIENT_MEN * ANSES_GROSS_WAGE_2014_T4 /0.83, 
+                                        (ln_wage_true) * COEFFICIENT_WOMEN * ANSES_GROSS_WAGE_2014_T4/0.83),0)               
+                - itl_anses_1: if(IS_WAGE_EARNER, itl_anses, 0)
+                - itl_anses_2: if(IS_INDEPENDENT, itl_anses, 0)   
+                - sect_quartile: if(itl==0, 0, 
+                                    if(IS_WAGE_EARNER,
+                                        if(itl<=percentile(itl,25,filter=IS_WAGE_EARNER),1,
+                                        if(itl<=percentile(itl,50,filter=IS_WAGE_EARNER),2,
+                                        if(itl<=percentile(itl,75,filter=IS_WAGE_EARNER),3,4))), 
+                                    if(IS_INDEPENDENT,                                       
+                                        if(itl<=percentile(itl,25,filter=IS_INDEPENDENT),1,
+                                        if(itl<=percentile(itl,50,filter=IS_INDEPENDENT),2,
+                                        if(itl<=percentile(itl,75,filter=IS_INDEPENDENT),3,4))),
+                                    if(IS_INFORMAL,                                       
+                                        if(itl<=percentile(itl,25,filter=IS_INFORMAL),1,
+                                        if(itl<=percentile(itl,50,filter=IS_INFORMAL),2,
+                                        if(itl<=percentile(itl,75,filter=IS_INFORMAL),3,4))),sect_quartile))))           
+   
+#Although not strictly related to labour income, we also simulate in this module independent workers under the Autonomous workers and the Small Independent contributors 
+        #(or monotributo) regimes. People that were simulated as being independent workers of the formal sector are selected in priority to be under the autonomous
+        #workers regime. Then, the wealthiest informal workers are picked in order to reproduce past proportions of individuals in the autonomous workers and monotributo
+        #regimes. Contributions under these independent workers regimes are computed separately.
+                - score_autonomos: if(not IS_INDEPENDENT, -10, 
+                                        itl + uniform())
+                - not_indep_reg: if(not IS_INDEPENDENT, True, False)
+                - autonomos_align: if(age>15 and age<70,
+                                    if(ISMALE,
+                                        align(score_autonomos,'cal_auton_h_b.csv', leave=not_indep_reg or IS_WAGE_EARNER),
+                                        align(score_autonomos,'cal_auton_f_b.csv', leave=not_indep_reg or IS_WAGE_EARNER)
+                                    ),
+                                  False)
+                - score_monotributo: if(IS_INDEPENDENT and autonomos_align==False, 10000000 + uniform(), 
+                                        if(autonomos_align==True, -1000, 
+                                            if(IS_INFORMAL, itl + uniform(), 
+                                                -100)))
+                                            
+                - monotributo_align: if(age>15 and age<70,
+                                    if(ISMALE,
+                                        align(score_monotributo,'cal_mono_h_b.csv',leave=autonomos_align or IS_WAGE_EARNER),
+                                        align(score_monotributo, 'cal_mono_f_b.csv',leave=autonomos_align or IS_WAGE_EARNER)
+                                    ),
+                                  False)   
+                - autonomo: if(autonomos_align, 1, 0)
+                - monotributo: if(monotributo_align, 1, 0)
+
+#We finally dump the variables relevant for simulating past careers in a csv format, which we will then import with SAS, re-format and then input in our prospective
+        #microsimulations. 
+            compute_dump_all(): 
+                - dump_all: csv(dump(itl_anses,itl,id,household_id,labour_market_state,period,unborn,male,age_quarters,validated_quarters,autonomo,monotributo))                      
+simulation:
+    processes:          
+        - household: [household_composition]
+        - person: [ageing,agegrouping,number_children,marital_status,get_a_life] 
+        - household: [household_composition]
+        - person: [[one_time_runs, 1000],students_module]
+        - person: [labour_market_module,labour_income,compute_dump_all]
+        - household: [household_composition,clean_empty]
+#Uncomment this if you want more details in the console log. 
+    # logging:
+        #level: "processes"
+         
+    input:
+        file: H:\LIAM2_commented_code\Retrospective_simulations\Import_files\LIAM2_files\base_liam2_2014_t2_b.h5
+    output:
+        file: H:\LIAM2_commented_code\delete_me.h5
+#The starting period must be the one immediately after the microsimulated dataset. This is because if we take for instance the second quarter of 2015 as the starting
+        #point, then all the global variables used in the first period will correspond to the first quarter of 2015. This is logical: the first period we simulate 
+        #is the first quarter of 2015. 
+    start_period: 1005
+    periods: 239
+    
+#Remember to run this module the number of periods commented below. This will stop the model in 1954, but you will still be able to interact with the microsimulation 
+        #through the console if you want to. 
+    #239
+    random_seed: 17101945 
+    skip_shows: True
+    
+    default_entity: person

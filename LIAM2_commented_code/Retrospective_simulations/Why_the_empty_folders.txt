@@ -1,0 +1,4 @@
+I took out from the github commit all datasets, available in the ZENODO digital repository linked to this github account (DOI: 10.5281/zenodo.1420273 ) because they were too heavy. 
+I decided to keep the folders both for the sake of comparability with the version 1 of the zenodo, and to help figure out the paths mentioned in LIAM2 files. 
+I kept the hdf5 files LIAM2 uses as a starting dataset though, so you should be able to run the simulations anyway. If all else fails, go to my Zenodo repository and 
+download the datasets there. 

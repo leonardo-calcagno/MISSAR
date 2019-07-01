@@ -1,0 +1,59 @@
+# This is an "import" file. To use it press F5 in liam2 environment, or run
+# the following command in a console:
+# INSTALL PATH\liam2 import demo_import.yml
+output: H:\LIAM2_commented_code\Retrospective_simulations\Import_files\LIAM2_files\base_liam2_2014_t2_b.h5
+
+globals:
+    periodic:
+        path: H:\LIAM2_commented_code\globals\globals_retrospective_simulations.csv
+        transposed: true
+
+entities:
+    household:
+        path: H:\LIAM2_commented_code\Retrospective_simulations\Import_files\SAS_input\microsim_base_2014_t2_hh_b.csv
+        # if fields are not specified, they are all imported
+        fields:
+            - Year: int
+            - pondera: int
+            - household_id2: int
+
+        oldnames:
+            Year: ano4
+    person:
+        path: H:\LIAM2_commented_code\Retrospective_simulations\Import_files\SAS_input\microsim_base_2014_t2_b.csv
+        fields:
+            # period and id are implicit
+            - age:           int
+            - male:        bool
+            - labour_market_state:     int
+            - marital_status:    int
+            - mother_id:     int
+            - partner_id:    int
+            - pondera:         int
+            - formation: int
+            - agegroup: int
+            - household_id: int
+            - age_quarters: int
+            - itl: float
+            - student: bool
+            - polimodal: int
+            - university_year: int
+            - resid_back: float
+            - underage_children: int
+            - father_id: int
+            - little_children: int
+            - housewife: int
+            - perm_housewife: int      
+
+        
+        # if you want to keep your csv files intact but you use different names
+        # in your simulation that in the csv files, you can specify name changes
+        # here. The format is: "newname: oldname"
+        oldnames:
+            age: ch06
+            Year: ano4
+            itl: ITL
+
+        # if you want to invert the value of some boolean fields (True -> False
+        # and False -> True), add them to the "invert" list below.
+#        invert: [list, of, boolean, fields, to, invert]
