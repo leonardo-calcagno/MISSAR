@@ -1,0 +1,48 @@
+
+# Created by https://www.gitignore.io/api/sas,windows
+# Edit at https://www.gitignore.io/?templates=sas,windows
+
+### SAS ###
+# Binary data formats
+*.sas7baud
+*.sas7bdat
+*.sas7bvew
+*.sas7bndx
+*.sas7bcat
+*.sas7bacs
+*.sas7bfdb
+*.sas7bmdb
+*.sas7bdmd
+*.sas7bitm
+*.sas7butl
+*.sas7bput
+*.sas7bbak
+
+### Windows ###
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# End of https://www.gitignore.io/api/sas,windows
+*.h5
