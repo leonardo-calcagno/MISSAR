@@ -192,6 +192,12 @@ entities:
                 - end_of_studies: if(formation==2 and IS_NOT_STUDENT, 
                                 if(age>17, 18, 17),end_of_studies)
                 - end_of_studies: if(formation==1 and IS_NOT_STUDENT and age>15, 16, end_of_studies)
+        #4- We have shown the residuals of our backward Mincer wage equations follow a Normal distribution in all of our starting datasets. For the second quarter of 
+                #2014, the mean equals -0.13465 and the standard deviation 0.589215
+                # as shown by the pdf Normality of forward residuals. We thus randomly assign each individual that does not have a wage residual at the beginning 
+                #of the simulation a residual drawn from this normal distribution. Once assigned, this residual stays unchanged for the rest of the individual's life.
+                - resid_back: if(resid_back!=0, resid_back, 
+                            normal(loc=-0.13465,scale=0.589215))
             students_module(): 
 #In our backwards simulations, the main point of the education module is determining the end of studies age, which depends on the respondent's education level 
         #when surveyed
