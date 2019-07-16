@@ -1258,6 +1258,26 @@ if missing(is_student) then student="False";
 if is_student=1 then student="True"; 
 if is_student=0 then student="False"; 
 drop is_student; run; 
+proc freq data=leo.eph_formatted_2016; 
+weight pondera; 
+where ( (ch04=1) & (period=52) & (agegroup =16|agegroup =20|agegroup=25)) ;
+table student*ch06 / noprint outpct out=student_52; 
+run; 
+proc freq data=leo.eph_formatted_2016; 
+weight pondera; 
+where ( (ch04=1) & (period=53)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_53; 
+run; 
+proc freq data=leo.eph_formatted_2016; 
+weight pondera; 
+where ( (ch04=1) & (period=54)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_54; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=1) & (period=55)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_55; 
+run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
 where ( (ch04=1) & (period=56)& (agegroup=16|agegroup=20|agegroup=25));
@@ -1855,23 +1875,72 @@ weight pondera;
 where (  ch04=1 & (period=55)& (100>agegroup>15));
 table ch07*agegroup / noprint outpct out=marital_status_55; 
 run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where (  ch04=1 & (period=56)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_56; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where (  ch04=1 & (period=57)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_57; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where (  ch04=1 & (period=58)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_58; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where (  ch04=1 & (period=59)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_59; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where (  ch04=1 & (period=60)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_60; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where (  ch04=1 & (period=61)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_61; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where (  ch04=1 & (period=62)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_62; 
+run; 
 data marital_status_52; set marital_status_52; period=54; percent_col=pct_col/100; run; 
 data marital_status_53; set marital_status_53; period=55; percent_col=pct_col/100; run; 
 data marital_status_54; set marital_status_54; period=56; percent_col=pct_col/100; run; 
 data marital_status_55; set marital_status_55; period=57; percent_col=pct_col/100; run; 
+data marital_status_56; set marital_status_56; period=58; percent_col=pct_col/100; run; 
+data marital_status_57; set marital_status_57; period=59; percent_col=pct_col/100; run; 
+data marital_status_58; set marital_status_58; period=60; percent_col=pct_col/100; run; 
+data marital_status_59; set marital_status_59; period=61; percent_col=pct_col/100; run; 
+data marital_status_60; set marital_status_60; period=62; percent_col=pct_col/100; run; 
+data marital_status_61; set marital_status_61; period=63; percent_col=pct_col/100; run; 
+data marital_status_62; set marital_status_62; period=64; percent_col=pct_col/100; run; 
+
 data marital_status_52; set marital_status_52; keep percent_col agegroup ch07 period; run; 
 data marital_status_53; set marital_status_53; keep percent_col agegroup ch07 period; run; 
 data marital_status_54; set marital_status_54; keep percent_col agegroup ch07 period; run; 
 data marital_status_55; set marital_status_55; keep percent_col agegroup ch07 period; run; 
+data marital_status_56; set marital_status_56; keep percent_col agegroup ch07 period; run; 
+data marital_status_57; set marital_status_57; keep percent_col agegroup ch07 period; run; 
+data marital_status_58; set marital_status_58; keep percent_col agegroup ch07 period; run; 
+data marital_status_59; set marital_status_59; keep percent_col agegroup ch07 period; run; 
+data marital_status_60; set marital_status_60; keep percent_col agegroup ch07 period; run; 
+data marital_status_61; set marital_status_61; keep percent_col agegroup ch07 period; run; 
+data marital_status_62; set marital_status_62; keep percent_col agegroup ch07 period; run; 
 data marital_status_base_men; 
-set marital_status_52
-marital_status_53
-marital_status_54
-marital_status_55; run; 
-data mar_stat_1_men;
-set marital_status_base_men (where=(ch07=1));
+set marital_status_52-marital_status_62; 
 run; 
 
+
+data mar_stat_1_men;
+set marital_status_base_men (where=(ch07=2));
+run; 
 
 data mar_stat_2_men;
 set marital_status_base_men (where=(ch07=2));
@@ -2058,19 +2127,67 @@ weight pondera;
 where (  ch04=2 & (period=55)& (100>agegroup>15));
 table ch07*agegroup / noprint outpct out=marital_status_55; 
 run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where (  ch04=2 & (period=56)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_56; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where (  ch04=2 & (period=57)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_57; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where (  ch04=2 & (period=58)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_58; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where (  ch04=2 & (period=59)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_59; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where (  ch04=2 & (period=60)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_60; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where (  ch04=2 & (period=61)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_61; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where (  ch04=2 & (period=62)& (100>agegroup>15));
+table ch07*agegroup / noprint outpct out=marital_status_62; 
+run; 
 data marital_status_52; set marital_status_52; period=54; percent_col=pct_col/100; run; 
 data marital_status_53; set marital_status_53; period=55; percent_col=pct_col/100; run; 
 data marital_status_54; set marital_status_54; period=56; percent_col=pct_col/100; run; 
 data marital_status_55; set marital_status_55; period=57; percent_col=pct_col/100; run; 
+data marital_status_56; set marital_status_56; period=58; percent_col=pct_col/100; run; 
+data marital_status_57; set marital_status_57; period=59; percent_col=pct_col/100; run; 
+data marital_status_58; set marital_status_58; period=60; percent_col=pct_col/100; run; 
+data marital_status_59; set marital_status_59; period=61; percent_col=pct_col/100; run; 
+data marital_status_60; set marital_status_60; period=62; percent_col=pct_col/100; run; 
+data marital_status_61; set marital_status_61; period=63; percent_col=pct_col/100; run; 
+data marital_status_62; set marital_status_62; period=64; percent_col=pct_col/100; run; 
+
 data marital_status_52; set marital_status_52; keep percent_col agegroup ch07 period; run; 
 data marital_status_53; set marital_status_53; keep percent_col agegroup ch07 period; run; 
 data marital_status_54; set marital_status_54; keep percent_col agegroup ch07 period; run; 
 data marital_status_55; set marital_status_55; keep percent_col agegroup ch07 period; run; 
+data marital_status_56; set marital_status_56; keep percent_col agegroup ch07 period; run; 
+data marital_status_57; set marital_status_57; keep percent_col agegroup ch07 period; run; 
+data marital_status_58; set marital_status_58; keep percent_col agegroup ch07 period; run; 
+data marital_status_59; set marital_status_59; keep percent_col agegroup ch07 period; run; 
+data marital_status_60; set marital_status_60; keep percent_col agegroup ch07 period; run; 
+data marital_status_61; set marital_status_61; keep percent_col agegroup ch07 period; run; 
+data marital_status_62; set marital_status_62; keep percent_col agegroup ch07 period; run; 
 data marital_status_base_wom; 
-set marital_status_52
-marital_status_53
-marital_status_54
-marital_status_55; run; 
+set marital_status_52-marital_status_62;
+run; 
 data mar_stat_1_wom;
 set marital_status_base_wom (where=(ch07=1));
 run; 
@@ -2363,8 +2480,8 @@ dbms=csv replace;
 run; 
 
 
-/****A last element we need is the structure coefficient to correct the RIPTE index by gender for the four periods that go from the 
-		second quarter of 2016 to the first quarter of 2017******/
+/****A last element we need is the structure coefficient to correct the RIPTE index by gender for the periods since the second quarter
+		of 2016******/
 
 
 
@@ -2491,13 +2608,33 @@ run;
 %mean_var_post_2016(leo.eph_formatted_2016_54,ITL,labour_market_state,period,54,ch04); 
 %ITL_centiles_post_2016(leo.eph_formatted_2017,period,55);
 %mean_var_post_2016(leo.eph_formatted_2017_55,ITL,labour_market_state,period,55,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2017,period,56);
+%mean_var_post_2016(leo.eph_formatted_2017_56,ITL,labour_market_state,period,56,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2017,period,57);
+%mean_var_post_2016(leo.eph_formatted_2017_57,ITL,labour_market_state,period,57,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2017,period,58);
+%mean_var_post_2016(leo.eph_formatted_2017_58,ITL,labour_market_state,period,58,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2018,period,59);
+%mean_var_post_2016(leo.eph_formatted_2018_59,ITL,labour_market_state,period,59,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2018,period,60);
+%mean_var_post_2016(leo.eph_formatted_2018_60,ITL,labour_market_state,period,60,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2018,period,61);
+%mean_var_post_2016(leo.eph_formatted_2018_61,ITL,labour_market_state,period,61,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2018,period,62);
+%mean_var_post_2016(leo.eph_formatted_2018_62,ITL,labour_market_state,period,62,ch04); 
 proc print data=leo.itl_mean_52; run; 
 proc print data=leo.itl_mean_53; run; 
 proc print data=leo.itl_mean_54; run; 
 proc print data=leo.itl_mean_55; run; 
-
+proc print data=leo.itl_mean_56; run; 
+proc print data=leo.itl_mean_57; run; 
+proc print data=leo.itl_mean_58; run; 
+proc print data=leo.itl_mean_59; run; 
+proc print data=leo.itl_mean_60; run; 
+proc print data=leo.itl_mean_61; run; 
+proc print data=leo.itl_mean_62; run; 
 data leo.itl_mean_post_2016; 
-set leo.itl_mean_52 - leo.itl_mean_55; 
+set leo.itl_mean_52 - leo.itl_mean_62; 
 		coefficient_men=mean_ITL_men/mean_ITL_all; 
 		coefficient_women=mean_ITL_women/mean_ITL_all; 
 run; 
@@ -2505,8 +2642,7 @@ data leo.coeffs_ripte_post_2016;
 set leo.itl_mean_post_2016; 
 keep coefficient_men coefficient_women period; 
 run;
-proc print data=leo.coeffs_ripte_post_2016(obs=150); run;  
-proc print data=leo.coeffs_ripte_mau (obs=150); run; 
+proc print data=leo.coeffs_ripte_post_2016(obs=150); run; 
 proc export data=leo.coeffs_ripte_post_2016
 outfile='H:\LIAM2_commented_code\globals\structure_coefficients_post_2016.csv' 
 dbms=csv replace; 
