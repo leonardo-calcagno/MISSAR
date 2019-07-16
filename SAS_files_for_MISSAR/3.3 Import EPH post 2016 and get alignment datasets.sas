@@ -1242,48 +1242,82 @@ if missing(is_student) then student="False";
 if is_student=1 then student="True"; 
 if is_student=0 then student="False"; 
 drop is_student; run; 
-data leo.eph_formatted_2016_2017; 
-set leo.eph_formatted_2016_2017; 
+data leo.eph_formatted_2018; 
+set leo.eph_formatted_2018; 
 if cat_inac=3 then is_student=1;
 if cat_inac=1 |cat_inac=2|cat_inac=4|cat_inac=5|cat_inac=6|cat_inac=7|missing(cat_inac) then is_student=0; 
 if missing(is_student) then student="False"; 
 if is_student=1 then student="True"; 
 if is_student=0 then student="False"; 
 drop is_student; run; 
-proc freq data=leo.eph_formatted_2016; 
+data leo.eph_formatted_2016_2018; 
+set leo.eph_formatted_2016_2018; 
+if cat_inac=3 then is_student=1;
+if cat_inac=1 |cat_inac=2|cat_inac=4|cat_inac=5|cat_inac=6|cat_inac=7|missing(cat_inac) then is_student=0; 
+if missing(is_student) then student="False"; 
+if is_student=1 then student="True"; 
+if is_student=0 then student="False"; 
+drop is_student; run; 
+proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where ( (ch04=1) & (period=52) & (agegroup =16|agegroup =20|agegroup=25)) ;
-table student*ch06 / noprint outpct out=student_52; 
-run; 
-proc freq data=leo.eph_formatted_2016; 
-weight pondera; 
-where ( (ch04=1) & (period=53)& (agegroup=16|agegroup=20|agegroup=25));
-table student*ch06 / noprint outpct out=student_53; 
-run; 
-proc freq data=leo.eph_formatted_2016; 
-weight pondera; 
-where ( (ch04=1) & (period=54)& (agegroup=16|agegroup=20|agegroup=25));
-table student*ch06 / noprint outpct out=student_54; 
+where ( (ch04=1) & (period=56)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_56; 
 run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where ( (ch04=1) & (period=55)& (agegroup=16|agegroup=20|agegroup=25));
-table student*ch06 / noprint outpct out=student_55; 
+where ( (ch04=1) & (period=57)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_57; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=1) & (period=58)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_58; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=1) & (period=59)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_59; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=1) & (period=60)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_60; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=1) & (period=61)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_61; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=1) & (period=62)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_62; 
 run; 
 data student_52; set student_52; period=54; percent_col=pct_col/100; run; 
 data student_53; set student_53; period=55; percent_col=pct_col/100; run; 
 data student_54; set student_54; period=56; percent_col=pct_col/100; run; 
 data student_55; set student_55; period=57; percent_col=pct_col/100; run; 
+data student_56; set student_56; period=58; percent_col=pct_col/100; run; 
+data student_57; set student_57; period=59; percent_col=pct_col/100; run; 
+data student_58; set student_58; period=60; percent_col=pct_col/100; run; 
+data student_59; set student_59; period=61; percent_col=pct_col/100; run; 
+data student_60; set student_60; period=62; percent_col=pct_col/100; run; 
+data student_61; set student_61; period=63; percent_col=pct_col/100; run; 
+data student_62; set student_62; period=64; percent_col=pct_col/100; run; 
 
 data student_52; set student_52; keep percent_col student ch06 period; run; 
 data student_53; set student_53; keep percent_col student ch06 period; run; 
 data student_54; set student_54; keep percent_col student ch06 period; run; 
 data student_55; set student_55; keep percent_col student ch06 period; run; 
+data student_56; set student_56; keep percent_col student ch06 period; run; 
+data student_57; set student_57; keep percent_col student ch06 period; run; 
+data student_58; set student_58; keep percent_col student ch06 period; run; 
+data student_59; set student_59; keep percent_col student ch06 period; run; 
+data student_60; set student_60; keep percent_col student ch06 period; run; 
+data student_61; set student_61; keep percent_col student ch06 period; run; 
+data student_62; set student_62; keep percent_col student ch06 period; run; 
 data student_men_base; 
-set student_52
-student_53
-student_54
-student_55; run; 
+set student_52-student_62; run; 
 
 /*We then only take from the base the different labour market states and transpose them, to put the labour-market proportions by gender in
 		a format readable by LIAM2.*/
@@ -1313,7 +1347,6 @@ set transp_student_men;
 rename ch06=age; 
 run; 
 proc print data=leo.cal_post_2016_stu_men; run; 
-proc print data=leo.cal_mau_est_m; rUN;
 /*We do the same thing for women.*/
 proc freq data=leo.eph_formatted_2016; 
 weight pondera; 
@@ -1335,20 +1368,66 @@ weight pondera;
 where ( (ch04=2) & (period=55)& (agegroup=16|agegroup=20|agegroup=25));
 table student*ch06 / noprint outpct out=student_55; 
 run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=2) & (period=56)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_56; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=2) & (period=57)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_57; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=2) & (period=58)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_58; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=2) & (period=59)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_59; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=2) & (period=60)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_60; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=2) & (period=61)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_61; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=2) & (period=62)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_62; 
+run; 
 data student_52; set student_52; period=54; percent_col=pct_col/100; run; 
 data student_53; set student_53; period=55; percent_col=pct_col/100; run; 
 data student_54; set student_54; period=56; percent_col=pct_col/100; run; 
 data student_55; set student_55; period=57; percent_col=pct_col/100; run; 
+data student_56; set student_56; period=58; percent_col=pct_col/100; run; 
+data student_57; set student_57; period=59; percent_col=pct_col/100; run; 
+data student_58; set student_58; period=60; percent_col=pct_col/100; run; 
+data student_59; set student_59; period=61; percent_col=pct_col/100; run; 
+data student_60; set student_60; period=62; percent_col=pct_col/100; run; 
+data student_61; set student_61; period=63; percent_col=pct_col/100; run; 
+data student_62; set student_62; period=64; percent_col=pct_col/100; run; 
 
 data student_52; set student_52; keep percent_col student ch06 period; run; 
 data student_53; set student_53; keep percent_col student ch06 period; run; 
 data student_54; set student_54; keep percent_col student ch06 period; run; 
 data student_55; set student_55; keep percent_col student ch06 period; run; 
+data student_56; set student_56; keep percent_col student ch06 period; run; 
+data student_57; set student_57; keep percent_col student ch06 period; run; 
+data student_58; set student_58; keep percent_col student ch06 period; run; 
+data student_59; set student_59; keep percent_col student ch06 period; run; 
+data student_60; set student_60; keep percent_col student ch06 period; run; 
+data student_61; set student_61; keep percent_col student ch06 period; run; 
+data student_62; set student_62; keep percent_col student ch06 period; run; 
 data student_wom_base; 
-set student_52
-student_53
-student_54
-student_55; run; 
+set student_52-student_62; run; 
 
 /*We then only take from the base the different labour market states and transpose them, to put the labour-market proportions by gender in
 		a format readable by LIAM2.*/
@@ -1378,7 +1457,6 @@ set transp_student_wom;
 rename ch06=age; 
 run; 
 proc print data=leo.cal_post_2016_stu_wom; run; 
-proc print data=leo.cal_mau_est_f; rUN;
 
 
 proc export data=leo.cal_post_2016_stu_men
@@ -1413,19 +1491,67 @@ weight pondera;
 where ( (ch04=1) & (period=55)& (agegroup=16|agegroup=20|agegroup=25));
 table formation*ch06 / noprint outpct out=formation_55; 
 run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=1) & (period=56)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_56; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=1) & (period=57)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_57; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=1) & (period=58)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_58; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=1) & (period=59)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_59; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=1) & (period=60)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_60; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=1) & (period=61)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_61; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=1) & (period=62)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_62; 
+run; 
 data formation_52; set formation_52; period=54; percent_col=pct_col/100; run; 
 data formation_53; set formation_53; period=55; percent_col=pct_col/100; run; 
 data formation_54; set formation_54; period=56; percent_col=pct_col/100; run; 
 data formation_55; set formation_55; period=57; percent_col=pct_col/100; run; 
+data formation_56; set formation_56; period=58; percent_col=pct_col/100; run; 
+data formation_57; set formation_57; period=59; percent_col=pct_col/100; run; 
+data formation_58; set formation_58; period=60; percent_col=pct_col/100; run; 
+data formation_59; set formation_59; period=61; percent_col=pct_col/100; run; 
+data formation_60; set formation_60; period=62; percent_col=pct_col/100; run; 
+data formation_61; set formation_61; period=63; percent_col=pct_col/100; run; 
+data formation_62; set formation_62; period=64; percent_col=pct_col/100; run; 
+
 data formation_52; set formation_52; keep percent_col formation ch06 period; run; 
 data formation_53; set formation_53; keep percent_col formation ch06 period; run; 
 data formation_54; set formation_54; keep percent_col formation ch06 period; run; 
 data formation_55; set formation_55; keep percent_col formation ch06 period; run; 
+data formation_56; set formation_56; keep percent_col formation ch06 period; run; 
+data formation_57; set formation_57; keep percent_col formation ch06 period; run; 
+data formation_58; set formation_58; keep percent_col formation ch06 period; run; 
+data formation_59; set formation_59; keep percent_col formation ch06 period; run; 
+data formation_60; set formation_60; keep percent_col formation ch06 period; run; 
+data formation_61; set formation_61; keep percent_col formation ch06 period; run; 
+data formation_62; set formation_62; keep percent_col formation ch06 period; run; 
 data formation_men_base; 
-set formation_52
-formation_53
-formation_54
-formation_55; run; 
+set formation_52-formation_62;
+run; 
 
 /*proc sort data=leo.cal_wag_f_for3; 
 by agegroup; 
@@ -1505,9 +1631,6 @@ run;
 
  proc print data=leo.cal_post_2016_for_2_men; 
  run; 
- proc print data=leo.cal_mau_for_2_m; 
- run; 
- 
 proc transpose data=for_3_men out=transp_for_3_men; 
 by ch06;
 id period ;
@@ -1553,25 +1676,68 @@ weight pondera;
 where ( (ch04=2) & (period=55)& (agegroup=16|agegroup=20|agegroup=25));
 table formation*ch06 / noprint outpct out=formation_55; 
 run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=2) & (period=56)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_56; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=2) & (period=57)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_57; 
+run; 
+proc freq data=leo.eph_formatted_2017; 
+weight pondera; 
+where ( (ch04=2) & (period=58)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_58; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=2) & (period=59)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_59; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=2) & (period=60)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_60; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=2) & (period=61)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_61; 
+run; 
+proc freq data=leo.eph_formatted_2018; 
+weight pondera; 
+where ( (ch04=2) & (period=62)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_62; 
+run; 
 data formation_52; set formation_52; period=54; percent_col=pct_col/100; run; 
 data formation_53; set formation_53; period=55; percent_col=pct_col/100; run; 
 data formation_54; set formation_54; period=56; percent_col=pct_col/100; run; 
 data formation_55; set formation_55; period=57; percent_col=pct_col/100; run; 
+data formation_56; set formation_56; period=58; percent_col=pct_col/100; run; 
+data formation_57; set formation_57; period=59; percent_col=pct_col/100; run; 
+data formation_58; set formation_58; period=60; percent_col=pct_col/100; run; 
+data formation_59; set formation_59; period=61; percent_col=pct_col/100; run; 
+data formation_60; set formation_60; period=62; percent_col=pct_col/100; run; 
+data formation_61; set formation_61; period=63; percent_col=pct_col/100; run; 
+data formation_62; set formation_62; period=64; percent_col=pct_col/100; run; 
+
 data formation_52; set formation_52; keep percent_col formation ch06 period; run; 
 data formation_53; set formation_53; keep percent_col formation ch06 period; run; 
 data formation_54; set formation_54; keep percent_col formation ch06 period; run; 
 data formation_55; set formation_55; keep percent_col formation ch06 period; run; 
+data formation_56; set formation_56; keep percent_col formation ch06 period; run; 
+data formation_57; set formation_57; keep percent_col formation ch06 period; run; 
+data formation_58; set formation_58; keep percent_col formation ch06 period; run; 
+data formation_59; set formation_59; keep percent_col formation ch06 period; run; 
+data formation_60; set formation_60; keep percent_col formation ch06 period; run; 
+data formation_61; set formation_61; keep percent_col formation ch06 period; run; 
+data formation_62; set formation_62; keep percent_col formation ch06 period; run; 
 data formation_wom_base; 
-set formation_52
-formation_53
-formation_54
-formation_55; run; 
+set formation_52-formation_62; 
+run; 
 
-/*proc sort data=leo.cal_wag_f_for3; 
-by agegroup; 
-run; */
-/*On prend ensuite de la base uniquewomt les différents états dans le marché du travail et on les transpose. 
-Le résultat for une série de tableaux en format LIAM2 selon l'état dans le marché du travail*/
 
 data for_1_wom;
 set formation_wom_base (where=(formation="1"));
@@ -1645,9 +1811,6 @@ run;
 
  proc print data=leo.cal_post_2016_for_2_wom; 
  run; 
- proc print data=leo.cal_mau_for_2_m; 
- run; 
- 
 proc transpose data=for_3_wom out=transp_for_3_wom; 
 by ch06;
 id period ;
