@@ -11,8 +11,12 @@ title 'Normality of backward Mincer wage equations residuals';
 proc univariate data=leo.wage_residuals_back noprint normaltest;
    histogram resid /normal(color=red)  ;
 run; 
-/*We take the mean and standard error computed for the whole 2003-2015 period. Still, we show the residuals of the wage equations are 
-		still normal for each starting dataset (second quarters of 2014 and 2015, fourth quarter of 2014). */
+/*For the sake of continuity with our starting dataset, we compute the standard error and mean of the residuals of the wage equations
+		in our starting datasets, and also show these residuals follow a normal law. If we generate individual error terms in our 
+		simulations with the mean and standard deviation computed on the 2003-2015 period, we create a discontinuity in 
+		labour income inequality between our starting dataset and the simulated periods. This is why we compute the mean and standard
+		deviation of the residuals of forward and backward Mincer wage equations for each starting dataset (second quarters of 2014 
+		and 2015, fourth quarter of 2014). */
 
 title 'Normality of forward Mincer wage equations residuals, fourth quarter of 2014';
 proc univariate data=leo.wage_residuals_forward noprint normaltest;
