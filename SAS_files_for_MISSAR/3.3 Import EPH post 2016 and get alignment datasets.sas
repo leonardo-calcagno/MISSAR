@@ -235,7 +235,7 @@ run;
  %import_ephc_2016_2018(18,2); 
  %import_ephc_2016_2018(18,3); 
  %import_ephc_2016_2018(18,4); 
-
+ %import_ephc_2016_2018(19,1); 
  /*The second quarter of 2018 has format problems with the date of birth variable ch05. We correct them here. Before that, we 
  		corrected the csv file, putting as missing all the entries where the date of birth was 01/01/1900 (roughly 4800).*/
 data leo.ephc_2018_t02; 
@@ -246,6 +246,18 @@ data leo.ephc_2018_t02;
 run; 
 data leo.ephc_2018_t02; 
 set leo.ephc_2018_t02; 
+	rename ch05_date=ch05; 
+run; 
+/*The first quarter of 2019 also has format problems with the date of birth variable ch05. We correct them here. Before that, we 
+ 		corrected the csv file, putting as missing all the entries where the date of birth was 01/01/1900.*/
+data leo.ephc_2019_t01; 
+ set leo.ephc_2019_t01; 
+	ch05_date=datepart(ch05);
+	format ch05_date DDMMYY10.; 
+	drop ch05; 
+run; 
+data leo.ephc_2019_t01; 
+set leo.ephc_2019_t01; 
 	rename ch05_date=ch05; 
 run; 
 
@@ -262,11 +274,15 @@ DATA leo.new_eph_2018;
  set leo.ephc_2018_t01- leo.ephc_2018_t04; 
  person=catx(',',codusu,nro_hogar,componente);
  run; 
-data leo.new_eph_2016_2018; 
-set leo.new_eph_2016-leo.new_eph_2018; 
+ data leo.new_eph_2019; 
+ set leo.ephc_2019_t01; 
+ person=catx(',',codusu,nro_hogar,componente);
+ run; 
+data leo.new_eph_2016_2019; 
+set leo.new_eph_2016-leo.new_eph_2019; 
 run; 
  /*Here we quickly count how many times an individual appears in the base, as a descriptive statistic.*/
- proc sort data=leo.new_eph_2016_2018; 
+ proc sort data=leo.new_eph_2016_2019; 
  by person; 
  run;
   proc sort data=leo.new_eph_2016; 
@@ -281,28 +297,32 @@ run;
  by person; 
  run;
 
+  proc sort data=leo.new_eph_2019; 
+ by person; 
+ run;
 
- data new_eph_2016_2018_2; 
-set leo.new_eph_2016_2018; 
+
+ data new_eph_2016_2019_2; 
+set leo.new_eph_2016_2019; 
 by  person ;  
 if first.person  then apparition=1; 
 else apparition+1;
 if last.person; 
 run;
-proc freq data=new_eph_2016_2018_2; 
+proc freq data=new_eph_2016_2019_2; 
 table apparition; run; 
- data leo.new_eph_2016_2018; 
-set leo.new_eph_2016_2018; 
+ data leo.new_eph_2016_2019; 
+set leo.new_eph_2016_2019; 
 by person ;  
 if first.person  then apparition=1; 
 else apparition+1;
 run;
 
-data leo.new_eph_2016_2018;
+data leo.new_eph_2016_2019;
 length contributes_vol $20.; 
 length contributes_comp $20.;
 length contributes $20.;
- set leo.new_eph_2016_2018;
+ set leo.new_eph_2016_2019;
  if ano4=2016 & trimestre=2 then period=52; 
  if ano4=2016 & trimestre=3 then period=53; 
 if ano4=2016 & trimestre=4 then period=54; 
@@ -329,16 +349,20 @@ if pp07i=2 or pp07i=0  then contributes_vol="False";
 run; 
 
 data leo.new_eph_2016; 
-set leo.new_eph_2016_2018; 
+set leo.new_eph_2016_2019; 
 	where ano4=2016; 
 run; 
 data leo.new_eph_2017; 
-set leo.new_eph_2016_2018; 
+set leo.new_eph_2016_2019; 
 	where ano4=2017; 
 run; 
 data leo.new_eph_2018; 
-set leo.new_eph_2016_2018; 
+set leo.new_eph_2016_2019; 
 	where ano4=2018; 
+run; 
+data leo.new_eph_2019; 
+set leo.new_eph_2016_2019; 
+	where ano4=2019; 
 run; 
 
 /*Then, we endogenously determine the proportion of independent contributors */
@@ -402,7 +426,8 @@ run;
 %indep_endo_2016(leo.new_eph_2016,leo.eph_formatted_2016);
 %indep_endo_2016(leo.new_eph_2017,leo.eph_formatted_2017);
 %indep_endo_2016(leo.new_eph_2018,leo.eph_formatted_2018);
-%indep_endo_2016(leo.new_eph_2016_2018,leo.eph_formatted_2016_2018);
+%indep_endo_2016(leo.new_eph_2019,leo.eph_formatted_2019);
+%indep_endo_2016(leo.new_eph_2016_2019,leo.eph_formatted_2016_2019);
 /*Next, we format other variables, trying to be consistent with what we did for the 2003-2015 period.*/
 data leo.eph_formatted_2016; 
 set leo.eph_formatted_2016; 
@@ -576,8 +601,66 @@ if (ageconti>64 and ageconti<70) then agegroup=65;
 if ageconti>69 then agegroup=300;
  run; 
 
-data leo.eph_formatted_2016_2018; 
-set leo.eph_formatted_2016_2018; 
+ 
+data leo.eph_formatted_2019; 
+set leo.eph_formatted_2019; 
+
+household=cats(codusu,nro_hogar);
+ id=cats(codusu,nro_hogar,componente); 
+ if ch03=01 then hhstate=1; 
+ if ch03=02 then hhstate=2;
+ if ch03=03 then hhstate=3; 
+ if ch03=04 then hhstate=4; 
+ if ch03=05 then hhstate=5; 
+ if ch03=06 then hhstate=6; 
+ if ch03=07 then hhstate=7; 
+ if ch03=08 then hhstate=8; 
+ if ch03=09 then hhstate=9; 
+ if ch03=10 then hhstate=10;  
+ if ch07=1 then marital_status=1; 
+ if ch07=2 then marital_status=2; 
+ if ch07=3 then marital_status=3; 
+ if ch07=4 then marital_status=4; 
+ if ch07=5 then marital_status=5;
+ if ch06=-1 then ch06=0;
+ 
+if ageconti=-1 then ageconti=0; 
+if (ageconti>=-1 and ageconti<16) then agegroup_ext=1;
+if (ageconti>15 and ageconti<20) then agegroup_ext=16;
+if (ageconti>19 and ageconti<25) then agegroup_ext=20;
+if (ageconti>24 and ageconti<30) then agegroup_ext=25;
+if (ageconti>29 and ageconti<35) then agegroup_ext=30;
+if (ageconti>34 and ageconti<40) then agegroup_ext=35;
+if (ageconti>39 and ageconti<45) then agegroup_ext=40;
+if (ageconti>44 and ageconti<50) then agegroup_ext=45;
+if (ageconti>49 and ageconti<55) then agegroup_ext=50;
+if (ageconti>54 and ageconti<60) then agegroup_ext=55;
+if (ageconti>59 and ageconti<65) then agegroup_ext=60;
+if (ageconti>64 and ageconti<70) then agegroup_ext=65;
+if (ageconti>69 and ageconti<75) then agegroup_ext=70;
+if (ageconti>74 and ageconti<80) then agegroup_ext=75;
+if (ageconti>79 and ageconti<85) then agegroup_ext=80;
+if (ageconti>84 and ageconti<90) then agegroup_ext=85;
+if (ageconti>89 and ageconti<95) then agegroup_ext=90;
+if ageconti>94 then agegroup_ext=95;
+
+
+if (ageconti>=-1 and ageconti<16) then agegroup=1;
+if (ageconti>15 and ageconti<20) then agegroup=16;
+if (ageconti>19 and ageconti<25) then agegroup=20;
+if (ageconti>24 and ageconti<30) then agegroup=25;
+if (ageconti>29 and ageconti<35) then agegroup=30;
+if (ageconti>34 and ageconti<40) then agegroup=35;
+if (ageconti>39 and ageconti<45) then agegroup=40;
+if (ageconti>44 and ageconti<50) then agegroup=45;
+if (ageconti>49 and ageconti<55) then agegroup=50;
+if (ageconti>54 and ageconti<60) then agegroup=55;
+if (ageconti>59 and ageconti<65) then agegroup=60;
+if (ageconti>64 and ageconti<70) then agegroup=65;
+if ageconti>69 then agegroup=300;
+ run; 
+data leo.eph_formatted_2016_2019; 
+set leo.eph_formatted_2016_2019; 
 
 household=cats(codusu,nro_hogar);
  id=cats(codusu,nro_hogar,componente);  
