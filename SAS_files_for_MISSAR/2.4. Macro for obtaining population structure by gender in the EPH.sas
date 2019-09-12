@@ -3,7 +3,7 @@ dm 'clear log';
 %macro age_group_and_gender_for_indep (indata,period,agegroup_var,gender_var); 
 
 proc freq data=&indata.; 
-	where period=&period.;
+	where period=&period. & ageconti>=15;
 	weight pondera; 
 		table &gender_var.*&agegroup_var. / out=demographic_&period. noprint; 
 run; 
@@ -32,7 +32,9 @@ set women_&period.;
 	drop &gender_var.; 
 run; 
 %mend; 
-
+proc freq data=leo.eph_formatted_2016_2019; 
+table ch06*ageconti; 
+run; 
 %age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,63,agegroup,ch04); 
 %age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,62,agegroup,ch04); 
 %age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,61,agegroup,ch04); 
