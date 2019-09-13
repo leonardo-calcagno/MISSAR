@@ -311,3 +311,172 @@ proc export data=indep_women_2016_2019
 	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\indep_women_post_2016.csv' 
 	dbms=csv replace; 
 run; 
+
+proc freq data=leo.eph_formatted_2016_2019; 
+	weight pondera; 
+	where ageconti>=16 & ageconti<70; 
+		table period*agegroup /outpct out=demographic; 
+run; 
+proc print data=demographic; run;
+
+%macro age_group_for_indep (indata,period,agegroup_var); 
+
+data demographic_&period.; 
+set demographic; 
+	if period^=&period. 
+		then delete; 
+	drop pct_row percent pct_col period; 
+	rename count=pop_&period.; 
+run; 
+
+
+proc freq data=&indata.; 
+	weight pondera; 
+	where ageconti>=16 & ageconti<70 & period=&period.; 
+		table indep*&agegroup_var. /outpct out=indep_&period. noprint; 
+run; 
+
+data indep_&period.; 
+set indep_&period.; 
+	if indep=0 
+		then delete; 
+	indep_&period.=pct_col/100; 
+	if &agegroup_var.=1 | &agegroup_var.=300 
+		then delete; 
+run; 
+data indep_&period.; 
+set indep_&period.; 
+	keep &agegroup_var. indep_&period.; 
+run; 
+
+%mend; 
+%age_group_for_indep (leo.eph_formatted_2016_2019,52,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,53,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,54,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,55,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,56,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,57,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,58,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,59,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,60,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,61,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,62,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,63,agegroup); 
+
+data leo.indep_population_post_2016; 
+merge indep_63-indep_52; 
+	by agegroup; 
+run; 
+data leo.demographic_post_2016; 
+merge demographic_63-demographic_52; 
+	by agegroup; 
+run; 
+
+
+
+
+
+proc export data=leo.indep_population_post_2016
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\indep_population_post_2016.csv' 
+	dbms=csv replace; 
+run; 
+
+proc export data=leo.demographic_post_2016
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\demographic_post_2016.csv' 
+	dbms=csv replace; 
+run;  
+proc freq data=leo.eph_data_formatted_2003_2015; 
+	weight pondera; 
+	where ageconti>=16 & ageconti<70; 
+		table period*agegroup /outpct out=demographic; 
+run; 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,48,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,47,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,46,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,45,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,44,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,43,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,42,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,41,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,40,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,39,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,38,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,37,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,36,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,35,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,34,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,33,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,32,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,31,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,30,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,29,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,28,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,27,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,26,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,25,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,24,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,23,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,22,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,21,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,20,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,19,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,18,agegroup); /*
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,17,agegroup); */
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,16,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,15,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,14,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,13,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,12,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,11,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,10,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,9,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,8,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,7,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,6,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,5,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,4,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,3,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,2,agegroup); 
+%age_group_for_Indep(leo.eph_data_formatted_2003_2015,1,agegroup); 
+
+data leo.indep_population_2003_2015; 
+merge indep_48-indep_18 indep_1-indep_16;
+	by agegroup; 
+run; 
+
+data leo.indep_population_2003_2015; 
+set leo.indep_population_2003_2015; 
+	indep_17=((indep_18+indep_16)/2);
+run; 
+
+data leo.demographic_2003_2015; 
+merge demographic_48-demographic_18 demographic_1-demographic_16;
+	by agegroup; 
+run; 
+
+data leo.demographic_2003_2015; 
+set leo.demographic_2003_2015; 
+	pop_17=round((pop_18+pop_16)/2);
+run; 
+
+
+
+data leo.indep_population_2003_2015;
+	retain agegroup indep_48-indep_10 indep_9 indep_8 indep_7 indep_6 indep_5 indep_4 indep_3 indep_2 indep_1; 
+set leo.indep_population_2003_2015; 
+run; 
+data leo.demographic_2003_2015;
+	retain agegroup pop_48-pop_10 pop_9 pop_8 pop_7 pop_6 pop_5 pop_4 pop_3 pop_2 pop_1; 
+set leo.demographic_2003_2015; 
+run; 
+proc print data=leo.indep_population_2003_2015; run; 
+proc print data=leo.demographic_2003_2015; run; 
+proc export data=leo.indep_population_2003_2015
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\indep_population_2003_2015.csv' 
+	dbms=csv replace; 
+run; 
+
+proc export data=leo.demographic_2003_2015
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\demographic_2003_2015.csv' 
+	dbms=csv replace; 
+run; 
