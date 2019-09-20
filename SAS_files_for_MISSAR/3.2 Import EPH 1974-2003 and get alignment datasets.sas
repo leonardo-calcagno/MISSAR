@@ -2762,7 +2762,7 @@ proc sort data=leo.structure_coefficients_95_03;
 by period; 
 run;
 proc export data=leo.structure_coefficients_95_03 
-outfile="H:\LIAM2_commented_code\globals\structure_coefficients_95_03.csv"
+outfile="C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\Structure_coefficients\structure_coefficients_95_03.csv"
 dbms=csv replace; 
 run; 
 
@@ -2847,7 +2847,7 @@ by period;
 run;
 
 proc export data=leo.structure_coefficients_91_94 
-outfile="H:\LIAM2_commented_code\globals\structure_coefficients_91_94.csv"
+outfile="C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\Structure_coefficients\structure_coefficients_91_94.csv"
 dbms=csv replace; 
 run; 
 
@@ -2974,7 +2974,7 @@ keep coefficient_men coefficient_women period;
 run;
 
 proc export data=leo.structure_coefficients_74_90 
-outfile="H:\LIAM2_commented_code\globals\structure_coefficients_74_90.csv"
+outfile="C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\Structure_coefficients\structure_coefficients_74_90.csv"
 dbms=csv replace; 
 run; 
 
