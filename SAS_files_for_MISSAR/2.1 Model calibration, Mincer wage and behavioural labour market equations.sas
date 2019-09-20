@@ -255,7 +255,7 @@ set leo.mean_ITL;
 	keep coefficient_men coefficient_women period; 
 run;
 proc export data=leo.structure_coefficients
-	outfile='H:\LIAM2_commented_code\globals\structure_coefficients.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\Structure_coefficients\structure_coefficients_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 proc sort data=leo.eph_data_formatted_2003_2015; 
