@@ -1860,8 +1860,9 @@ entities:
             get_a_life:
 #This short module is taken almost as is from LIAM2 demonstration code. It simply ensures people aged 24 or more not in a relationship make a new household, even if
         #they are inactive. 
+    #In order to reduce the number of households with no income though, only those that are working may form a new household.    
                 - alone: household.nb_persons ==1
-                - household_id: if(not IN_RELATIONSHIP and not alone and (age >= 24),
+                - household_id: if(not IN_RELATIONSHIP and not alone and (age >= 24) and IS_WORKING,
                             new('household'),
                             household_id)
 
