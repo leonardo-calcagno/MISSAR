@@ -422,33 +422,21 @@ entities:
                                                 filter=sedlac_income!=0,weights=pondera),weights=pondera)
                                                     /sum(all_labour_income+all_fam_benefits,weights=pondera)                                                    
     # 5- We export these redistribution indicators into a separate csv file.                                                 
-                - csv('Period', 'Gini per capita, all income', 'Gini per capita, labour income','Gini per capita, labour and pension income', 'Gini per capita, labour and family benefits income', 
-                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
-                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
-                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
-                                            fname='redistribution_central.csv',mode='a')
+                
                 - csv(period,gini_all_income,gini_labour_income,gini_labour_pension_income,gini_labour_fam_benefits,
                             decile_ratio_all_income, decile_ratio_labour_income, decile_ratio_labour_pension_income, decile_ratio_labour_fam_ben_income, 
                                 share_top_10, share_top_10_labour,share_top_10_labour_pension,share_top_10_labour_fam_ben,
                                     share_bottom_10, share_bottom_10_labour,share_bottom_10_labour_pension,share_bottom_10_labour_fam_ben,
                                         fname='redistribution_central.csv',mode='a') 
         ################################################################################################################                                
-                - csv('Period', 'Gini insee, all income', 'Gini insee, labour income','Gini insee, labour and pension income', 'Gini insee, labour and family benefits income', 
-                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
-                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
-                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
-                                            fname='redistribution_central_insee.csv',mode='a')
+                
                 - csv(period,gini_insee_all_income,gini_insee_labour_income,gini_insee_labour_pension_income,gini_insee_labour_fam_benefits,
                             decile_ratio_insee_all_income, decile_ratio_insee_labour_income, decile_ratio_insee_labour_pension_income, decile_ratio_insee_labour_fam_ben_income, 
                                 share_top_10_insee, share_top_10_insee_labour,share_top_10_insee_labour_pension,share_top_10_insee_labour_fam_ben,
                                     share_bottom_10_insee, share_bottom_10_insee_labour,share_bottom_10_insee_labour_pension,share_bottom_10_insee_labour_fam_ben,
                                         fname='redistribution_central_insee.csv',mode='a') 
         ################################################################################################################
-                - csv('Period', 'Gini sedlac, all income', 'Gini sedlac, labour income','Gini sedlac, labour and pension income', 'Gini sedlac, labour and family benefits income', 
-                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
-                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
-                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
-                                            fname='redistribution_central_sedlac.csv',mode='a')
+                
                 - csv(period,gini_sedlac_all_income,gini_sedlac_labour_income,gini_sedlac_labour_pension_income,gini_sedlac_labour_fam_benefits,
                             decile_ratio_sedlac_all_income, decile_ratio_sedlac_labour_income, decile_ratio_sedlac_labour_pension_income, decile_ratio_sedlac_labour_fam_ben_income, 
                                 share_top_10_sedlac, share_top_10_sedlac_labour,share_top_10_sedlac_labour_pension,share_top_10_sedlac_labour_fam_ben,
@@ -1138,9 +1126,57 @@ entities:
                 #of the simulation a residual drawn from this normal distribution. Once assigned, this residual stays unchanged for the rest of the individual's life.
                 - resid: if(resid!=0, resid, 
                             normal(loc=-0.13869,scale=0.580294))    
-        #Finally, having all individuals age at the same time was a problem for our education module. We thus assume respondents had a 25% chance of being born during a given quarter.        
+        #Fifth, having all individuals age at the same time was a problem for our education module. We thus assume respondents had a 25% chance of being born during a given quarter.        
                 
                 - age_quarters: age_quarters + choice([0, 1, 2, 3], [0.25, 0.25, 0.25, 0.25]) 
+        #Sixth, we are going to export aggregate files to determine the sustainability, adequacy and redistributive impact of social security. We create here the headers of such csv 
+                #files, so it is not repeated at each loop of the simulation in the output files. 
+                - csv('Period', 'Gini per capita, all income', 'Gini per capita, labour income','Gini per capita, labour and pension income', 'Gini per capita, labour and family benefits income', 
+                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
+                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
+                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
+                                            fname='redistribution_central.csv',mode='a')
+                - csv('Period', 'Gini insee, all income', 'Gini insee, labour income','Gini insee, labour and pension income', 'Gini insee, labour and family benefits income', 
+                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
+                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
+                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
+                                            fname='redistribution_central_insee.csv',mode='a')     
+                - csv('Period', 'Gini sedlac, all income', 'Gini sedlac, labour income','Gini sedlac, labour and pension income', 'Gini sedlac, labour and family benefits income', 
+                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
+                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
+                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
+                                            fname='redistribution_central_sedlac.csv',mode='a')   
+        ################################################################################################################
+                - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
+                                                fname='active_age_men.csv',mode='a')
+                - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
+                                                fname='active_age_women.csv',mode='a')
+                - csv('Period', 'Mean real labour income', 'Total workers',
+                                    fname='workers_and_wage_central.csv',mode='a')
+        ################################################################################################################
+                - csv('Period', 'Total SIPA income', 
+                                    'Total wage-earners SIPA contributions', 'Total taxable income','Total gross wages', 'Total SAC',
+                                        'Total autonomous workers SIPA contributions','Total monotributo SIPA contributions', 'Monotributo integrated tax', 
+                                                fname='debug_central_SIPA_income.csv',mode='a')     
+                - csv('period', 'total pensions, pre-2016, cost', 'total net pensions, pre-2016',  'total pensions, post-2016, cost', 'total net pensions, post-2016',
+                                    'total retirement benefits pre-2016', 'total survivors pensions pre-2016','total retirement benefits post-2016', 'total survivors pensions post-2016',
+                                        'total universal pensions, cost', 'total net universal pensions',
+                                            ' total thirteenth month of pension pre-2016, cost', 'total net thirteenth month of pension pre-2016', ' total thirteenth month of pension post-2016, cost', 'total net thirteenth month of pension post-2016',
+                                                ' total thirteenth month of universal pension, cost', 'total net thirteenth month of universal pension',
+                                                    fname='debug_central_v2_m.csv',mode='a')
+                - csv('period', 'total family benefits', 'total contributive child benefits', 'total auh', 'total spouse benefit',
+                                ' total school aid', 'total wedding benefit', 'total prenatal benefit', 'total pregnancy benefit', 'total birth benefit', 
+                                    fname='debug_central_v5_m.csv',mode='a')
+        ################################################################################################################
+                - csv('period', 'Contributory pensioners share', 'Moratorium pensioners share', 'Universal pensioners share','Retirement coverage for legal age',
+                                    'Retirement coverage 65+', 'All coverage legal age', 'All coverage 65+','Contributory retirement coverage legal age', 'Contributory retirement coverage 65+', 'Survivors benefit coverage legal age', 'Survivors benefit coverage 65+', 'Moratorium benefit coverage legal age', 'Moratorium benefit coverage 65+', 'PUAM coverage legal age', 'PUAM coverage 65+',
+                                    'Mean contributory retirement pension', 'Mean survivors benefit', 'Mean moratorium pension', 'Mean universal pension', 'Mean retirement pension', 'Mean pension benefit',
+                                        'Median pension benefit', 'Median pension to labour income ratio', 'Mean pension to labour income ratio',
+                                            'Mean family benefit', 'Mean child benefits', 'Mean contributory child benefits', 'Mean AUH benefits', 
+                                                'Child benefit coverage', 'Contributory child benefit coverage', 'AUH coverage',
+                                                    'Gini, retirement age', 'Gini, retirement age, non labour income', 'Gini, 65+', 'Gini, 65+, non labour income', 
+                                                        'Gini, retirement age, has income',  'Gini, retirement age, (has) non labour income', 'Gini, 65+, has income', 'Gini, 65+, (has) non labour income',
+                                                    fname='adequacy_central.csv',mode='a')
             ageing: 
                 - age_quarters: age_quarters + 1
                 - age: trunc(age_quarters/4) 
@@ -1468,14 +1504,10 @@ entities:
             #dependent labour-market scenarios, so as to reach the desired rate of, say, dependent wage-earners while taking into account the demographic 
             #structure of the starting population.
         #This active age population is the same whatever the economic scenario. As such, we only compute it once for each starting period. 
-                - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
-                                                fname='active_age_men.csv',mode='a')
                 - csv(period,sum(pondera*male,filter=agegroup==16), sum(pondera*male,filter=agegroup==20),  sum(pondera*male,filter=agegroup==25),  sum(pondera*male,filter=agegroup==30), 
                                  sum(pondera*male,filter=agegroup==35),  sum(pondera*male,filter=agegroup==40),  sum(pondera*male,filter=agegroup==45),  sum(pondera*male,filter=agegroup==50),  sum(pondera*male,filter=agegroup==55), 
                                   sum(pondera*male,filter=agegroup==60),  sum(pondera*male,filter=agegroup==65), 
                                     fname='active_age_men.csv',mode='a')
-                - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
-                                                fname='active_age_women.csv',mode='a')
                 - csv(period,sum(pondera*(not male),filter=agegroup==16), sum(pondera*(not male),filter=agegroup==20),  sum(pondera*(not male),filter=agegroup==25),  sum(pondera*(not male),filter=agegroup==30), 
                                  sum(pondera*(not male),filter=agegroup==35),  sum(pondera*(not male),filter=agegroup==40),  sum(pondera*(not male),filter=agegroup==45),  sum(pondera*(not male),filter=agegroup==50),  sum(pondera*(not male),filter=agegroup==55), 
                                   sum(pondera*(not male),filter=agegroup==60),  sum(pondera*(not male),filter=agegroup==65), 
@@ -2167,8 +2199,6 @@ entities:
     #5- Finally, we export the simulated evolution of the mean (net) wage of all workers. This is important for computing future growth, 
             #as our real wage hypotheses concern formal wage-earners. By taking the mean wage evolution as a determinant of growth, 
             #we also factor in the impact of workers' productivity when they work in the formal or informal sector. 
-                - csv('Period', 'Mean real labour income', 'Total workers',
-                                    fname='workers_and_wage_central.csv',mode='a')
                 - csv(period,sum(discounted_itl*pondera)/sum(pondera,filter=labour_market_state!=4 and labour_market_state!=5),
                         sum(pondera,filter=labour_market_state!=4 and labour_market_state!=5),
                             fname='workers_and_wage_central.csv',mode='a')   
@@ -2525,10 +2555,6 @@ entities:
     #6- We export total SIPA social security contributions + monotributo integrated tax to a separate csv file. It helps with debugging and 
             #estimating ANSES's aggregate economic result. 
                 - SIPA_income: mono_integrated_tax*0.7 + contribution_sal_SIPA+contribution_aut_SIPA+contribution_mono_SIPA
-                - csv('Period', 'Total SIPA income', 
-                                    'Total wage-earners SIPA contributions', 'Total taxable income','Total gross wages', 'Total SAC',
-                                        'Total autonomous workers SIPA contributions','Total monotributo SIPA contributions', 'Monotributo integrated tax', 
-                                                fname='debug_central_SIPA_income.csv',mode='a')
                 - csv(period,sum(SIPA_income*pondera)/1000,
                        sum(contribution_sal_SIPA*pondera)/1000,sum(taxable_income*pondera)/1000,sum(discounted_itl_sal_gross*pondera)/1000,sum(medio_aguinaldo_gross*pondera)/1000,
                         sum(contribution_aut_SIPA*pondera)/1000, sum(contribution_mono_SIPA*pondera)/1000,sum(mono_integrated_tax*pondera)/1000,
@@ -2894,13 +2920,7 @@ entities:
     #11- We've had some cases where individuals who do not get any pension still appear as having liquidated their retirement rights. 
             #We thus add this instruction to correct this error at every simulated period.
                 - liqui_retirement: if(discounted_v2_m==0 or discounted_v2_m_2==0, False, liqui_retirement)                
-    #12- We export total paid retirement benefits by type and computation method. This allows for a faster computation of ANSES deficit.       
-                - csv('period', 'total pensions, pre-2016, cost', 'total net pensions, pre-2016',  'total pensions, post-2016, cost', 'total net pensions, post-2016',
-                                    'total retirement benefits pre-2016', 'total survivors pensions pre-2016','total retirement benefits post-2016', 'total survivors pensions post-2016',
-                                        'total universal pensions, cost', 'total net universal pensions',
-                                            ' total thirteenth month of pension pre-2016, cost', 'total net thirteenth month of pension pre-2016', ' total thirteenth month of pension post-2016, cost', 'total net thirteenth month of pension post-2016',
-                                                ' total thirteenth month of universal pension, cost', 'total net thirteenth month of universal pension',
-                                                    fname='debug_central_v2_m.csv',mode='a')
+    #12- We export total paid retirement benefits by type and computation method. This allows for a faster computation of ANSES deficit.  
                 - csv(period,sum(disc_cost_v2_m*pondera)/1000,sum(discounted_v2_m*pondera)/1000,sum(disc_cost_v2_m_2*pondera)/1000,sum(discounted_v2_m_2*pondera)/1000
                                 ,sum(net_retirement*pondera)/1000,sum(net_pension*pondera)/1000,sum(net_retirement_2*pondera)/1000,sum(net_pension_2*pondera)/1000
                                     ,sum(universal_gross_pension*pondera)/1000,sum(universal_net_pension*pondera)/1000,
@@ -3092,9 +3112,6 @@ entities:
                 
         #We export the aggregate family benefits for each period in a separate csv file to help with debugging and projecting ANSES long-term deficit.
                 #For studying ANSES sustainability, it is better to study the sum of all family benefits, were they received by a specific family member or not. 
-                - csv('period', 'total family benefits', 'total contributive child benefits', 'total auh', 'total spouse benefit',
-                                ' total school aid', 'total wedding benefit', 'total prenatal benefit', 'total pregnancy benefit', 'total birth benefit', 
-                                    fname='debug_central_v5_m.csv',mode='a')
                 - csv(period,sum(discounted_v5_m*pondera)/1000,
                        sum(child_benefit*pondera)/1000,sum(auh*pondera)/1000,sum(spouse_benefit*pondera)/1000,
                             sum(school_aid/3*pondera)/1000,sum(wedding_benefit/3*pondera)/1000,sum(prenatal/3*pondera)/1000,sum(pregnancy_sp/3*pondera)/1000,sum(birth_benefit/3*pondera)/1000,
@@ -3259,15 +3276,6 @@ entities:
                                             filter=age>=65 and (discounted_itl+all_pension_income+discounted_v5_m)!=0,weights=pondera)
                 - gini_65_has_income_non_labour: gini(all_pension_income+discounted_v5_m,
                                             filter=age>=65 and (all_pension_income+discounted_v5_m)!=0,weights=pondera)
-                - csv('period', 'Contributory pensioners share', 'Moratorium pensioners share', 'Universal pensioners share','Retirement coverage for legal age',
-                                    'Retirement coverage 65+', 'All coverage legal age', 'All coverage 65+','Contributory retirement coverage legal age', 'Contributory retirement coverage 65+', 'Survivors benefit coverage legal age', 'Survivors benefit coverage 65+', 'Moratorium benefit coverage legal age', 'Moratorium benefit coverage 65+', 'PUAM coverage legal age', 'PUAM coverage 65+',
-                                    'Mean contributory retirement pension', 'Mean survivors benefit', 'Mean moratorium pension', 'Mean universal pension', 'Mean retirement pension', 'Mean pension benefit',
-                                        'Median pension benefit', 'Median pension to labour income ratio', 'Mean pension to labour income ratio',
-                                            'Mean family benefit', 'Mean child benefits', 'Mean contributory child benefits', 'Mean AUH benefits', 
-                                                'Child benefit coverage', 'Contributory child benefit coverage', 'AUH coverage',
-                                                    'Gini, retirement age', 'Gini, retirement age, non labour income', 'Gini, 65+', 'Gini, 65+, non labour income', 
-                                                        'Gini, retirement age, has income',  'Gini, retirement age, (has) non labour income', 'Gini, 65+, has income', 'Gini, 65+, (has) non labour income',
-                                                    fname='adequacy_central.csv',mode='a')
                 - csv(period, contributory_pensioners_share, moratorium_pensioners_share, universal_pensioners_share,
                             retirement_coverage_legal_age,retirement_coverage_65,all_coverage_legal_age,all_coverage_65,contributory_coverage_legal_age,contributory_coverage_65,survivors_coverage_legal_age,survivors_coverage_65,moratorium_coverage_legal_age,moratorium_coverage_65,PUAM_coverage_legal_age,PUAM_coverage_65,
                                 mean_contributory_retirement,mean_survivors_pension, mean_moratorium_pension, mean_universal_pension, mean_retirement_pension, mean_pension_benefit,
@@ -3337,7 +3345,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49 
-    periods: 20
+    periods: 10
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
