@@ -1842,13 +1842,21 @@ entities:
                             if(justmarried, partner.household_id, household_id),
                             household_id)
             #As we did earlier in this module, we once again make children their newlywed parents (or their father or mother that entered a common-law union). 
-                    #As usual, we consider the mother keeps custody of the children. 
-                - household_id: if(age<24 and not IN_RELATIONSHIP and labour_market_state==5,
+                    #As usual, we consider the mother keeps custody of the children.
+            #Moreover, children that have known parents and are unemployed stay in their parents' household.
+                    #We also allow for going back to parents' place for people not working and not in a relationship up to 40.
+                - household_id: if(age<40 and not IN_RELATIONSHIP and (labour_market_state==4 or labour_market_state==5),
                             if(mother_id!=UNSET, mother.household_id,
                                 if(father_id!=UNSET, father.household_id,
-                                    household_id)), household_id)         
+                                    household_id)), 
+                                        household_id)                                           
                 - marital_status: if(justcoupled or partner.justcoupled, COUPLED, marital_status)
                 - marital_status: if(partner.marital_status==1, COUPLED, marital_status)
+            #We also make sure people in a couple live together. Indeed, there are some one person households which have people in a common-law union or marriage,
+                    #but with only one person in the household.
+                - household_id: if(ISFEMALE, 
+                                    if(IN_RELATIONSHIP and partner_id!=UNSET, partner.household_id, household_id),    
+                                        household_id)
             get_a_life:
 #This short module is taken almost as is from LIAM2 demonstration code. It simply ensures people aged 24 or more not in a relationship make a new household, even if
         #they are inactive. 
