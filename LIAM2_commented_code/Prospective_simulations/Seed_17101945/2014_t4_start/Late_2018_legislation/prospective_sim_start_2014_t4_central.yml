@@ -130,6 +130,7 @@ entities:
             - nb_persons:  {type: int, initialdata: false}
             - nb_children: {type: int, initialdata: false}
             - nb_lil_children: {type: int, initialdata: false}
+            - nb_adults: {type: int, initialdata: false}
             - igf_hh: {type: float, initialdata: false}
             - wage_earners_hh: {type: int, initialdata: false}
             - monotributistas_hh: {type: int, initialdata: false}
@@ -137,6 +138,10 @@ entities:
             - inactive_hh: {type: int, initialdata: false}
             - max_itl_sal_hh: {type: float, initialdata: false}
             - max_monotributo_cat_hh: {type: int, initialdata: false}
+            - all_income: {type: float, initialdata: false}
+            - all_labour_income: {type: float, initialdata: false}
+            - all_pension_income: {type: float, initialdata: false}
+            - all_fam_benefits: {type: float, initialdata: false}
             - id: int
             - pondera: int
             - household_id2: int
@@ -150,6 +155,7 @@ entities:
                 - nb_persons: persons.count()
                 - nb_children: persons.count(age < 18)
                 - nb_lil_children: persons.count(age < 5) 
+                - nb_adults: persons.count(age>=16)
             clean_empty: remove(nb_persons ==0)
             igf_household: 
             # IGF stands for family-group income. Since some family links cannot be correctly estimated in the EPHc, it is important to compute it for all individuals 
@@ -190,6 +196,7 @@ entities:
             #We define a temporary value for retirement pension income. It takes into account the change in the computation of the initial pension starting June 2016.
                 - all_pension_income: if(period<=54,persons.sum(discounted_v2_m),
                                             persons.sum(discounted_v2_m_2))
+            #Incidentally, we decide to store other household income variables, useful to track in particular simulated households with no revenue.                                
                 - all_income: persons.sum(discounted_itl)+ all_pension_income + persons.sum(discounted_v5_m)
                 - all_labour_income: persons.sum(discounted_itl)
                 - all_fam_benefits: persons.sum(discounted_v5_m)
@@ -900,6 +907,8 @@ entities:
             - mono_integrated_tax: {type: float, initialdata: false}
             - monotributo_cat: {type: int, initialdata: false}
             - rent_aut: {type: float, initialdata: false}
+            - social_monotributo: {type: int, initialdata: false}
+            - monotributo: {type: int, initialdata: false}
                 # aguinaldo stands for thirteenth month, a widespread benefit among formal wage-earners.  
             - medio_aguinaldo: {type: float, initialdata: false}
             - medio_aguinaldo_gross: {type: float, initialdata: false}
@@ -997,6 +1006,7 @@ entities:
             IS_INFORMAL: labour_market_state ==3
             IS_UNEMPLOYED: labour_market_state ==4
             IS_INACTIVE: labour_market_state ==5
+            IS_WORKING: labour_market_state==1 or labour_market_state==2 or labour_market_state==3
             ISSTUDENT: student
             ISMARRIED: marital_status ==2
             IN_RELATIONSHIP: marital_status ==1 or marital_status ==2
@@ -2194,6 +2204,17 @@ entities:
                                   False)   
                 - autonomo: if(autonomos_align, 1, 0)
                 - monotributo: if(monotributo_align, 1, 0)
+        # The 2019 national budget Law 27467 makes earning the universal pension incompatible with working in the formal sector, except if you are a social monotributista.
+                #This category of monotributo is accessible only to the poorest independent workers, and represented between January 2015 and February 2019 an average of 20% 
+                        #of all monotributistas, following the Labour ministry's Labour and Firms Dynamics Observatory Statistical Annex of February 2019.
+                #The data in the cal_mono_h_p.csv and cal_mono_f_p.csv is the total of both normal and social monotributistas. As such, we simply flag the poorest 20%
+                        #monotributistas as social monotributistas. 
+                - score_social_monotributo: if(monotributo==0, -1000000,
+                                                -discounted_itl-uniform())
+                - social_monotributo_align: if(age>15 and age<70 and monotributo==1, 
+                                                align(score_social_monotributo,0.2),
+                                                    False)
+                - social_monotributo: if(social_monotributo_align, 1, 0)
         # We accordingly increase by a quarter their career as an independent worker of the Autonomous workers regime (car_ind) or as a monotributista (car_mono_norref). 
                 - car_ind: if(autonomo==0, car_ind, car_ind+1)
                 - car_mono_norref: if(monotributo==0, car_mono_norref, car_mono_norref+1)
@@ -2779,6 +2800,12 @@ entities:
                                       if(new_contributory_pension, False,
                                          if(liqui_retirement,False, 
                                             tag_pension_uni)))
+        #The 2019 budget Law 27467 forbids formal workers from earning the universal pension, except those in the social monotributo program. 
+                - forbid_pension_uni: if(period<65, False, 
+                                          if(labour_market_state==1 or labour_market_state==2, True, 
+                                            if(monotributo==1 and social_monotributo==0, True, 
+                                                False)))
+                - tag_pension_uni: if(forbid_pension_uni, False, tag_pension_uni)
                 - liqui_retirement: if(tag_pension_uni, False, liqui_retirement)
                 - gross_retirement: if(tag_pension_uni, MIN_PENSION_CENTRAL_2014_T4*0.8,
                                         gross_retirement)
@@ -3310,7 +3337,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49 
-    periods: 104
+    periods: 20
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
