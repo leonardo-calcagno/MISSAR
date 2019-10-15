@@ -1849,7 +1849,12 @@ entities:
                             if(mother_id!=UNSET, mother.household_id,
                                 if(father_id!=UNSET, father.household_id,
                                     household_id)), 
-                                        household_id)                                           
+                                        household_id)       
+            #We repeat this, in the second round there are some more  individuals that go back to parents' house.
+                - household_id: if(age<40 and not IN_RELATIONSHIP and (labour_market_state==4 or labour_market_state==5),
+                            if(mother_id!=UNSET, mother.household_id,
+                                if(father_id!=UNSET, father.household_id,
+                                    household_id)), household_id)                                          
                 - marital_status: if(justcoupled or partner.justcoupled, COUPLED, marital_status)
                 - marital_status: if(partner.marital_status==1, COUPLED, marital_status)
             #We also make sure people in a couple live together. Indeed, there are some one person households which have people in a common-law union or marriage,
@@ -2051,6 +2056,15 @@ entities:
                                             align(wage_earner_score,'cal_ind_h_central_p.csv',leave=wage_earner_align),
                                             align(wage_earner_score,'cal_ind_f_central_p.csv',leave=wage_earner_align)),
                                   False))   
+    # We force people living alone that are not working in the formal sector to at least work in the informal sector, so as to reduce the 
+            #number of households with no revenue. 
+                #Optional code: have at least one of the parents work, here the male partner.
+                                                         
+                - unregistered_score: if(household.all_income>0, unregistered_score, 
+                                            if(household.nb_adults==1, 10000 + unregistered_score, 
+                                                if(household.nb_adults==2 and wage_earner_align==False and independent_align== False 
+                                                    and partner_id!=UNSET and partner.wage_earner_align==False and partner.independent_align==False and male, 10000 + unregistered_score,
+                                                    unregistered_score)))
                 - unregistered_align: if(ACTIVEAGE,
                                     if(ISMALE,
                                         align(unregistered_score,'cal_aun_h_central_p.csv',leave=wage_earner_align or independent_align),
