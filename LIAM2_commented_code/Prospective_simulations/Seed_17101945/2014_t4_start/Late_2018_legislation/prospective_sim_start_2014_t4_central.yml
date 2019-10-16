@@ -146,7 +146,7 @@ entities:
             - pondera: int
             - household_id2: int
             - formal_workers_align_hh: {type: int, initialdata: false}
-            - oldest_hh: {type: int, initialdata: false}
+            - oldest_working_age_hh: {type: int, initialdata: false}
             
         links:
             persons: {type: one2many, target: person, field: household_id}
@@ -446,7 +446,7 @@ entities:
                                         fname='redistribution_central_sedlac.csv',mode='a')   
             count_formal_workers:
                 - formal_workers_align_hh: persons.count(wage_earner_align==True)+ persons.count(independent_align==True)
-                - oldest_hh: persons.max(age)
+                - oldest_working_age_hh: persons.max(age,15<age and age<70)
                 
     person:
         fields:
@@ -2048,7 +2048,7 @@ entities:
             #number of households with no revenue. 
                 - unregistered_score: if(household.all_pension_income>0, unregistered_score,
                                         if(household.formal_workers_align_hh>0, unregistered_score,
-                                            if(age==household.oldest_hh, 10000 + unregistered_score, 
+                                            if(age==household.oldest_working_age_hh, 10000 + unregistered_score, 
                                                 unregistered_score)))                        
                 - unemployed_score: if(ACTIVEAGE,
                                         if(ISMALE, logit_score((-0.8166)+(IS_FORMATION1)*(0.1661)+(IS_FORMATION2)*(0.1777)+(age>=16  and  age<20)*(-0.3485)+(age>=50  and  age<55)*(0.1456)
