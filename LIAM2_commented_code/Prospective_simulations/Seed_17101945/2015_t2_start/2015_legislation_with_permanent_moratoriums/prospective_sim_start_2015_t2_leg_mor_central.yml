@@ -27,7 +27,7 @@
 #We do not need to change the globals file between the 2017 legislation counter-factual scenario and this simulation. 
 globals:
     periodic:
-        path: H:\LIAM2_commented_code\globals\globals_transposed_prosp_scenarios_2017_leg.csv 
+        path: C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\globals_transposed_prosp_scenarios_2017_leg.csv 
         transposed: true
         fields: 
     #A large part of our economic scenarios revolve around fixed values of global variables. These change following historically observed values and our economic scenarios.

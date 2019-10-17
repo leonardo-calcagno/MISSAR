@@ -5,7 +5,7 @@
 
 globals:
     periodic:
-        path: H:\LIAM2_commented_code_AGN\globals\globals_transposed_prosp_scenarios.csv 
+        path: C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\globals_transposed_prosp_scenarios.csv 
         transposed: true
         fields: 
     #A large part of our economic scenarios revolve around fixed values of global variables. These change following historically observed values and our economic scenarios.
