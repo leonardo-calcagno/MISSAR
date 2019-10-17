@@ -1159,31 +1159,31 @@ entities:
                                                 fname='active_age_men.csv',mode='a')
                 - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
                                                 fname='active_age_women.csv',mode='a')
-                - csv('Period', 'Mean real labour income', 'Total workers',
+                - csv('Period','Mean_real_labour_income','Total_workers',
                                     fname='workers_and_wage_central.csv',mode='a')
         ################################################################################################################
-                - csv('Period', 'Total SIPA income', 
-                                    'Total wage-earners SIPA contributions', 'Total taxable income','Total gross wages', 'Total SAC',
-                                        'Total autonomous workers SIPA contributions','Total monotributo SIPA contributions', 'Monotributo integrated tax', 
-                                                fname='debug_central_SIPA_income.csv',mode='a')     
-                - csv('period', 'total pensions, pre-2016, cost', 'total net pensions, pre-2016',  'total pensions, post-2016, cost', 'total net pensions, post-2016',
-                                    'total retirement benefits pre-2016', 'total survivors pensions pre-2016','total retirement benefits post-2016', 'total survivors pensions post-2016',
-                                        'total universal pensions, cost', 'total net universal pensions',
-                                            ' total thirteenth month of pension pre-2016, cost', 'total net thirteenth month of pension pre-2016', ' total thirteenth month of pension post-2016, cost', 'total net thirteenth month of pension post-2016',
-                                                ' total thirteenth month of universal pension, cost', 'total net thirteenth month of universal pension',
-                                                    fname='debug_central_v2_m.csv',mode='a')
-                - csv('period', 'total family benefits', 'total contributive child benefits', 'total auh', 'total spouse benefit',
-                                ' total school aid', 'total wedding benefit', 'total prenatal benefit', 'total pregnancy benefit', 'total birth benefit', 
-                                    fname='debug_central_v5_m.csv',mode='a')
+                - csv('Period', 'Total_SIPA_income',
+                                    'Total_wage-earners_SIPA_contributions','Total_taxable_income','Total_gross_wages','Total_SAC',
+                                        'Total_autonomous_workers_SIPA_contributions','Total_Monotributo_SIPA_contributions','Monotributo_integrated_tax',
+                                                fname='central_SIPA_income.csv',mode='a')     
+                - csv('period','Total_pensions_pre-2016_cost','Total_net_pensions_pre-2016', 'Total_pensions_post-2016_cost','Total_net_pensions_post-2016',
+                                    'Total_retirement_benefits_pre-2016','Total_survivors_pensions_pre-2016','Total_retirement_benefits_post-2016','Total_survivors_pensions_post-2016',
+                                        'Total_universal_pensions_cost','Total_net_universal_pensions',
+                                            'Total_thirteenth_month_of_pension_pre-2016_cost','Total_net_thirteenth_month_of_pension_pre-2016','Total_thirteenth_month_of_pension_post-2016_cost','Total_net_thirteenth_month_of_pension_post-2016',
+                                                'Total_thirteenth_month_of_universal_pension_cost','Total_net_thirteenth_month_of_universal_pension',
+                                                    fname='central_v2_m.csv',mode='a')
+                - csv('period','Total_family_benefits','Total_contributive_child_benefits','Total_auh','Total_spouse_benefit',
+                                'Total_school_aid','Total_wedding_benefit','Total_prenatal_benefit','Total_pregnancy_benefit','Total_birth_benefit',
+                                    fname='central_v5_m.csv',mode='a')
         ################################################################################################################
-                - csv('period', 'Contributory pensioners share', 'Moratorium pensioners share', 'Universal pensioners share','Retirement coverage for legal age',
-                                    'Retirement coverage 65+', 'All coverage legal age', 'All coverage 65+','Contributory retirement coverage legal age', 'Contributory retirement coverage 65+', 'Survivors benefit coverage legal age', 'Survivors benefit coverage 65+', 'Moratorium benefit coverage legal age', 'Moratorium benefit coverage 65+', 'PUAM coverage legal age', 'PUAM coverage 65+',
-                                    'Mean contributory retirement pension', 'Mean survivors benefit', 'Mean moratorium pension', 'Mean universal pension', 'Mean retirement pension', 'Mean pension benefit',
-                                        'Median pension benefit', 'Median pension to labour income ratio', 'Mean pension to labour income ratio',
-                                            'Mean family benefit', 'Mean child benefits', 'Mean contributory child benefits', 'Mean AUH benefits', 
-                                                'Child benefit coverage', 'Contributory child benefit coverage', 'AUH coverage',
-                                                    'Gini, retirement age', 'Gini, retirement age, non labour income', 'Gini, 65+', 'Gini, 65+, non labour income', 
-                                                        'Gini, retirement age, has income',  'Gini, retirement age, (has) non labour income', 'Gini, 65+, has income', 'Gini, 65+, (has) non labour income',
+                - csv('period','Contributory_pensioners_share','Moratorium_pensioners_share','universal_pensioners_share','retirement_coverage_for_legal_age',
+                                    'retirement_coverage_65+','All_coverage_legal_age','All_coverage_65+','Contributory_retirement_coverage_legal_age','Contributory_retirement_coverage_65+','survivors_benefit_coverage_legal_age','survivors_benefit_coverage_65+','Moratorium_benefit_coverage_legal_age','Moratorium_benefit_coverage_65+','PUAM_coverage_legal_age','PUAM_coverage_65+',
+                                    'Mean_Contributory_retirement_pension','Mean_survivors_benefit','Mean_moratorium_pension','Mean_universal_pension','Mean_retirement_pension','Mean_pension_benefit',
+                                        'Median_pension_benefit','Median_pension_to_labour_income_ratio','Mean_pension_to_labour_income_ratio',
+                                            'Mean_family_benefit','Mean_child_benefits','Mean_Contributory_child_benefits','Mean_AUH_benefits',
+                                                'Child_benefit_coverage','Contributory_child_benefit_coverage','AUH_coverage',
+                                                    'Gini_retirement_age','Gini_retirement_age_non_labour_income','Gini_65+','Gini_65+_non_labour_income',
+                                                        'Gini_retirement_age_has_income', 'Gini_retirement_age_(has)_non_labour_income','Gini_65+_has_income','Gini_65+_(has)_non_labour_income',
                                                     fname='adequacy_central.csv',mode='a')
             ageing: 
                 - age_quarters: age_quarters + 1
@@ -2600,7 +2600,7 @@ entities:
                 - csv(period,sum(SIPA_income*pondera)/1000,
                        sum(contribution_sal_SIPA*pondera)/1000,sum(taxable_income*pondera)/1000,sum(discounted_itl_sal_gross*pondera)/1000,sum(medio_aguinaldo_gross*pondera)/1000,
                         sum(contribution_aut_SIPA*pondera)/1000, sum(contribution_mono_SIPA*pondera)/1000,sum(mono_integrated_tax*pondera)/1000,
-                                fname='debug_central_SIPA_income.csv',mode='a')
+                                fname='central_SIPA_income.csv',mode='a')
             retirement:
 #Here we compute accumulated retirement rights, new retirement pensions and put up to date old retirement pensions (through pension mobility. We also increase moratorium 
         #pensions after the five-year penalty period has passed). 
@@ -2968,7 +2968,7 @@ entities:
                                     ,sum(universal_gross_pension*pondera)/1000,sum(universal_net_pension*pondera)/1000,
                                         sum(sac_jp_gross*pondera)/1000,sum(sac_jp_net*pondera)/1000,sum(sac_jp_gross_2*pondera)/1000,sum(sac_jp_net_2*pondera)/1000,
                                             sum(sac_up_gross*pondera)/1000,sum(sac_up_net*pondera)/1000,
-                                                fname='debug_central_v2_m.csv',mode='a')
+                                                fname='central_v2_m.csv',mode='a')
                 
             family_benefits: 
 #Lastly, we compute family benefits. All of these are de jure means-tested on the family-group level (variable IGF, or family-group income). 
@@ -3157,7 +3157,7 @@ entities:
                 - csv(period,sum(discounted_v5_m*pondera)/1000,
                        sum(child_benefit*pondera)/1000,sum(auh*pondera)/1000,sum(spouse_benefit*pondera)/1000,
                             sum(school_aid/3*pondera)/1000,sum(wedding_benefit/3*pondera)/1000,sum(prenatal/3*pondera)/1000,sum(pregnancy_sp/3*pondera)/1000,sum(birth_benefit/3*pondera)/1000,
-                                fname='debug_central_v5_m.csv',mode='a')
+                                fname='central_v5_m.csv',mode='a')
             adequacy: 
 #We put in this module all descriptive statistics on pension and family benefits income adequacy.
     #1- We implement the legislative change in June 2016 on computing the initial retirement benefit or survivor's pension.
@@ -3389,7 +3389,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49 
-    periods: 104
+    periods: 1
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
