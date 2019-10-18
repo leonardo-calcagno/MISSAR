@@ -2045,7 +2045,7 @@ entities:
                                             logit_score(temp_3 + temp_4)
                                     ,-10)))
                 #2-  We force people living alone that are not working in the formal sector to at least work in the informal sector, so as to reduce the 
-            #number of households with no revenue. 
+                    #number of households with no revenue. 
                 - unregistered_score: if(household.all_pension_income>0, unregistered_score,
                                         if(household.formal_workers_align_hh>0, unregistered_score,
                                             if(age==household.oldest_working_age_hh, 10000 + unregistered_score, 

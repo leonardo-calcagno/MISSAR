@@ -153,6 +153,7 @@ entities:
             - nb_persons:  {type: int, initialdata: false}
             - nb_children: {type: int, initialdata: false}
             - nb_lil_children: {type: int, initialdata: false}
+            - nb_adults: {type: int, initialdata: false}
             - igf_hh: {type: float, initialdata: false}
             - wage_earners_hh: {type: int, initialdata: false}
             - monotributistas_hh: {type: int, initialdata: false}
@@ -160,6 +161,10 @@ entities:
             - inactive_hh: {type: int, initialdata: false}
             - max_itl_sal_hh: {type: float, initialdata: false}
             - max_monotributo_cat_hh: {type: int, initialdata: false}
+            - all_income: {type: float, initialdata: false}
+            - all_labour_income: {type: float, initialdata: false}
+            - all_pension_income: {type: float, initialdata: false}
+            - all_fam_benefits: {type: float, initialdata: false}
             - id: int
             - pondera: int
             - household_id2: int
@@ -173,6 +178,7 @@ entities:
                 - nb_persons: persons.count()
                 - nb_children: persons.count(age < 18)
                 - nb_lil_children: persons.count(age < 5) 
+                - nb_adults: persons.count(age>=16)
             clean_empty: remove(nb_persons ==0)
             igf_household: 
             # IGF stands for family-group income. Since some family links cannot be correctly estimated in the EPHc, it is important to compute it for all individuals 
@@ -438,33 +444,20 @@ entities:
                                                 filter=sedlac_income!=0,weights=pondera),weights=pondera)
                                                     /sum(all_labour_income+all_fam_benefits,weights=pondera)                                                    
     # 5- We export these redistribution indicators into a separate csv file.                                                 
-                - csv('Period', 'Gini per capita, all income', 'Gini per capita, labour income','Gini per capita, labour and pension income', 'Gini per capita, labour and family benefits income', 
-                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
-                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
-                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
-                                            fname='redistribution_central.csv',mode='a')
                 - csv(period,gini_all_income,gini_labour_income,gini_labour_pension_income,gini_labour_fam_benefits,
                             decile_ratio_all_income, decile_ratio_labour_income, decile_ratio_labour_pension_income, decile_ratio_labour_fam_ben_income, 
                                 share_top_10, share_top_10_labour,share_top_10_labour_pension,share_top_10_labour_fam_ben,
                                     share_bottom_10, share_bottom_10_labour,share_bottom_10_labour_pension,share_bottom_10_labour_fam_ben,
                                         fname='redistribution_central.csv',mode='a') 
         ################################################################################################################                                
-                - csv('Period', 'Gini insee, all income', 'Gini insee, labour income','Gini insee, labour and pension income', 'Gini insee, labour and family benefits income', 
-                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
-                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
-                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
-                                            fname='redistribution_central_insee.csv',mode='a')
+                
                 - csv(period,gini_insee_all_income,gini_insee_labour_income,gini_insee_labour_pension_income,gini_insee_labour_fam_benefits,
                             decile_ratio_insee_all_income, decile_ratio_insee_labour_income, decile_ratio_insee_labour_pension_income, decile_ratio_insee_labour_fam_ben_income, 
                                 share_top_10_insee, share_top_10_insee_labour,share_top_10_insee_labour_pension,share_top_10_insee_labour_fam_ben,
                                     share_bottom_10_insee, share_bottom_10_insee_labour,share_bottom_10_insee_labour_pension,share_bottom_10_insee_labour_fam_ben,
                                         fname='redistribution_central_insee.csv',mode='a') 
         ################################################################################################################
-                - csv('Period', 'Gini sedlac, all income', 'Gini sedlac, labour income','Gini sedlac, labour and pension income', 'Gini sedlac, labour and family benefits income', 
-                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
-                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
-                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
-                                            fname='redistribution_central_sedlac.csv',mode='a')
+                
                 - csv(period,gini_sedlac_all_income,gini_sedlac_labour_income,gini_sedlac_labour_pension_income,gini_sedlac_labour_fam_benefits,
                             decile_ratio_sedlac_all_income, decile_ratio_sedlac_labour_income, decile_ratio_sedlac_labour_pension_income, decile_ratio_sedlac_labour_fam_ben_income, 
                                 share_top_10_sedlac, share_top_10_sedlac_labour,share_top_10_sedlac_labour_pension,share_top_10_sedlac_labour_fam_ben,
@@ -487,7 +480,7 @@ entities:
             - student: bool
             - polimodal: int
             - university_year: int
-            # Second, we import labour-market related variables 
+            # Third, we import labour-market related variables 
             - labour_market_state:     int
             - seniority: int
             - quarterly_seniority: int
@@ -496,18 +489,18 @@ entities:
             - resid: float
             - boss: int
             - contribution: int
-            # Third, we import social-security information 
+            # Fourth, we import social-security information 
             - retired: bool
             #- v2_m: float
             - discounted_v2_m: float
             #- costo_v2_m: float
             - disc_cost_v2_m: float
-            # Fourth, we list here identification variables and family links
+            # Fifth, we list here identification variables and family links
             - household_id: int
             - mother_id:     int
             - partner_id:    int
             - father_id: int
-            #Fifth, we add career variables. They are useful for computing both retirement benefits and survivors pensions
+            #Sixth, we add career variables. They are useful for computing both retirement benefits and survivors pensions
             - car_sal: int
             - car_ind: int
             - car_mono_norref: int
@@ -912,7 +905,7 @@ entities:
             - discounted_itl_gross: {type: float, initialdata: false}
             - discounted_itl_sal_gross: {type: float, initialdata: false}
             - itl_anses: {type: float, initialdata: false}   
-                #Cotis stans for contributionation or contribution to social security. See the contributions module for details. 
+                #contribution stands for contributions to social security. See the contributions module for details. 
             - contribution_sal_SIPA: {type: float, initialdata: false}
             - contribution_sal_PAMI: {type: float, initialdata: false}
             - contribution_sal_obra_social: {type: float, initialdata: false}
@@ -923,9 +916,14 @@ entities:
             - mono_integrated_tax: {type: float, initialdata: false}
             - monotributo_cat: {type: int, initialdata: false}
             - rent_aut: {type: float, initialdata: false}
+            - social_monotributo: {type: int, initialdata: false}
+            - monotributo: {type: int, initialdata: false}
                 # aguinaldo stands for thirteenth month, a widespread benefit among formal wage-earners.  
             - medio_aguinaldo: {type: float, initialdata: false}
             - medio_aguinaldo_gross: {type: float, initialdata: false}
+                #We count the number of formal workers in a household before forcing some people to at least be informal. We need thus to stock these variables.
+            - wage_earner_align: {type: bool, initialdata: false}
+            - independent_align: {type: bool, initialdata: false}
                 #IGF stands for Family group income. See the details in the family benefits module
             - igf: {type: float, initialdata: false}
             # Fourthly, these are the retirement and survivors pensions we compute in our model. 
@@ -1023,6 +1021,7 @@ entities:
             IS_INFORMAL: labour_market_state ==3
             IS_UNEMPLOYED: labour_market_state ==4
             IS_INACTIVE: labour_market_state ==5
+            IS_WORKING: labour_market_state==1 or labour_market_state==2 or labour_market_state==3
             ISSTUDENT: student
             ISMARRIED: marital_status ==2
             IN_RELATIONSHIP: marital_status ==1 or marital_status ==2
@@ -1159,6 +1158,29 @@ entities:
         #Finally, having all individuals age at the same time was a problem for our education module. We thus assume respondents had a 25% chance of being born during a given quarter.        
                 
                 - age_quarters: age_quarters + choice([0, 1, 2, 3], [0.25, 0.25, 0.25, 0.25]) 
+        #Sixth, we are going to export aggregate files to determine the sustainability, adequacy and redistributive impact of social security. We create here the headers of such csv 
+                #files, so it is not repeated at each loop of the simulation in the output files. 
+                - csv('Period', 'Gini per capita, all income', 'Gini per capita, labour income','Gini per capita, labour and pension income', 'Gini per capita, labour and family benefits income', 
+                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
+                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
+                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
+                                            fname='redistribution_central.csv',mode='a')
+                - csv('Period', 'Gini insee, all income', 'Gini insee, labour income','Gini insee, labour and pension income', 'Gini insee, labour and family benefits income', 
+                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
+                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
+                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
+                                            fname='redistribution_central_insee.csv',mode='a')
+                - csv('Period', 'Gini sedlac, all income', 'Gini sedlac, labour income','Gini sedlac, labour and pension income', 'Gini sedlac, labour and family benefits income', 
+                                'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
+                                    'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
+                                        'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
+                                            fname='redistribution_central_sedlac.csv',mode='a')
+################################################################################################################
+                - csv('Period', 'Total_SIPA_income',
+                                    'Total_wage-earners_SIPA_contributions','Total_taxable_income','Total_gross_wages','Total_SAC',
+                                        'Total_autonomous_workers_SIPA_contributions','Total_Monotributo_SIPA_contributions','Monotributo_integrated_tax',
+                                                fname='central_SIPA_income.csv',mode='a')    
+#SEGUIR AQUI
             ageing: 
                 - age_quarters: age_quarters + 1
                 - age: trunc(age_quarters/4) 
