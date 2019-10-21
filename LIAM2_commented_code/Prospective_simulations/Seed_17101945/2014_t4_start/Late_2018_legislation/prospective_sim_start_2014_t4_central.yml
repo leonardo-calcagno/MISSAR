@@ -1421,8 +1421,7 @@ entities:
                 
     # 5- We store family pensions in more aggregate variables. We basically sum all survivor's benefits a given individual receives (no matter the departed that originated them).
                 - gross_pension_child: pension_child_f + pension_child_m 
-                - gross_pension_child_2: pension_child_2_f + pension_child_2_m
-                #SEGUIR AQUI 13 ABRIL 2018 ERROR PENSION_CHILD QUE SE VA AL INFINITO Y MÁS ALLÁ ID 56151
+                - gross_pension_child_2: pension_child_2_f + pension_child_2_m                
         #Survivor's pensions contribute to the PAMI (elderly healthcare) just as retirement benefits.
             # Contributions to the PAMI are: 3% of the gross pension up to the minimum pension, then 6% of all income above the minimum pension. 
                 - net_pension_child: if(gross_pension_child>=MIN_PENSION_CENTRAL_2014_T4, (gross_pension_child-MIN_PENSION_CENTRAL_2014_T4)*0.94+MIN_PENSION_CENTRAL_2014_T4*0.97, 
