@@ -982,7 +982,6 @@ entities:
             - disc_cost_v2_m_2: {type: float, initialdata: false}
             #We group in this variable all the bonuses paid temporarily to ANSES beneficiaries.
             - temporary_pension_bonus: {type: float, initialdata: false} 
-            - temporary_auh_bonus: {type: float, initialdata: false} 
             
            
         links:
@@ -3108,6 +3107,25 @@ entities:
                                 if(household.nb_persons==household.inactive_hh, 0, auh))))
             #Finally, just to double check, we ensure a child that earns a family benefit cannot earn the AUH.     
                 - auh: if(child_benefit>0, 0, auh) 
+    #5.2- We add temporary AUH bonuses, for one period only, given since 2018. 
+            #First, the Decree 1058/2017 gave $400 pesos to AUH recipients on March 2018. Thus, we use the CPI index for March, but assume it is given the second quarter
+                    #of 2018 (together with the increase of the AUH in the model). 
+                - decree_1058_2017_auh_bonus: if(period!=62, 0, 
+                                                if(auh<=0, 0, 
+                                                    181.09))
+           
+                - temporary_auh_bonus: decree_1058_2017_auh_bonus
+                - auh: if(auh==0, auh, 
+                            auh+temporary_auh_bonus)
+    #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. Thus, for three periods (May 2019, August 2019 and November 2019) in
+            #our model, the AUH is higher than the contributive child benefit earned by the children of monotributistas or lowest earning wage-earners. We hard-code it 
+            #here. Beware, CPI indexes for October and November 2019 are taken from market expectations published by the Central Bank (REM): once official CPI 
+            #indexes are published, we have to change the period 68 value for the auh. 
+                - auh: if(auh<=0, auh,
+                            if(period==66, 727.85, 
+                                if(period==67, 666.98,
+                                    if(period==68, 580.15, 
+                                         auh)))) 
     #6- We compute the yearly school aid (paid on March). This benefit is meant for minors that attend school. 
         #It is accessible to children that receive a contributive child benefit (as explicited de jure by Res. 606/2011 Art. 2).
                 #"Wage-earners, those receiving a labour hazards (...), unemployment or SIPA [retirement] benefit (...) will get the family benefit for yearly school aid as long as they are entitled to the child benefit". 
@@ -3406,12 +3424,6 @@ entities:
                                                 if(has_moratorium_pension or has_universal_pension, 169.78,
                                                     0))))
                 - temporary_pension_bonus: decree_1058_2017_bonus
-            temporary_measures_fam_ben:
-                  #Article 5 of the Decree also pays $400 pesos to AUH beneficiaries. Discounted by the March 2018 CPI, this equals $181.09.
-                - decree_1058_2017_auh_bonus: if(period!=62, 0, 
-                                                if(auh<=0, 0, 
-                                                    181.09))
-                - temporary_auh_bonus: decree_1058_2017_auh_bonus
                 #SEGUIR AQUI, EN PARTICULAR AGREGAR LA VARIABLE TEMPORARY BONUS A LOS CSV, PERO NO A LOS MONTOS DE LOS BENEFICIOS.
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
@@ -3451,7 +3463,7 @@ simulation:
             #are means-tested on the IGF. 
         - person: [retirement,temporary_measures_pensions]
         - household: [household_composition,clean_empty, igf_household]
-        - person: [family_benefits,temporary_measures_fam_ben,adequacy] 
+        - person: [family_benefits,adequacy] 
         - household: [redistribution]
       #  - person: [dump_all] 
     #For debugging with the console, it is better to remove the dump_all instruction above, as it makes the code run twice as fast. 
@@ -3474,7 +3486,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49 
-    periods: 14
+    periods: 16
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
