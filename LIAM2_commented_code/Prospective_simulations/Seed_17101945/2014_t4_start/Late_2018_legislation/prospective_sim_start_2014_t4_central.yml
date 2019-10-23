@@ -196,12 +196,13 @@ entities:
     #1- We compute various versions of household income. These are different combinations of labour, pension and family benefits income. 
         #First, we compute the household's total income. It is useful for determining the income share of the top and bottom deciles. 
             #We define a temporary value for retirement pension income. It takes into account the change in the computation of the initial pension starting June 2016.
-                - all_pension_income: if(period<=54,persons.sum(discounted_v2_m),
-                                            persons.sum(discounted_v2_m_2))
-                #+persons.sum(temporary_pension_bonus)
+                - all_pension_income: if(period<=54,persons.sum(discounted_v2_m+temporary_pension_bonus),
+                                            persons.sum(discounted_v2_m_2+temporary_pension_bonus))
+                # Uncomment if you want to see the impact of the bonus on income inequality. The impact on the Gini of the second quarter of 2018 is marginal. 
+                #- all_pension_income: if(period<=54,persons.sum(discounted_v2_m),
+                 #                           persons.sum(discounted_v2_m_2))
             #Incidentally, we decide to store other household income variables, useful to track in particular simulated households with no revenue.                                
                 - all_income: persons.sum(discounted_itl)+ all_pension_income + persons.sum(discounted_v5_m)
-                #+persons.sum(temporary_pension_bonus)
                 - all_labour_income: persons.sum(discounted_itl)
                 - all_fam_benefits: persons.sum(discounted_v5_m)
         #Second, we compute various combinations of per capita income. The two most interesting comparisons are per capita income before and after social transfers.
@@ -1190,6 +1191,10 @@ entities:
                                                     'Gini_retirement_age','Gini_retirement_age_non_labour_income','Gini_65+','Gini_65+_non_labour_income',
                                                         'Gini_retirement_age_has_income', 'Gini_retirement_age_(has)_non_labour_income','Gini_65+_has_income','Gini_65+_(has)_non_labour_income',
                                                     fname='adequacy_central.csv',mode='a')
+        ###############################################################################################################
+                - csv('Period','All_pensions','Contributory_pensions','Moratorium_and_PUAM',
+                                                fname='temporary_pension_bonus_central.csv',mode='a')
+                - csv('Period','AUH', fname='temporary_fam_ben_bonus_central.csv',mode='a')
             ageing: 
                 - age_quarters: age_quarters + 1
                 - age: trunc(age_quarters/4) 
@@ -3181,6 +3186,8 @@ entities:
                        sum(child_benefit*pondera)/1000,sum(auh*pondera)/1000,sum(spouse_benefit*pondera)/1000,
                             sum(school_aid/3*pondera)/1000,sum(wedding_benefit/3*pondera)/1000,sum(prenatal/3*pondera)/1000,sum(pregnancy_sp/3*pondera)/1000,sum(birth_benefit/3*pondera)/1000,
                                 fname='central_v5_m.csv',mode='a')
+                - csv(period,sum(temporary_auh_bonus*pondera)/1000,
+                                fname='temporary_fam_ben_bonus_central.csv',mode='a')
             adequacy: 
 #We put in this module all descriptive statistics on pension and family benefits income adequacy.
     #1- We implement the legislative change in June 2016 on computing the initial retirement benefit or survivor's pension.
@@ -3424,7 +3431,13 @@ entities:
                                                 if(has_moratorium_pension or has_universal_pension, 169.78,
                                                     0))))
                 - temporary_pension_bonus: decree_1058_2017_bonus
-                #SEGUIR AQUI, EN PARTICULAR AGREGAR LA VARIABLE TEMPORARY BONUS A LOS CSV, PERO NO A LOS MONTOS DE LOS BENEFICIOS.
+    #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
+            #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
+            #hypotetical bonuses in the future. As suchk, we simply export in a separate csv file the cost of temporary pension bonuses. 
+                - csv(period,sum(temporary_pension_bonus*pondera)/1000,sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==339.55)/1000,
+                                sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==169.78)/1000,
+                                                fname='temporary_pension_bonus_central.csv',mode='a')
+                
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
                                 discounted_v2_m,disc_cost_v2_m,discounted_v2_m_2,disc_cost_v2_m_2,gross_retirement,gross_retirement_2,net_retirement,net_retirement_2,gross_pension,gross_pension_2,net_pension,net_pension_2,sac_jp_gross,sac_jp_gross_2,sac_jp_net,sac_jp_net_2,sac_up_gross,sac_up_net,liqui_retirement,universal_gross_pension,universal_net_pension,
@@ -3486,7 +3499,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49 
-    periods: 16
+    periods: 104
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
