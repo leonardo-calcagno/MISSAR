@@ -426,8 +426,7 @@ entities:
                                             filter=sedlac_income<=percentile(sedlac_income,10,
                                                 filter=sedlac_income!=0,weights=pondera),weights=pondera)
                                                     /sum(all_labour_income+all_fam_benefits,weights=pondera)                                                    
-    # 5- We export these redistribution indicators into a separate csv file.                                                 
-                
+    # 5- We export these redistribution indicators into a separate csv file.
                 - csv(period,gini_all_income,gini_labour_income,gini_labour_pension_income,gini_labour_fam_benefits,
                             decile_ratio_all_income, decile_ratio_labour_income, decile_ratio_labour_pension_income, decile_ratio_labour_fam_ben_income, 
                                 share_top_10, share_top_10_labour,share_top_10_labour_pension,share_top_10_labour_fam_ben,
@@ -440,13 +439,13 @@ entities:
                                 share_top_10_insee, share_top_10_insee_labour,share_top_10_insee_labour_pension,share_top_10_insee_labour_fam_ben,
                                     share_bottom_10_insee, share_bottom_10_insee_labour,share_bottom_10_insee_labour_pension,share_bottom_10_insee_labour_fam_ben,
                                         fname='redistribution_central_insee.csv',mode='a') 
-        ################################################################################################################
-                
+        ################################################################################################################ 
                 - csv(period,gini_sedlac_all_income,gini_sedlac_labour_income,gini_sedlac_labour_pension_income,gini_sedlac_labour_fam_benefits,
                             decile_ratio_sedlac_all_income, decile_ratio_sedlac_labour_income, decile_ratio_sedlac_labour_pension_income, decile_ratio_sedlac_labour_fam_ben_income, 
                                 share_top_10_sedlac, share_top_10_sedlac_labour,share_top_10_sedlac_labour_pension,share_top_10_sedlac_labour_fam_ben,
                                     share_bottom_10_sedlac, share_bottom_10_sedlac_labour,share_bottom_10_sedlac_labour_pension,share_bottom_10_sedlac_labour_fam_ben,
                                         fname='redistribution_central_sedlac.csv',mode='a')   
+            
             count_formal_workers:
                 - formal_workers_align_hh: persons.count(wage_earner_align==True)+ persons.count(independent_align==True)
                 - oldest_working_age_hh: persons.max(age,15<age and age<70)
@@ -905,7 +904,7 @@ entities:
             - rent_aut: {type: float, initialdata: false}
             - social_monotributo: {type: int, initialdata: false}
             - monotributo: {type: int, initialdata: false}
-                # aguinaldo stands for thirteenth month, a widespread benefit among formal wage-earners.  
+                # aguinaldo stands for thirteenth month, a widespread benefit among formal wage-earners.
             - medio_aguinaldo: {type: float, initialdata: false}
             - medio_aguinaldo_gross: {type: float, initialdata: false}
                 #We count the number of formal workers in a household before forcing some people to at least be informal. We need thus to stock these variables.
@@ -934,7 +933,6 @@ entities:
             - tag_pension_uni: {type: bool, initialdata: false}
             - universal_gross_pension: {type: float, initialdata: false}
             - universal_net_pension: {type: float, initialdata: false}
-                    
                     # SAC stands for Sueldo anual complementario, or thirteenth month. There is a thirteenth month that is paid in two parts (June and December) to retirees and pensioners.
                     # It is subject to contributions to the PAMI healthcare system for the elderly, as such there is a gross ("bruta") and net ("neta") thirteenth month for retirees and pensioners
             - sac_jp_gross: {type: float, initialdata: false}
@@ -981,7 +979,7 @@ entities:
                 # The actual cost for ANSES, including the compulsory contribution to elderly healthcare, is given by variable disc_cost_v2_m
             - discounted_v2_m_2: {type: float, initialdata: false}
             - disc_cost_v2_m_2: {type: float, initialdata: false}
-            #We group in this variable all the bonuses paid temporarily to ANSES beneficiaries.
+            #We group in this variable all the bonuses paid temporarily to ANSES pension beneficiaries.
             - temporary_pension_bonus: {type: float, initialdata: false} 
             
            
@@ -1883,7 +1881,7 @@ entities:
             get_a_life:
 #This short module is taken almost as is from LIAM2 demonstration code. It simply ensures people aged 24 or more not in a relationship make a new household, even if
         #they are inactive. 
-    #In order to reduce the number of households with no income though, only those that are working may form a new household.    
+    #In order to reduce the number of households with no income though, only those that are working may form a new household.
                 - alone: household.nb_persons ==1
                 - household_id: if(partner_id==UNSET and not alone and (age >= 24) and IS_WORKING,
                             new('household'),
@@ -1904,9 +1902,7 @@ entities:
                 
                 - temp_2:  (labour_market_state==1 and sect_quartile== 1)*(-0.7981)+(labour_market_state==1 and sect_quartile== 2)*(-1.7823)+(labour_market_state==1 and sect_quartile== 4)*(-0.4383)+(labour_market_state!=2 or sect_quartile!=1)*(-3.3208)
                                                         +(labour_market_state==2 and sect_quartile== 2)*(3.5073)+(labour_market_state==2 and sect_quartile== 3)*(3.7082)+(labour_market_state==2 and sect_quartile== 4)*(4.1695)
-                                                        +(labour_market_state==3 and sect_quartile== 3)*(0.8403)+(labour_market_state==3 and sect_quartile== 4)*(1.3470)+(labour_market_state==5)*(-1.1619)                                       
-                
-                                                  
+                                                        +(labour_market_state==3 and sect_quartile== 3)*(0.8403)+(labour_market_state==3 and sect_quartile== 4)*(1.3470)+(labour_market_state==5)*(-1.1619)                                                       
                 - wage_earner_score: if(ACTIVEAGE,
                                         if(ISMALE, 
                                            logit_score((2.4008)+(IS_FORMATION2)*(0.3469)+(IS_FORMATION3)*(0.5928)+(age>=16 and age<20)*(-1.0280)+(age>=25 and age<30)*(0.1381)
@@ -2017,8 +2013,7 @@ entities:
                 - temp_4:  (labour_market_state==1 and sect_quartile== 2)*(-1.4080)+(labour_market_state==1 and sect_quartile== 3)*(-0.9099)+(labour_market_state==1 and sect_quartile== 4)*(-1.8524)
                                                         +(labour_market_state==2 and sect_quartile==1)*(0.5792)+(labour_market_state==2 and sect_quartile== 2)*(0.3398)+(labour_market_state!=3 or sect_quartile!=1)*(-1.8805)
                                                         +(labour_market_state==3 and sect_quartile== 2)*(2.2168)+(labour_market_state==3 and sect_quartile== 3)*(2.2966)+(labour_market_state==3 and sect_quartile== 4)*(2.1187)
-                                                        +(labour_market_state==5)*(-1.0093)   
-                                                 
+                                                        +(labour_market_state==5)*(-1.0093)                                                    
                 - unregistered_score: if(ACTIVEAGE,
                                         if(ISMALE, logit_score((0.4251)+(IS_FORMATION1)*(1.1038)+(IS_FORMATION2)*(0.6866)+(age>=16 and age<20)*(-0.7414)+(age>=20 and age<25)*(-0.1981)
                                                                 +(age>=25 and age<30)*(-0.0477)+(age>=45 and age<50)*(0.0956)+(age>=60 and age<65)*(-0.2403)+(ISMARRIED)*(-0.2368)
@@ -2091,8 +2086,6 @@ entities:
                                                         +(labour_market_state!=4)*(-5.5192)+(labour_market_state==5)*(2.8292))
                                     ,-10)))
     #3- Finally, we select enough people to fill the desired rate of people in a given labour-market state.         
-                
-    
                 - unregistered_align: if(ACTIVEAGE,
                                     if(ISMALE,
                                         align(unregistered_score,'cal_aun_h_central_p.csv',leave=wage_earner_align or independent_align),
@@ -3203,6 +3196,7 @@ entities:
                 #survivors pension gets the compensation only once, as we already consider all survivors pensions are derived from contributory benefits in our model 
                    #(the data shows it is most of the time the case anyway). If we also assume this bonus could be accumulated, we would be overestimating the cost and
                    #impact of this temporary bonus. 
+        #Go to the temporary_pension_bonus procedure for more information on this one-time payment.
                 - survivors_benefit: if(survivors_benefit<=0, survivors_benefit,
                                         if(retirement_pension==0, survivors_benefit+temporary_pension_bonus, 
                                             survivors_benefit+temporary_pension_bonus))
@@ -3368,7 +3362,6 @@ entities:
                                                 gini_ret_age_all, gini_ret_age_non_labour, gini_65_all, gini_65_non_labour,
                                                     gini_ret_age_has_income_all, gini_ret_age_has_income_non_labour, gini_65_has_income_all, gini_65_has_income_non_labour,
                                             fname='adequacy_central.csv',mode='a')
-#Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             temporary_measures_pensions: 
             #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri government. 
 #First, a bonus was paid on March 2018 to compensate retirement and survivors' pensioners for the change in pension mobility 
@@ -3438,6 +3431,7 @@ entities:
                                 sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==169.78)/1000,
                                                 fname='temporary_pension_bonus_central.csv',mode='a')
                 
+#Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
                                 discounted_v2_m,disc_cost_v2_m,discounted_v2_m_2,disc_cost_v2_m_2,gross_retirement,gross_retirement_2,net_retirement,net_retirement_2,gross_pension,gross_pension_2,net_pension,net_pension_2,sac_jp_gross,sac_jp_gross_2,sac_jp_net,sac_jp_net_2,sac_up_gross,sac_up_net,liqui_retirement,universal_gross_pension,universal_net_pension,
@@ -3499,7 +3493,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49 
-    periods: 104
+    periods: 16
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
