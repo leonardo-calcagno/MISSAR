@@ -3093,7 +3093,7 @@ entities:
                     #of 2018 (together with the increase of the AUH in the model). 
                 - decree_1058_2017_auh_bonus: if(period!=62, 0, 
                                                 if(auh<=0, 0, 
-                                                    181.09))
+                                                    181.09/3))
            
                 - temporary_auh_bonus: decree_1058_2017_auh_bonus
                 - auh: if(auh==0, auh, 
@@ -3392,10 +3392,11 @@ entities:
                         # period is $3360.18, and the average pension $4749.29
                 #However, we actualise the value of the bonus by the March 2018 CPI index, because this is when the bonus was actually paid. 
                         #Thus, contributory retirement pensioners get $339.55, while moratorium and universal pensioners get half this bonus, $169.78.
+                #We also divide by three this bonus: it was paid on a single month, and the pension variable for a given period is the mean pension during a quarter.
                 - decree_1058_2017_bonus: if(period!=62, 0, 
                                             if(disc_cost_v2_m>4317.05, 0,
-                                               if(has_contributory_benefit, 339.55, 
-                                                if(has_moratorium_pension or has_universal_pension, 169.78,
+                                               if(has_contributory_benefit, 339.55/3, 
+                                                if(has_moratorium_pension or has_universal_pension, 169.78/3,
                                                     0))))
                 - temporary_pension_bonus: decree_1058_2017_bonus
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
@@ -3467,7 +3468,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49 
-    periods: 16
+    periods: 104
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
