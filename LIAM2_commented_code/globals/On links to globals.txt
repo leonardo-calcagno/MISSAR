@@ -1,0 +1,5 @@
+LIAM2 can only import csv files, as of version 0.12. We thus need to copy and paste the values of the globals from the xlsx files where they are computed to the csv files
+that are imported by LIAM2. 
+To make this copy and paste process easier, we make intermediate .xlsx globals files, from where you then only need to copy everything and paste to the csv file.
+These xlsx files are linked to the Inflation_RIPTE_and_ANSES_discounting.xlsx file, with absolute links. To make this work, you will need to change the path in 
+your excel file at home. 

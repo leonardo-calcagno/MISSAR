@@ -80,20 +80,20 @@ globals:
             # AUT refers to independent workers that contribute to the Autonomous Workers regime.
             # Categories I and II are reserved for own-account workers while categories III to V are those of the entrepreneurs.
             # LIM_AUT_ACTU_I: income limit to belong to category I in real terms.
-            # RENT_AUT_ACTU_I: reference income associated to category I in real terms.
+            # RENT_AUT_ACTU_LOW_I: reference income associated to category I in real terms.
             # COT_AUT_ACTU_LOW_I: social security contributions of category I workers in real terms. 
             - LIM_AUT_ACTU_I: float
-            - RENT_AUT_ACTU_I: float
+            - RENT_AUT_ACTU_LOW_I: float
             - COT_AUT_ACTU_LOW_I: float
-            - RENT_AUT_ACTU_II: float
+            - RENT_AUT_ACTU_LOW_II: float
             - COT_AUT_ACTU_LOW_II: float
             - LIM_AUT_ACTU_III: float
-            - RENT_AUT_ACTU_III: float
+            - RENT_AUT_ACTU_LOW_III: float
             - COT_AUT_ACTU_LOW_III: float
             - LIM_AUT_ACTU_IV: float
-            - RENT_AUT_ACTU_IV: float
+            - RENT_AUT_ACTU_LOW_IV: float
             - COT_AUT_ACTU_LOW_IV: float
-            - RENT_AUT_ACTU_V: float
+            - RENT_AUT_ACTU_LOW_V: float
             - COT_AUT_ACTU_LOW_V: float
             #Finally, we list below global variables related to family benefits. 
             # There are four relevant family income caps for child benefits. Cap 1 is the lowest in real terms, cap 4 is the highest (and exceeding it bars access to family benefits to formal workers)
@@ -2351,29 +2351,29 @@ entities:
                 #bosses being in category V. This is because the income limits to be in lower categories (I for own-account workers, III and IV for bosses) are extremely
                 #low, since they have never been adjusted for inflation. Starting from 2018, we simply assume all bosses are in Category V and all 
                 #own-account workers of the autonomous workers regime are in Category II. This lets us skip the estimation of the real values of income limits for Categories
-                #I, III and IV, which would have required we simulate future inflation rates. This is why RENT_AUT_ACTU_I, RENT_AUT_ACTU_III and RENT_AUT_ACTU_IV are all equal to 
+                #I, III and IV, which would have required we simulate future inflation rates. This is why RENT_AUT_ACTU_LOW_I, RENT_AUT_ACTU_LOW_III and RENT_AUT_ACTU_LOW_IV are all equal to 
                 #0 starting from year 2018. 
         #For each category, Autonomous workers are assigned a reference income, which enters in the computation of their retirement rights. 
                 - rent_aut: if(autonomo==0, 0,
                                 if(boss==0, 
-                                    if(discounted_itl<=LIM_AUT_ACTU_I, RENT_AUT_ACTU_I, RENT_AUT_ACTU_II),
-                                        if(discounted_itl<=LIM_AUT_ACTU_III, RENT_AUT_ACTU_III,
-                                            if(discounted_itl<=LIM_AUT_ACTU_IV, RENT_AUT_ACTU_IV, RENT_AUT_ACTU_V))))                            
+                                    if(discounted_itl<=LIM_AUT_ACTU_I, RENT_AUT_ACTU_LOW_I, RENT_AUT_ACTU_LOW_II),
+                                        if(discounted_itl<=LIM_AUT_ACTU_III, RENT_AUT_ACTU_LOW_III,
+                                            if(discounted_itl<=LIM_AUT_ACTU_IV, RENT_AUT_ACTU_LOW_IV, RENT_AUT_ACTU_LOW_V))))                            
                 - rent_aut_2: rent_aut
         #Finally, we compute their compulsory contributions to the SIPA (so to the retirement system) and to the PAMI (elderly healthcare). 
                 - contribution_aut_SIPA: if(autonomo==0, 0,
-                                     if(rent_aut==RENT_AUT_ACTU_I, COT_AUT_ACTU_LOW_I*0.27/0.32, 
-                                        if(rent_aut==RENT_AUT_ACTU_II, COT_AUT_ACTU_LOW_II*0.27/0.32, 
-                                            if(rent_aut==RENT_AUT_ACTU_III, COT_AUT_ACTU_LOW_III*0.27/0.32, 
-                                                if(rent_aut==RENT_AUT_ACTU_IV, COT_AUT_ACTU_LOW_IV*0.27/0.32, COT_AUT_ACTU_LOW_V*0.27/0.32)))))
+                                     if(rent_aut==RENT_AUT_ACTU_LOW_I, COT_AUT_ACTU_LOW_I*0.27/0.32, 
+                                        if(rent_aut==RENT_AUT_ACTU_LOW_II, COT_AUT_ACTU_LOW_II*0.27/0.32, 
+                                            if(rent_aut==RENT_AUT_ACTU_LOW_III, COT_AUT_ACTU_LOW_III*0.27/0.32, 
+                                                if(rent_aut==RENT_AUT_ACTU_LOW_IV, COT_AUT_ACTU_LOW_IV*0.27/0.32, COT_AUT_ACTU_LOW_V*0.27/0.32)))))
                                     
                                 
                 
                 - contribution_aut_PAMI: if(autonomo==0, 0,
-                                     if(rent_aut==RENT_AUT_ACTU_I, COT_AUT_ACTU_LOW_I*0.05/0.32, 
-                                        if(rent_aut==RENT_AUT_ACTU_II, COT_AUT_ACTU_LOW_II*0.05/0.32, 
-                                            if(rent_aut==RENT_AUT_ACTU_III, COT_AUT_ACTU_LOW_III*0.05/0.32, 
-                                                if(rent_aut==RENT_AUT_ACTU_IV*0.05/0.32, COT_AUT_ACTU_LOW_IV, COT_AUT_ACTU_LOW_V*0.05/0.32)))))
+                                     if(rent_aut==RENT_AUT_ACTU_LOW_I, COT_AUT_ACTU_LOW_I*0.05/0.32, 
+                                        if(rent_aut==RENT_AUT_ACTU_LOW_II, COT_AUT_ACTU_LOW_II*0.05/0.32, 
+                                            if(rent_aut==RENT_AUT_ACTU_LOW_III, COT_AUT_ACTU_LOW_III*0.05/0.32, 
+                                                if(rent_aut==RENT_AUT_ACTU_LOW_IV*0.05/0.32, COT_AUT_ACTU_LOW_IV, COT_AUT_ACTU_LOW_V*0.05/0.32)))))
     #4- We update accordingly our variables tracking recent formal independent workers' careers.             
                 - lag_mono_40: lag_mono_39
                 - lag_mono_39: lag_mono_38
