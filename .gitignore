@@ -48,3 +48,6 @@ $RECYCLE.BIN/
 *.h5
 # Ignore LibreOffice lock files
 *.~lock*
+
+#Ignore LIAM2 error logs
+*.log
