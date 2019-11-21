@@ -2056,68 +2056,68 @@ run;
 /* We then compute the alignment rates for marital status, first among men.*/
 proc freq data=leo.eph_formatted_2016; 
 weight pondera; 
-where (  ch04=1 & (period=52) & (100>agegroup>15)) ;
-table ch07*agegroup / noprint outpct out=marital_status_52; 
+where (  ch04=1 & (period=52) & (100>agegroup_ext>15)) ;
+table ch07*agegroup_ext / noprint outpct out=marital_status_52; 
 run; 
 proc freq data=leo.eph_formatted_2016; 
 weight pondera; 
-where (  ch04=1 & (period=53)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_53; 
+where (  ch04=1 & (period=53)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_53; 
 run; 
 proc freq data=leo.eph_formatted_2016; 
 weight pondera; 
-where (  ch04=1 & (period=54)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_54; 
+where (  ch04=1 & (period=54)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_54; 
 run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where (  ch04=1 & (period=55)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_55; 
+where (  ch04=1 & (period=55)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_55; 
 run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where (  ch04=1 & (period=56)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_56; 
+where (  ch04=1 & (period=56)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_56; 
 run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where (  ch04=1 & (period=57)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_57; 
+where (  ch04=1 & (period=57)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_57; 
 run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where (  ch04=1 & (period=58)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_58; 
+where (  ch04=1 & (period=58)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_58; 
 run; 
 proc freq data=leo.eph_formatted_2018; 
 weight pondera; 
-where (  ch04=1 & (period=59)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_59; 
+where (  ch04=1 & (period=59)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_59; 
 run; 
 proc freq data=leo.eph_formatted_2018; 
 weight pondera; 
-where (  ch04=1 & (period=60)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_60; 
+where (  ch04=1 & (period=60)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_60; 
 run; 
 proc freq data=leo.eph_formatted_2018; 
 weight pondera; 
-where (  ch04=1 & (period=61)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_61; 
+where (  ch04=1 & (period=61)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_61; 
 run; 
 proc freq data=leo.eph_formatted_2018; 
 weight pondera; 
-where (  ch04=1 & (period=62)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_62; 
+where (  ch04=1 & (period=62)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_62; 
 run; 
 proc freq data=leo.eph_formatted_2019; 
 weight pondera; 
-where (  ch04=1 & (period=63)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_63; 
+where (  ch04=1 & (period=63)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_63; 
 run; 
 proc freq data=leo.eph_formatted_2019; 
 weight pondera; 
-where (  ch04=1 & (period=64)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_64; 
+where (  ch04=1 & (period=64)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_64; 
 run; 
 data marital_status_52; set marital_status_52; period=54; percent_col=pct_col/100; run; 
 data marital_status_53; set marital_status_53; period=55; percent_col=pct_col/100; run; 
@@ -2133,26 +2133,26 @@ data marital_status_62; set marital_status_62; period=64; percent_col=pct_col/10
 data marital_status_63; set marital_status_63; period=65; percent_col=pct_col/100; run; 
 data marital_status_64; set marital_status_64; period=66; percent_col=pct_col/100; run; 
 
-data marital_status_52; set marital_status_52; keep percent_col agegroup ch07 period; run; 
-data marital_status_53; set marital_status_53; keep percent_col agegroup ch07 period; run; 
-data marital_status_54; set marital_status_54; keep percent_col agegroup ch07 period; run; 
-data marital_status_55; set marital_status_55; keep percent_col agegroup ch07 period; run; 
-data marital_status_56; set marital_status_56; keep percent_col agegroup ch07 period; run; 
-data marital_status_57; set marital_status_57; keep percent_col agegroup ch07 period; run; 
-data marital_status_58; set marital_status_58; keep percent_col agegroup ch07 period; run; 
-data marital_status_59; set marital_status_59; keep percent_col agegroup ch07 period; run; 
-data marital_status_60; set marital_status_60; keep percent_col agegroup ch07 period; run; 
-data marital_status_61; set marital_status_61; keep percent_col agegroup ch07 period; run; 
-data marital_status_62; set marital_status_62; keep percent_col agegroup ch07 period; run; 
-data marital_status_63; set marital_status_63; keep percent_col agegroup ch07 period; run; 
-data marital_status_64; set marital_status_64; keep percent_col agegroup ch07 period; run; 
+data marital_status_52; set marital_status_52; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_53; set marital_status_53; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_54; set marital_status_54; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_55; set marital_status_55; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_56; set marital_status_56; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_57; set marital_status_57; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_58; set marital_status_58; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_59; set marital_status_59; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_60; set marital_status_60; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_61; set marital_status_61; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_62; set marital_status_62; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_63; set marital_status_63; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_64; set marital_status_64; keep percent_col agegroup_ext ch07 period; run; 
 data marital_status_base_men; 
 set marital_status_52-marital_status_64; 
 run; 
 
 
 data mar_stat_1_men;
-set marital_status_base_men (where=(ch07=2));
+set marital_status_base_men (where=(ch07=1));
 run; 
 
 data mar_stat_2_men;
@@ -2171,27 +2171,27 @@ set marital_status_base_men (where=(ch07=5));
 run; 
 
 proc sort data=mar_stat_1_men; 
-by agegroup; 
+by agegroup_ext; 
 run; 
 proc sort data=mar_stat_2_men; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
 proc sort data=mar_stat_3_men; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
 proc sort data=mar_stat_4_men; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
 proc sort data=mar_stat_5_men; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
  
 proc transpose data=mar_stat_1_men out=transp_mar_stat_1_men; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_1_men; 
@@ -2204,7 +2204,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_1_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_1_men; 
 run; 
 %m_zero(leo.cal_post_2016_mar_stat_1_men); 
@@ -2215,16 +2215,16 @@ run;
 
 
 proc sort data=mar_stat_2_men; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
 proc sort data=mar_stat_3_men; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
  
 proc transpose data=mar_stat_2_men out=transp_mar_stat_2_men; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_2_men; 
@@ -2237,7 +2237,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_2_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_2_men;
  
 run; 
@@ -2249,7 +2249,7 @@ run;
 
  
 proc transpose data=mar_stat_3_men out=transp_mar_stat_3_men; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_3_men; 
@@ -2262,7 +2262,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_3_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_3_men;
  
 run; 
@@ -2273,7 +2273,7 @@ dbms=csv replace;
 run; 
 
 proc transpose data=mar_stat_4_men out=transp_mar_stat_4_men; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_4_men; 
@@ -2286,7 +2286,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_4_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_4_men;
  
 run; 
@@ -2297,7 +2297,7 @@ dbms=csv replace;
 run; 
  
 proc transpose data=mar_stat_5_men out=transp_mar_stat_5_men; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_5_men; 
@@ -2310,7 +2310,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_5_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_5_men;
  
 run; 
@@ -2322,68 +2322,68 @@ run;
 /* Now we compute the marital status alignment ratios among women.*/
 proc freq data=leo.eph_formatted_2016; 
 weight pondera; 
-where (  ch04=2 & (period=52) & (100>agegroup>15)) ;
-table ch07*agegroup / noprint outpct out=marital_status_52; 
+where (  ch04=2 & (period=52) & (100>agegroup_ext>15)) ;
+table ch07*agegroup_ext / noprint outpct out=marital_status_52; 
 run; 
 proc freq data=leo.eph_formatted_2016; 
 weight pondera; 
-where (  ch04=2 & (period=53)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_53; 
+where (  ch04=2 & (period=53)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_53; 
 run; 
 proc freq data=leo.eph_formatted_2016; 
 weight pondera; 
-where (  ch04=2 & (period=54)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_54; 
+where (  ch04=2 & (period=54)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_54; 
 run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where (  ch04=2 & (period=55)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_55; 
+where (  ch04=2 & (period=55)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_55; 
 run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where (  ch04=2 & (period=56)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_56; 
+where (  ch04=2 & (period=56)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_56; 
 run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where (  ch04=2 & (period=57)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_57; 
+where (  ch04=2 & (period=57)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_57; 
 run; 
 proc freq data=leo.eph_formatted_2017; 
 weight pondera; 
-where (  ch04=2 & (period=58)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_58; 
+where (  ch04=2 & (period=58)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_58; 
 run; 
 proc freq data=leo.eph_formatted_2018; 
 weight pondera; 
-where (  ch04=2 & (period=59)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_59; 
+where (  ch04=2 & (period=59)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_59; 
 run; 
 proc freq data=leo.eph_formatted_2018; 
 weight pondera; 
-where (  ch04=2 & (period=60)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_60; 
+where (  ch04=2 & (period=60)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_60; 
 run; 
 proc freq data=leo.eph_formatted_2018; 
 weight pondera; 
-where (  ch04=2 & (period=61)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_61; 
+where (  ch04=2 & (period=61)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_61; 
 run; 
 proc freq data=leo.eph_formatted_2018; 
 weight pondera; 
-where (  ch04=2 & (period=62)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_62; 
+where (  ch04=2 & (period=62)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_62; 
 run; 
 proc freq data=leo.eph_formatted_2019; 
 weight pondera; 
-where (  ch04=2 & (period=63)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_63; 
+where (  ch04=2 & (period=63)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_63; 
 run; 
 proc freq data=leo.eph_formatted_2019; 
 weight pondera; 
-where (  ch04=2 & (period=64)& (100>agegroup>15));
-table ch07*agegroup / noprint outpct out=marital_status_64; 
+where (  ch04=2 & (period=64)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_64; 
 run; 
 data marital_status_52; set marital_status_52; period=54; percent_col=pct_col/100; run; 
 data marital_status_53; set marital_status_53; period=55; percent_col=pct_col/100; run; 
@@ -2399,27 +2399,25 @@ data marital_status_62; set marital_status_62; period=64; percent_col=pct_col/10
 data marital_status_63; set marital_status_63; period=65; percent_col=pct_col/100; run; 
 data marital_status_64; set marital_status_64; period=66; percent_col=pct_col/100; run; 
 
-data marital_status_52; set marital_status_52; keep percent_col agegroup ch07 period; run; 
-data marital_status_53; set marital_status_53; keep percent_col agegroup ch07 period; run; 
-data marital_status_54; set marital_status_54; keep percent_col agegroup ch07 period; run; 
-data marital_status_55; set marital_status_55; keep percent_col agegroup ch07 period; run; 
-data marital_status_56; set marital_status_56; keep percent_col agegroup ch07 period; run; 
-data marital_status_57; set marital_status_57; keep percent_col agegroup ch07 period; run; 
-data marital_status_58; set marital_status_58; keep percent_col agegroup ch07 period; run; 
-data marital_status_59; set marital_status_59; keep percent_col agegroup ch07 period; run; 
-data marital_status_60; set marital_status_60; keep percent_col agegroup ch07 period; run; 
-data marital_status_61; set marital_status_61; keep percent_col agegroup ch07 period; run; 
-data marital_status_62; set marital_status_62; keep percent_col agegroup ch07 period; run; 
-data marital_status_63; set marital_status_63; keep percent_col agegroup ch07 period; run; 
-data marital_status_64; set marital_status_64; keep percent_col agegroup ch07 period; run; 
+data marital_status_52; set marital_status_52; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_53; set marital_status_53; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_54; set marital_status_54; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_55; set marital_status_55; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_56; set marital_status_56; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_57; set marital_status_57; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_58; set marital_status_58; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_59; set marital_status_59; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_60; set marital_status_60; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_61; set marital_status_61; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_62; set marital_status_62; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_63; set marital_status_63; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_64; set marital_status_64; keep percent_col agegroup_ext ch07 period; run; 
 data marital_status_base_wom; 
 set marital_status_52-marital_status_64;
 run; 
 data mar_stat_1_wom;
 set marital_status_base_wom (where=(ch07=1));
 run; 
-
-
 data mar_stat_2_wom;
 set marital_status_base_wom (where=(ch07=2));
 run; 
@@ -2436,27 +2434,27 @@ set marital_status_base_wom (where=(ch07=5));
 run; 
 
 proc sort data=mar_stat_1_wom; 
-by agegroup; 
+by agegroup_ext; 
 run; 
 proc sort data=mar_stat_2_wom; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
 proc sort data=mar_stat_3_wom; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
 proc sort data=mar_stat_4_wom; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
 proc sort data=mar_stat_5_wom; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
  
 proc transpose data=mar_stat_1_wom out=transp_mar_stat_1_wom; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_1_wom; 
@@ -2469,7 +2467,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_1_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_1_wom; 
 run; 
 %m_zero(leo.cal_post_2016_mar_stat_1_wom); 
@@ -2480,16 +2478,16 @@ run;
 
 
 proc sort data=mar_stat_2_wom; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
 proc sort data=mar_stat_3_wom; 
-by agegroup; 
+by agegroup_ext; 
 run; 
  
  
 proc transpose data=mar_stat_2_wom out=transp_mar_stat_2_wom; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_2_wom; 
@@ -2502,7 +2500,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_2_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_2_wom;
  
 run; 
@@ -2514,7 +2512,7 @@ run;
 
  
 proc transpose data=mar_stat_3_wom out=transp_mar_stat_3_wom; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_3_wom; 
@@ -2527,7 +2525,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_3_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_3_wom;
  
 run; 
@@ -2538,7 +2536,7 @@ dbms=csv replace;
 run; 
 
 proc transpose data=mar_stat_4_wom out=transp_mar_stat_4_wom; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_4_wom; 
@@ -2551,7 +2549,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_4_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_4_wom;
  
 run; 
@@ -2562,7 +2560,7 @@ dbms=csv replace;
 run; 
  
 proc transpose data=mar_stat_5_wom out=transp_mar_stat_5_wom; 
-by agegroup;
+by agegroup_ext;
 id period ;
 run;
 data transp_mar_stat_5_wom; 
@@ -2575,7 +2573,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_5_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66;
 set transp_mar_stat_5_wom;
  
 run; 
