@@ -2603,6 +2603,10 @@ entities:
     #6- We export total SIPA social security contributions + monotributo integrated tax to a separate csv file. It helps with debugging and 
             #estimating ANSES's aggregate economic result. 
                 - SIPA_income: mono_integrated_tax*0.7 + contribution_sal_SIPA+contribution_aut_SIPA+contribution_mono_SIPA
+                - csv(period,sum(SIPA_income*pondera)/1000,
+                       sum(contribution_sal_SIPA*pondera)/1000,sum(taxable_income*pondera)/1000,sum(discounted_itl_sal_gross*pondera)/1000,sum(medio_aguinaldo_gross*pondera)/1000,
+                        sum(contribution_aut_SIPA*pondera)/1000, sum(contribution_mono_SIPA*pondera)/1000,sum(mono_integrated_tax*pondera)/1000,
+                                fname='high_SIPA_income.csv',mode='a')
     #7 -We track the cost of the change in contribution rates and of the reduction of employers contributions established by Law 27430.
                 - old_contribution_sal_SIPA: if(labour_market_state!=1, 0, 
                                                 if(contribution==1,(discounted_itl_gross+medio_aguinaldo_gross)*(0.11+0.21-0.0162),
@@ -2615,10 +2619,6 @@ entities:
                 - old_contribution_sal_obra_social: if(labour_market_state!=1, 0, 
                                                         (discounted_itl_gross+medio_aguinaldo_gross)*(0.03+0.06)
                                                        )
-                - csv(period,sum(SIPA_income*pondera)/1000,
-                       sum(contribution_sal_SIPA*pondera)/1000,sum(taxable_income*pondera)/1000,sum(discounted_itl_sal_gross*pondera)/1000,sum(medio_aguinaldo_gross*pondera)/1000,
-                        sum(contribution_aut_SIPA*pondera)/1000, sum(contribution_mono_SIPA*pondera)/1000,sum(mono_integrated_tax*pondera)/1000,
-                                fname='high_SIPA_income.csv',mode='a')
                 - csv(period,sum(old_contribution_sal_SIPA*pondera)/1000-sum(contribution_sal_SIPA*pondera)/1000,
                             sum(old_contribution_sal_PAMI*pondera)/1000-sum(contribution_sal_PAMI*pondera)/1000,
                                 sum(old_contribution_sal_obra_social*pondera)/1000-sum(contribution_sal_obra_social*pondera)/1000,

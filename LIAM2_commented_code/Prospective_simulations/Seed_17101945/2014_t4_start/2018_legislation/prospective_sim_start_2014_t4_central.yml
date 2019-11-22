@@ -1169,7 +1169,9 @@ entities:
                 - csv('Period', 'Total_SIPA_income',
                                     'Total_wage-earners_SIPA_contributions','Total_taxable_income','Total_gross_wages','Total_SAC',
                                         'Total_autonomous_workers_SIPA_contributions','Total_Monotributo_SIPA_contributions','Monotributo_integrated_tax',
-                                                fname='central_SIPA_income.csv',mode='a')     
+                                                fname='central_SIPA_income.csv',mode='a')  
+                - csv('Period', 'SIPA_missing_contributions', 'PAMI_missing_contributions', 'Obras_sociales_missing_contributions',
+                                                fname='central_27430_reform_cost.csv',mode='a')                                                 
                 - csv('period','Total_pensions_pre-2016_cost','Total_net_pensions_pre-2016', 'Total_pensions_post-2016_cost','Total_net_pensions_post-2016',
                                     'Total_retirement_benefits_pre-2016','Total_survivors_pensions_pre-2016','Total_retirement_benefits_post-2016','Total_survivors_pensions_post-2016',
                                         'Total_universal_pensions_cost','Total_net_universal_pensions',
@@ -2559,9 +2561,11 @@ entities:
                 # October 2017 pesos. Since our variable medio_aguinaldo is divided by 3 to consider it as an average monthly income derived from the thirteenth month, 
                 # the 12000 pesos of non-taxable income, when applied to the "medio aguinaldo", is divided by 6.  
                 #3- Although unclear, limitation number 1 will be applied only after factoring in the thirteenth month.            
-                - taxable_income: if(labour_market_state!=1, 0, 
-                                    if((discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6)<= MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4
-                                        ,discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6))
+                - taxable_income: if(labour_market_state!=1, 0,  
+                                    if(period<61,discounted_itl_gross+medio_aguinaldo_gross,
+                                        if((discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6)<= MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4
+                                            ,discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6
+                                     )))
             #We have a weird bug that automatically transforms global variables of the type 0.195 into 195, although it does not affect values such as 0.18. 
                     #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.                            
                 - contribution_sal_SIPA: if(labour_market_state!=1, 0, 
@@ -2592,6 +2596,22 @@ entities:
                        sum(contribution_sal_SIPA*pondera)/1000,sum(taxable_income*pondera)/1000,sum(discounted_itl_sal_gross*pondera)/1000,sum(medio_aguinaldo_gross*pondera)/1000,
                         sum(contribution_aut_SIPA*pondera)/1000, sum(contribution_mono_SIPA*pondera)/1000,sum(mono_integrated_tax*pondera)/1000,
                                 fname='central_SIPA_income.csv',mode='a')
+    #7 -We track the cost of the change in contribution rates and of the reduction of employers contributions established by Law 27430.
+                - old_contribution_sal_SIPA: if(labour_market_state!=1, 0, 
+                                                if(contribution==1,(discounted_itl_gross+medio_aguinaldo_gross)*(0.11+0.21-0.0162),
+                                                    (discounted_itl_gross+medio_aguinaldo_gross)*(0.11+0.17-0.015)
+                                                   ))
+                - old_contribution_sal_PAMI: if(labour_market_state!=1, 0, 
+                                                if(contribution==1, (discounted_itl_gross+medio_aguinaldo_gross)*(0.03+0.0162), 
+                                                    (discounted_itl_gross+medio_aguinaldo_gross)*(0.03+0.015)
+                                                   ))
+                - old_contribution_sal_obra_social: if(labour_market_state!=1, 0, 
+                                                        (discounted_itl_gross+medio_aguinaldo_gross)*(0.03+0.06)
+                                                       )
+                - csv(period,sum(old_contribution_sal_SIPA*pondera)/1000-sum(contribution_sal_SIPA*pondera)/1000,
+                            sum(old_contribution_sal_PAMI*pondera)/1000-sum(contribution_sal_PAMI*pondera)/1000,
+                                sum(old_contribution_sal_obra_social*pondera)/1000-sum(contribution_sal_obra_social*pondera)/1000,
+                                    fname='central_27430_reform_cost.csv',mode='a')
             retirement:
 #Here we compute accumulated retirement rights, new retirement pensions and put up to date old retirement pensions (through pension mobility. We also increase moratorium 
         #pensions after the five-year penalty period has passed). 
