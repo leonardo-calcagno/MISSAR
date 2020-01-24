@@ -3458,8 +3458,8 @@ entities:
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
             #hypotetical bonuses in the future. As suchk, we simply export in a separate csv file the cost of temporary pension bonuses. 
-                - csv(period,sum(temporary_pension_bonus*pondera)/1000,sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==339.55)/1000,
-                                sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==169.78)/1000,
+                - csv(period,sum(temporary_pension_bonus*pondera)/1000,sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==339.55/3)/1000,
+                                sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==169.78/3)/1000,
                                                 fname='temporary_pension_bonus_low.csv',mode='a')
                 
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
