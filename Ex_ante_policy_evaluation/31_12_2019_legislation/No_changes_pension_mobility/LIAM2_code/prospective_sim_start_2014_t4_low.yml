@@ -3133,15 +3133,19 @@ entities:
             #Then, the Decree 594/2019 gave AUH beneficiaries a $1000 bonus on September and October 2019. We add this bonus. 
                     #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
                     #the AUH paid on average the whole quarter (or at least on the middle month).
-                - decree_594_2019_auh_bonus: if(period==67, 
-                                                    237.52/3,
-                                                        if(period==68, 
-                                                            227.51/3, 
-                                                            0))
-           
-                - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus
-                - auh: if(auh==0, auh, 
-                            auh+temporary_auh_bonus)
+            #In our model, we take as the third and fourths quarters of 2019 family benefits, the ones paid in August and November 2019. So the September and October 
+                    #2019 nominal increases both appear in period 68, the fourth quarter of 2019.       
+                - decree_594_2019_auh_bonus: if(period==68, 
+                                                    237.52/3 + 227.51/3, 
+                                                            0)
+            #After that, the Decree 73/2019 gave AUH beneficiaries a $2000 bonus on December 2019. We add this bonus. 
+                    #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
+                    #the AUH paid on average the whole quarter (or at least on the middle month). Also, since it was given after November 2019, we add it 
+                    #to the first quarter of 2020 family benefit.
+                - decree_73_2019_auh_bonus: if(period==69, 
+                                                425.21/3, 
+                                                    0)
+                - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus + decree_73_2019_auh_bonus
     #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. Thus, for three periods (May 2019, August 2019 and November 2019) in
             #our model, the AUH is higher than the contributive child benefit earned by the children of monotributistas or lowest earning wage-earners. We hard-code it 
             #here. Beware, CPI indexes for October and November 2019 are taken from market expectations published by the Central Bank (REM): once official CPI 
@@ -3151,6 +3155,9 @@ entities:
                                 if(period==67, 666.98,
                                     if(period==68, 583.17, 
                                          auh)))) 
+                
+                - auh: if(auh==0, auh, 
+                            auh+temporary_auh_bonus)
     #6- We compute the yearly school aid (paid on March). This benefit is meant for minors that attend school. 
         #It is accessible to children that receive a contributive child benefit (as explicited de jure by Res. 606/2011 Art. 2).
                 #"Wage-earners, those receiving a labour hazards (...), unemployment or SIPA [retirement] benefit (...) will get the family benefit for yearly school aid as long as they are entitled to the child benefit". 
@@ -3437,7 +3444,8 @@ entities:
                 - has_any_benefit: if(has_retirement_pension, True, 
                                         if(has_survivors_benefit, True, 
                                             False))
-     #In our model, we take as the first quarter of 2018 pension, the one paid in February 2018. So the March 2018 nominal increase only appears in 
+    # 3- Temporary pension bonuses
+            #In our model, we take as the first quarter of 2018 pension, the one paid in February 2018. So the March 2018 nominal increase only appears in 
                         #period 62, the second quarter of 2018. As such, even though the bonus was paid on March 2018, we add it only on the second quarter of 2018. 
                 #To determine the real value of the bonus, we proceed as such: the $10,000 pesos limit is applied to the pension earned in the second quarter of 2018, 
                         # discounted following May 2018 inflation: we thus divide the pension limit with the CPI index value of May 2018. This equals $4317.05 November 
@@ -3447,14 +3455,35 @@ entities:
                         #Thus, contributory retirement pensioners get $339.55, while moratorium and universal pensioners get half this bonus, $169.78.
                 #We also divide by three this bonus: it was paid on a single month, and the pension variable for a given period is the mean pension during a quarter.
                 - decree_1058_2017_bonus: if(period!=62, 0, 
-                                            if(disc_cost_v2_m>4317.05, 0,
+                                            if(disc_cost_v2_m_2>4317.05, 0,
                                                if(has_contributory_benefit, 339.55/3, 
                                                 if(has_moratorium_pension or has_universal_pension, 169.78/3,
                                                     0))))
-                - temporary_pension_bonus: decree_1058_2017_bonus
+            #After that, the Decree 73/2019 gave some pensioners a $5000 pesos bonus on December 2019 and January 2021: 
+                    #- The full $5000 were given to those earning at most the minimum pension of  $14067.93
+                    #- Those earning less than $19067.93 pesos exceptionnally earned that benefit for the month. 
+                #We however divide it by three each time, since it is paid on a single month, and the pension of the period is 
+                        #the pension paid on average the whole quarter (or at least on the middle month). Also, since these bonuses were given after 
+                        #November 2019, we add them to the first quarter of 2020 family benefit.   
+                #Finally, the bonus is only paid to those earning at most the minimum pension + 5000 pesos. Since we work with February 2020 pensions, discounted
+                        #with expected inflation by February 2020 (we use actual CPI up to December 2019, then BCRA's REM for January and February 2020), 
+                        #these 5000 pesos are equal to 990.43 November 2014 pesos, using the official CPI indexes with which the model is calibrated. Beware, 
+                        # this is hard-coded but these values will need to be revised once official CPI indexes are released for January and February 2020. 
+                #Also, we use the february 2020 real value of $5000 pesos for determining who gets the benefit, but since the bonus was actually paid on December 2019 
+                        # and January 2020, we input the real value for these months when taking into account the bonus that was actually paid. 
+                - decree_79_2019_bonus: if(period==69, 
+                                            if(disc_cost_v2_m_2 > MIN_PENSION_LOW_2014_T4 + 990.43, 0,
+                                                if(disc_cost_v2_m_2<=MIN_PENSION_LOW_2014_T4, 
+                                                    1036.02/3 + 1024.1/3, 
+                                                    (MIN_PENSION_LOW_2014_T4 + 1036.02 - disc_cost_v2_m_2)/3 + (MIN_PENSION_LOW_2014_T4 + 1024.1 - disc_cost_v2_m_2)/3
+                                                  )
+                                              ), 0
+                                           )
+                
+                - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
-            #hypotetical bonuses in the future. As suchk, we simply export in a separate csv file the cost of temporary pension bonuses. 
+            #hypotetical bonuses in the future. As such, we simply export in a separate csv file the cost of temporary pension bonuses. 
                 - csv(period,sum(temporary_pension_bonus*pondera)/1000,sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==339.55/3)/1000,
                                 sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==169.78/3)/1000,
                                                 fname='temporary_pension_bonus_low.csv',mode='a')

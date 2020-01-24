@@ -3133,11 +3133,11 @@ entities:
             #Then, the Decree 594/2019 gave AUH beneficiaries a $1000 bonus on September and October 2019. We add this bonus. 
                     #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
                     #the AUH paid on average the whole quarter (or at least on the middle month).
-                - decree_594_2019_auh_bonus: if(period==67, 
-                                                    237.52/3,
-                                                        if(period==68, 
-                                                            227.51/3, 
-                                                            0))
+                #In our model, we take as the third and fourths quarters of 2019 family benefits, the ones paid in August and November 2019. So the September and October 
+                    #2019 nominal increases both appear in period 68, the fourth quarter of 2019.       
+                - decree_594_2019_auh_bonus: if(period==68, 
+                                                    237.52/3 + 227.51/3, 
+                                                            0)
            
                 - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus
     #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. Thus, for three periods (May 2019, August 2019 and November 2019) in
@@ -3521,7 +3521,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49 
-    periods: 15
+    periods: 104
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
