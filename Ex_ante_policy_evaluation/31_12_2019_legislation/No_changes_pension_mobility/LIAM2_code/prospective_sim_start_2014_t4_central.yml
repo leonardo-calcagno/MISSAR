@@ -3138,10 +3138,13 @@ entities:
                                                         if(period==68, 
                                                             227.51/3, 
                                                             0))
-           
-                - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus
-                - auh: if(auh==0, auh, 
-                            auh+temporary_auh_bonus)
+            #After that, the Decree 73/2019 gave AUH beneficiaries a $2000 bonus on December 2019. We add this bonus. 
+                    #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
+                    #the AUH paid on average the whole quarter (or at least on the middle month).                                            
+                - decree_73_2019_auh_bonus: if(period==68, 
+                                                425.21/3, 
+                                                    0)
+                - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus + decree_73_2019_auh_bonus
     #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. Thus, for three periods (May 2019, August 2019 and November 2019) in
             #our model, the AUH is higher than the contributive child benefit earned by the children of monotributistas or lowest earning wage-earners. We hard-code it 
             #here. Beware, CPI indexes for October and November 2019 are taken from market expectations published by the Central Bank (REM): once official CPI 
@@ -3149,8 +3152,11 @@ entities:
                 - auh: if(auh<=0, auh,
                             if(period==66, 727.85, 
                                 if(period==67, 666.98,
-                                    if(period==68, 580.15, 
+                                    if(period==68, 583.17, 
                                          auh)))) 
+                
+                - auh: if(auh==0, auh, 
+                            auh+temporary_auh_bonus)
     #6- We compute the yearly school aid (paid on March). This benefit is meant for minors that attend school. 
         #It is accessible to children that receive a contributive child benefit (as explicited de jure by Res. 606/2011 Art. 2).
                 #"Wage-earners, those receiving a labour hazards (...), unemployment or SIPA [retirement] benefit (...) will get the family benefit for yearly school aid as long as they are entitled to the child benefit". 

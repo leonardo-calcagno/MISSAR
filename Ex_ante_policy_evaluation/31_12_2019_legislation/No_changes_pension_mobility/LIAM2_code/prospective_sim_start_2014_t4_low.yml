@@ -3149,7 +3149,7 @@ entities:
                 - auh: if(auh<=0, auh,
                             if(period==66, 727.85, 
                                 if(period==67, 666.98,
-                                    if(period==68, 580.15, 
+                                    if(period==68, 583.17, 
                                          auh)))) 
     #6- We compute the yearly school aid (paid on March). This benefit is meant for minors that attend school. 
         #It is accessible to children that receive a contributive child benefit (as explicited de jure by Res. 606/2011 Art. 2).
