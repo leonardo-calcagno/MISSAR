@@ -32,6 +32,7 @@ globals:
             #Then, we list variables related to social security contributions and categorisations
             - MIN_PENSION_CENTRAL_2014_T4: float
             - MAX_PENSION_CENTRAL_2014_T4: float
+            - MAX_CONTRIBUTIVE_BASE_CENTRAL: float
             #We add a global depicting the real increase of pensions each quarter based on the adopted pension mobility law. 
             #From the third quarter of 2018 onward, we assume it is equal to 30% of the real wage evolution. This is true as long as real wage increases at a fixed rate and 
             # that inflation stays the same, which we assume in our scenarios for the sake of simplicity. This is because the increase this quarter is 70% of the inflation and 30% of the RIPTE evolution 
@@ -2576,15 +2577,26 @@ entities:
                                             ,discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6
                                     )))
             #We have a weird bug that automatically transforms global variables of the type 0.195 into 195, although it does not affect values such as 0.18. 
-                    #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.                            
+                    #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.    
+            #Art. 9 of Law 24.241 specifies there is a maximum taxable wage, above which there are no employee's contributions. Employers' contributions are
+                    #made over the whole gross wage, with no limitations. We thus add this restriction in the code. 
+                - modulo_period: (period) % 4    
+                - max_medio_aguinaldo_gross: if(labour_market_state!=1, 0, 
+                                      if(modulo_period==1 or modulo_period==3,0, 
+                                         MAX_CONTRIBUTIVE_BASE_CENTRAL/6))
+                - taxable_income_employee: if(labour_market_state!=1, 0, 
+                                              if(discounted_itl_gross<=MAX_CONTRIBUTIVE_BASE_CENTRAL, discounted_itl_gross+medio_aguinaldo_gross,
+                                                 MAX_CONTRIBUTIVE_BASE_CENTRAL + max_medio_aguinaldo_gross
+                                                 )
+                                             )
                 - contribution_sal_SIPA: if(labour_market_state!=1, 0, 
-                                     if(contribution==1, taxable_income*(CONT_PAT_1/1000-0.0162)+(discounted_itl_gross+medio_aguinaldo_gross)*0.11,
-                                        if(contribution==2, taxable_income*(CONT_PAT_2/1000-0.015) +(discounted_itl_gross+medio_aguinaldo_gross)*0.11, 
-                                            taxable_income*(CONT_PAT_4/1000-0.015) +(discounted_itl_gross+medio_aguinaldo_gross)*0.11)))
+                                     if(contribution==1, taxable_income*(CONT_PAT_1/1000-0.0162)+(taxable_income_employee)*0.11,
+                                        if(contribution==2, taxable_income*(CONT_PAT_2/1000-0.015) +(taxable_income_employee)*0.11, 
+                                            taxable_income*(CONT_PAT_4/1000-0.015) +(taxable_income_employee)*0.11)))
                 - contribution_sal_PAMI: if(labour_market_state!=1, 0, 
-                                    if(contribution==1, taxable_income*(0.0162)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03,
-                                        if(contribution==2, taxable_income*(0.015)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03, 
-                                            taxable_income*(0.015)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03)))
+                                    if(contribution==1, taxable_income*(0.0162)+(taxable_income_employee)*0.03,
+                                        if(contribution==2, taxable_income*(0.015)+(taxable_income_employee)*0.03, 
+                                            taxable_income*(0.015)+(taxable_income_employee)*0.03)))
                                             
                
                 # On inclut dans les contributions de santé ce qui va aux obras sociales (90% du total) et au Fonds Solidaire de Redistribution (10% du total). Il peut être intéressant de les étudier séparément, 
@@ -2592,9 +2604,9 @@ entities:
                 #We add up in healthcare contributions (contribution_sal_obra_social) what goes to the "obras sociales" (90% of the total) with what goes to the Solidarity Redistribution
                         #Fund ("Fondo Solidario de Redistribución"). It is possible to separate these contributions at this step, but we choose not to since we focus on the ANSES. 
                 - contribution_sal_obra_social: if(labour_market_state!=1, 0, 
-                                                if(contribution==1, taxable_income*(0.06)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03,
-                                                    if(contribution==2, taxable_income*(0.06)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03, 
-                                                        taxable_income*(0.06)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03))) 
+                                                if(contribution==1, taxable_income*(0.06)+(taxable_income_employee)*0.03,
+                                                    if(contribution==2, taxable_income*(0.06)+(taxable_income_employee)*0.03, 
+                                                        taxable_income*(0.06)+(taxable_income_employee)*0.03))) 
                 - contribution_sal_tot: contribution_sal_SIPA+contribution_sal_PAMI+contribution_sal_obra_social
                 
                 

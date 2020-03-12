@@ -5,7 +5,7 @@
 
 globals:
     periodic:
-        path: C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\globals_prosp_scenarios_31_12_2019_leg.csv 
+        path: C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\globals_prosp_scenarios_alternative_leg.csv 
         transposed: true
         fields: 
     #A large part of our economic scenarios revolve around fixed values of global variables. These change following historically observed values and our economic scenarios.
@@ -32,6 +32,7 @@ globals:
             #Then, we list variables related to social security contributions and categorisations
             - MIN_PENSION_CENTRAL_2014_T4: float
             - MAX_PENSION_CENTRAL_2014_T4: float
+            - MAX_CONTRIBUTIVE_BASE_CENTRAL: float
             #We add a global depicting the real increase of pensions each quarter based on the adopted pension mobility law. 
             #From the third quarter of 2018 onward, we assume it is equal to 30% of the real wage evolution. This is true as long as real wage increases at a fixed rate and 
             # that inflation stays the same, which we assume in our scenarios for the sake of simplicity. This is because the increase this quarter is 70% of the inflation and 30% of the RIPTE evolution 
@@ -122,6 +123,7 @@ globals:
             #The emergency Law 27541 suspends pension mobility for the first semester of 2020, which is partially replaced by fixed sum increases for all pensioners, 
                     #instead of proportional increases. We put the hypothesised increases in the globals file. 
             - FIXED_SUM_INCREASE_2014_T4: float
+            - PROPORTIONAL_PENSION_INCREASE: float
 
         
 entities:
@@ -1338,22 +1340,54 @@ entities:
                 #their father/mother did not just die.      
         #We store separately child's survivor pension derived from the father's death (suffix _f) from that derived from mother's death (suffix _m)                     
                 - pension_ref_child_f: if(dead_father==UNSET, 0,
-                                if(age>=18, 0, 
-                                    if(father.dead, father.total_survivor_pensions,
-                                        pension_ref_child_f*REAL_MOBILITY_CENTRAL)))    
+                                            if(age>=18, 0, 
+                                                if(father.dead, father.total_survivor_pensions,
+                                                    if(period==70, 
+                                                        if(pension_ref_child_f==0, 0, 
+                                                            pension_ref_child_f*PROPORTIONAL_PENSION_INCREASE+FIXED_SUM_INCREASE_2014_T4
+                                                            ),
+                                                                pension_ref_child_f*REAL_MOBILITY_CENTRAL  
+                                                       )
+                                                    )
+                                                )  
+                                          )
                         
                 - pension_ref_child_m: if(dead_mother==UNSET, 0,
-                                if(age>=18, 0, 
-                                    if(mother.dead, mother.total_survivor_pensions,
-                                        pension_ref_child_m*REAL_MOBILITY_CENTRAL)))  
+                                            if(age>=18, 0, 
+                                                if(mother.dead, mother.total_survivor_pensions,
+                                                    if(period==70,
+                                                        if(pension_ref_child_m==0, 0, 
+                                                            pension_ref_child_m*PROPORTIONAL_PENSION_INCREASE+FIXED_SUM_INCREASE_2014_T4
+                                                            ),
+                                                            pension_ref_child_m*REAL_MOBILITY_CENTRAL
+                                                       )
+                                                    )
+                                                )
+                                        )
                 - pension_ref_child_f_2: if(dead_father==UNSET, 0,
-                                if(age>=18, 0, 
-                                    if(father.dead, father.total_survivor_pensions_2,
-                                        pension_ref_child_f_2*REAL_MOBILITY_CENTRAL)))     
+                                            if(age>=18, 0, 
+                                                if(father.dead, father.total_survivor_pensions_2,
+                                                    if(period==70, 
+                                                        if(pension_ref_child_f_2==0, 0, 
+                                                            pension_ref_child_f_2*PROPORTIONAL_PENSION_INCREASE+FIXED_SUM_INCREASE_2014_T4
+                                                            ),
+                                                                pension_ref_child_f_2*REAL_MOBILITY_CENTRAL
+                                                        )
+                                                    )
+                                                )
+                                            )
                 - pension_ref_child_m_2: if(dead_mother==UNSET, 0,
-                                if(age>=18, 0, 
-                                    if(mother.dead, mother.total_survivor_pensions_2,
-                                        pension_ref_child_m_2*REAL_MOBILITY_CENTRAL)))       
+                                            if(age>=18, 0, 
+                                                if(mother.dead, mother.total_survivor_pensions_2,
+                                                    if(period==70, 
+                                                        if(pension_ref_child_m_2==0, 0, 
+                                                            pension_ref_child_f_2*PROPORTIONAL_PENSION_INCREASE+FIXED_SUM_INCREASE_2014_T4
+                                                            ),
+                                                                pension_ref_child_m_2*REAL_MOBILITY_CENTRAL
+                                                        )
+                                                    )
+                                                )
+                                            )                
                                         
         #The repartition of the survivor's pension depends on the number of eligible relatives. In the case of children's survivor's pensions, it depends on the number of underage siblings. 
             # It is however complicated to reconstitute family links directly between siblings. It is much easier to bypass this problem by using parental links. 
@@ -1441,12 +1475,26 @@ entities:
                                       gross_pension_child_2*0.94)
         #We need to discount survivor's pensions following the mobility formula in force. We already did it for child benefits (we actualise the children's 
             #pensions of reference each quarter), we do so for survivor's pensions for the spouse. As usual, we only actualise it if the pension did not just start to be paid. 
-                - gross_pension_p: pension_partner + gross_pension_p*REAL_MOBILITY_CENTRAL
+                - gross_pension_p: if(period!=70, pension_partner + gross_pension_p*REAL_MOBILITY_CENTRAL, 
+                                        if(gross_pension_p==0, 
+                                            if(pension_partner==0, 0, 
+                                                pension_partner
+                                                ),
+                                                pension_partner +gross_pension_p*PROPORTIONAL_PENSION_INCREASE + FIXED_SUM_INCREASE_2014_T4
+                                            )
+                                      )
                 - net_pension_p: if(gross_pension_p>=MIN_PENSION_CENTRAL_2014_T4, (gross_pension_p-MIN_PENSION_CENTRAL_2014_T4)*0.94+MIN_PENSION_CENTRAL_2014_T4*0.97, 
                                       gross_pension_p*0.94)
                 - gross_pension: gross_pension_p + gross_pension_child
                 - net_pension: net_pension_p + net_pension_child
-                - gross_pension_2_p: pension_partner_2 + gross_pension_2_p*REAL_MOBILITY_CENTRAL
+                - gross_pension_2_p: if(period!=70, pension_partner_2 + gross_pension_2_p*REAL_MOBILITY_CENTRAL,
+                                        if(gross_pension_2_p==0, 
+                                            if(pension_partner_2==0, 0,
+                                                pension_partner_2
+                                               ),
+                                            pension_partner_2 + gross_pension_2_p*PROPORTIONAL_PENSION_INCREASE + FIXED_SUM_INCREASE_2014_T4
+                                        )
+                                        )
                 - net_pension_2_p: if(gross_pension_2_p>=MIN_PENSION_CENTRAL_2014_T4, (gross_pension_2_p-MIN_PENSION_CENTRAL_2014_T4)*0.94+MIN_PENSION_CENTRAL_2014_T4*0.97, 
                                       gross_pension_2_p*0.94)
                 - gross_pension_2: gross_pension_child_2 + gross_pension_2_p
@@ -2579,15 +2627,26 @@ entities:
                                             ,discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6
                                     )))
             #We have a weird bug that automatically transforms global variables of the type 0.195 into 195, although it does not affect values such as 0.18. 
-                    #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.                            
+                    #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.    
+            #Art. 9 of Law 24.241 specifies there is a maximum taxable wage, above which there are no employee's contributions. Employers' contributions are
+                    #made over the whole gross wage, with no limitations. We thus add this restriction in the code. 
+                - modulo_period: (period) % 4    
+                - max_medio_aguinaldo_gross: if(labour_market_state!=1, 0, 
+                                      if(modulo_period==1 or modulo_period==3,0, 
+                                         MAX_CONTRIBUTIVE_BASE_CENTRAL/6))
+                - taxable_income_employee: if(labour_market_state!=1, 0, 
+                                              if(discounted_itl_gross<=MAX_CONTRIBUTIVE_BASE_CENTRAL, discounted_itl_gross+medio_aguinaldo_gross,
+                                                 MAX_CONTRIBUTIVE_BASE_CENTRAL + max_medio_aguinaldo_gross
+                                                 )
+                                             )
                 - contribution_sal_SIPA: if(labour_market_state!=1, 0, 
-                                     if(contribution==1, taxable_income*(CONT_PAT_1/1000-0.0162)+(discounted_itl_gross+medio_aguinaldo_gross)*0.11,
-                                        if(contribution==2, taxable_income*(CONT_PAT_2/1000-0.015) +(discounted_itl_gross+medio_aguinaldo_gross)*0.11, 
-                                            taxable_income*(CONT_PAT_4/1000-0.015) +(discounted_itl_gross+medio_aguinaldo_gross)*0.11)))
+                                     if(contribution==1, taxable_income*(CONT_PAT_1/1000-0.0162)+(taxable_income_employee)*0.11,
+                                        if(contribution==2, taxable_income*(CONT_PAT_2/1000-0.015) +(taxable_income_employee)*0.11, 
+                                            taxable_income*(CONT_PAT_4/1000-0.015) +(taxable_income_employee)*0.11)))
                 - contribution_sal_PAMI: if(labour_market_state!=1, 0, 
-                                    if(contribution==1, taxable_income*(0.0162)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03,
-                                        if(contribution==2, taxable_income*(0.015)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03, 
-                                            taxable_income*(0.015)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03)))
+                                    if(contribution==1, taxable_income*(0.0162)+(taxable_income_employee)*0.03,
+                                        if(contribution==2, taxable_income*(0.015)+(taxable_income_employee)*0.03, 
+                                            taxable_income*(0.015)+(taxable_income_employee)*0.03)))
                                             
                
                 # On inclut dans les contributions de santé ce qui va aux obras sociales (90% du total) et au Fonds Solidaire de Redistribution (10% du total). Il peut être intéressant de les étudier séparément, 
@@ -2595,9 +2654,9 @@ entities:
                 #We add up in healthcare contributions (contribution_sal_obra_social) what goes to the "obras sociales" (90% of the total) with what goes to the Solidarity Redistribution
                         #Fund ("Fondo Solidario de Redistribución"). It is possible to separate these contributions at this step, but we choose not to since we focus on the ANSES. 
                 - contribution_sal_obra_social: if(labour_market_state!=1, 0, 
-                                                if(contribution==1, taxable_income*(0.06)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03,
-                                                    if(contribution==2, taxable_income*(0.06)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03, 
-                                                        taxable_income*(0.06)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03))) 
+                                                if(contribution==1, taxable_income*(0.06)+(taxable_income_employee)*0.03,
+                                                    if(contribution==2, taxable_income*(0.06)+(taxable_income_employee)*0.03, 
+                                                        taxable_income*(0.06)+(taxable_income_employee)*0.03))) 
                 - contribution_sal_tot: contribution_sal_SIPA+contribution_sal_PAMI+contribution_sal_obra_social
                 
                 
@@ -2927,19 +2986,22 @@ entities:
                 #August 2020. 
                 - gross_retirement: if(tag_pension_uni or moratorium_date>0, gross_retirement, 
                                         if(new_contributory_pension, gross_retirement, 
-                                            if (period==70,gross_retirement*0.06+FIXED_SUM_INCREASE_2014_T4,
-                                                if(period==71, gross_retirement*0.06+FIXED_SUM_INCREASE_2014_T4,
+                                            if(period==70, 
+                                                if(gross_retirement==0, 0, 
+                                                     gross_retirement*PROPORTIONAL_PENSION_INCREASE+FIXED_SUM_INCREASE_2014_T4
+                                                   ),
                                                     gross_retirement*REAL_MOBILITY_CENTRAL
-                                                    )
                                                 )
                                             )
                                         )
                 - gross_retirement_2: if(tag_pension_uni or moratorium_date>0, gross_retirement_2, 
                                         if(new_contributory_pension, gross_retirement_2, 
-                                             if (period==70,gross_retirement_2*0.06+FIXED_SUM_INCREASE_2014_T4,
-                                                if(period==71, gross_retirement_2*0.06+FIXED_SUM_INCREASE_2014_T4,
-                                                    gross_retirement_2*REAL_MOBILITY_CENTRAL
-                                                    )
+                                            if(period==70, 
+                                                if(gross_retirement_2==0, 0, 
+                                                    gross_retirement_2*PROPORTIONAL_PENSION_INCREASE+FIXED_SUM_INCREASE_2014_T4
+                                                   ),
+                                                gross_retirement_2*REAL_MOBILITY_CENTRAL
+                                                    
                                                 )
                                             )
                                         )            
