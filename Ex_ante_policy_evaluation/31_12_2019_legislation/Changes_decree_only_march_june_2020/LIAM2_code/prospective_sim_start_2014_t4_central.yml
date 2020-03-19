@@ -1198,6 +1198,13 @@ entities:
                 - csv('Period','All_pensions','Contributory_pensions','Moratorium_and_PUAM',
                                                 fname='temporary_pension_bonus_central.csv',mode='a')
                 - csv('Period','AUH', fname='temporary_fam_ben_bonus_central.csv',mode='a')
+        ###############################################################################################################        
+                - csv('Period', '90_100_dec','80_90_dec','70_80_dec','60_70_dec','50_60_dec',
+                                    '40_50_dec','30_40_dec','20_30_dec','10_20_dec','0_100_dec',
+                                        'count_100_dec','count_90_dec','count_80_dec','count_70_dec','count_60_dec',
+                                            'count_50_dec','count_40_dec','count_30_dec','count_20_dec','count_10_dec',
+                                                'count_0_dec','count_all_cont_pen',
+                                                    fname='central_cont_ret_deciles.csv',mode='a') 
             ageing: 
                 - age_quarters: age_quarters + 1
                 - age: trunc(age_quarters/4) 
@@ -3575,7 +3582,102 @@ entities:
                 - csv(period,sum(temporary_pension_bonus*pondera)/1000,sum(temporary_pension_bonus*pondera,filter=has_moratorium_pension or has_universal_pension)/1000,
                                 sum(temporary_pension_bonus*pondera,filter=has_contributory_benefit)/1000,
                                                 fname='temporary_pension_bonus_central.csv',mode='a')
-                
+#We have a distribution of contributory retirement pensions that strays away from reality, partly because we can't identify all moratorium pensioners in the first periods, 
+        #and partly because people tend to under-declare their retirement income in the EPHc. Here, we output a csv that contains income percentiles for people earning 
+        #a contributory retirement pension. 
+            percentiles:   
+                - percentile_100_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2>=percentile(disc_cost_v2_m_2,90,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                              )
+                - percentile_90_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2>=percentile(disc_cost_v2_m_2,80,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera) 
+                                                     and disc_cost_v2_m_2<percentile(disc_cost_v2_m_2,90,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                            )
+                - percentile_80_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2>=percentile(disc_cost_v2_m_2,70,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera) 
+                                                     and disc_cost_v2_m_2<percentile(disc_cost_v2_m_2,80,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                            )
+                - percentile_70_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2>=percentile(disc_cost_v2_m_2,60,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera) 
+                                                     and disc_cost_v2_m_2<percentile(disc_cost_v2_m_2,70,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                            )
+                - percentile_60_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2>=percentile(disc_cost_v2_m_2,50,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera) 
+                                                     and disc_cost_v2_m_2<percentile(disc_cost_v2_m_2,60,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                            )
+                - percentile_50_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2>=percentile(disc_cost_v2_m_2,40,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera) 
+                                                     and disc_cost_v2_m_2<percentile(disc_cost_v2_m_2,50,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                            )
+                - percentile_40_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2>=percentile(disc_cost_v2_m_2,30,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera) 
+                                                     and disc_cost_v2_m_2<percentile(disc_cost_v2_m_2,40,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                            )
+                - percentile_30_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2>=percentile(disc_cost_v2_m_2,20,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera) 
+                                                     and disc_cost_v2_m_2<percentile(disc_cost_v2_m_2,30,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                            )
+                - percentile_20_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2>=percentile(disc_cost_v2_m_2,10,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera) 
+                                                     and disc_cost_v2_m_2<percentile(disc_cost_v2_m_2,20,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                            )
+                - percentile_10_cont_pen: avg(disc_cost_v2_m_2,
+                                              filter=disc_cost_v2_m_2<percentile(disc_cost_v2_m_2,10,filter=disc_cost_v2_m_2>0 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                                            ) 
+        #Sometimes, there is no-one on a given decile. Whent his happens, we assign the decile the upper one's value. 
+                - percentile_90_cont_pen: if(avg(percentile_90_cont_pen)>0, 
+                                                    percentile_90_cont_pen, 
+                                                        percentile_100_cont_pen
+                                                )
+                - percentile_80_cont_pen: if(avg(percentile_80_cont_pen)>0, 
+                                                    percentile_80_cont_pen, 
+                                                        percentile_90_cont_pen
+                                                )
+                - percentile_70_cont_pen: if(avg(percentile_70_cont_pen)>0, 
+                                                    percentile_70_cont_pen, 
+                                                        percentile_80_cont_pen
+                                                )
+                - percentile_60_cont_pen: if(avg(percentile_60_cont_pen)>0, 
+                                                    percentile_60_cont_pen, 
+                                                        percentile_70_cont_pen
+                                                )
+                - percentile_50_cont_pen: if(avg(percentile_50_cont_pen)>0, 
+                                                    percentile_50_cont_pen, 
+                                                        percentile_60_cont_pen
+                                                )
+                - percentile_40_cont_pen: if(avg(percentile_40_cont_pen)>0, 
+                                                    percentile_40_cont_pen, 
+                                                        percentile_50_cont_pen
+                                                )
+                - percentile_30_cont_pen: if(avg(percentile_30_cont_pen)>0, 
+                                                    percentile_30_cont_pen, 
+                                                        percentile_40_cont_pen
+                                                )
+                - percentile_20_cont_pen: if(avg(percentile_20_cont_pen)>0, 
+                                                    percentile_20_cont_pen, 
+                                                        percentile_30_cont_pen
+                                                )  
+                - percentile_10_cont_pen: if(avg(percentile_10_cont_pen)>0, 
+                                                    percentile_10_cont_pen, 
+                                                        percentile_20_cont_pen
+                                                )   
+                - total_100_decile: count(percentile_100_cont_pen<disc_cost_v2_m_2 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_90_decile: count(percentile_90_cont_pen<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_100_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_80_decile: count(percentile_80_cont_pen<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_90_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_70_decile: count(percentile_70_cont_pen<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_80_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_60_decile: count(percentile_60_cont_pen<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_70_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_50_decile: count(percentile_50_cont_pen<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_60_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_40_decile: count(percentile_40_cont_pen<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_50_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_30_decile: count(percentile_30_cont_pen<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_40_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_20_decile: count(percentile_20_cont_pen<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_30_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_10_decile: count(percentile_10_cont_pen<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_20_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_0_decile: count(0<disc_cost_v2_m_2 and disc_cost_v2_m_2<=percentile_10_cont_pen and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - total_cont_pensioners: count(0<disc_cost_v2_m_2 and tag_pension_uni==False and moratorium_date<=0,weights=pondera)
+                - csv(period,avg(percentile_100_cont_pen),avg(percentile_90_cont_pen),avg(percentile_80_cont_pen),avg(percentile_70_cont_pen),avg(percentile_60_cont_pen),
+                            avg(percentile_50_cont_pen),avg(percentile_40_cont_pen),avg(percentile_30_cont_pen),avg(percentile_20_cont_pen),avg(percentile_10_cont_pen),
+                                avg(total_100_decile),avg(total_90_decile),avg(total_80_decile),avg(total_70_decile),avg(total_60_decile),avg(total_50_decile),
+                                    avg(total_40_decile),avg(total_30_decile),avg(total_20_decile),avg(total_10_decile),avg(total_0_decile),avg(total_cont_pensioners),
+                                        fname='central_cont_ret_deciles.csv',mode='a') 
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
@@ -3615,7 +3717,7 @@ simulation:
             #are means-tested on the IGF. 
         - person: [retirement,temporary_measures_pensions]
         - household: [household_composition,clean_empty, igf_household]
-        - person: [family_benefits,adequacy] 
+        - person: [family_benefits,adequacy,percentiles] 
         - household: [redistribution]
       #  - person: [dump_all] 
     #For debugging with the console, it is better to remove the dump_all instruction above, as it makes the code run twice as fast. 
