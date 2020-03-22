@@ -669,10 +669,30 @@ set leo.eph_data_formatted_2015_t2 leo.eph_data_formatted_2015_t1
 	leo.eph_data_formatted_2003_t3 leo.eph_data_formatted_2003_t4;
 run; 
 
+/* We add as labour-market states civil servants and independent workers of the informal sector. These are nested labour-market states: 
+		if an individual is simulated as being a formal wage-earner, then in a second step we check whether he works in the public or 
+		private sector. Same thing for independent workers of the informal sector. 
+	These labour-market state refinements are irrelevant for computing retirement rights. They are however probably highly significative
+			when determining individual wages and labour-market behaviour. Also, employer's contributions for civil servants are different
+			since Decree 814/2001 and Law 27430 fiscal reform established them as the lowest. Since that Decree, employer's contributions
+			differ by sector. We chose not to simulate belonging to the primary / secondary sector with lower employers' contributions
+			than the service sector, following that Decree, for now: making hypothesiss on the future proportion of working-age population
+			that are civil servants is not too far-fetched; it is much more complicated however to anticipate how much formal wage-earners
+			will work in the service or industrial sectors. */
+data leo.eph_data_formatted_2003_2015; 
+set leo.eph_data_formatted_2003_2015; 
+	civil_servant=0; 
+	if labour_market_state=1 & pp04a=2 
+		then civil_servant=1; 
+	informal_independent=0; 
+	if labour_market_state=3 & (cat_ocup=1 | cat_ocup=2)
+		then informal_independent=1; 
+run; 
 
 /***Now we carry out some data steps for studying quarterly transitions: we make datasets made up of people surveyed in period t and period 
 		t+1. The idea is then to track their evolution in said quarter. Thus, 50% of the dataset is made up of people surveyed in t, 
 		and the other half is the same people, but surveyed in t+1.****/
+
 
 %macro couple_trim(indata,outdata,unit_var,date_var,from,to);
 
@@ -784,7 +804,6 @@ dm 'odsresults; clear';
 %couple_trim(leo.eph_data_formatted_2003_2015,leo.eph_pannel_2015_t4_t1,person,period,46,47);
 %couple_trim(leo.eph_data_formatted_2003_2015,leo.eph_pannel_2015_t1_t2,person,period,47,48);
 
-
 /*The last step is adding information on the past characteristics of individuals (the past quarter) in the present quarter. This way, 
 		we know for instance what was the labour-market state in t-1 of an individual surveyed in t. This information is crucial 
 		for studying individual transitions, as it lets us observe these evolutions in the first place. We adopt a quarterly pace in our 
@@ -809,7 +828,7 @@ data last_quarter;
 set last_quarter; 
 keep person &estado. student ch07 ITL seniority
 ageconti partner_id underage_children partner_formation formation partner_age partner_lab_mar_state partner_student little_children
-sect_quartile quartile_all; 
+sect_quartile quartile_all informal_independent civil_servant; 
 run; 
 data last_quarter; 
 set last_quarter; 
@@ -829,6 +848,8 @@ rename partner_age=lag_part_age;
 rename partner_lab_mar_state=lag_part_lms; 
 rename sect_quartile=lag_sect_quartile; 
 rename quartile_all=lag_quartile_all; 
+rename informal_independent=lag_inf_indep; 
+rename civil_servant=lag_civil_servant; 
 run; 
 data last_quarter;
 set last_quarter; 
@@ -839,7 +860,7 @@ merge current_quarter last_quarter;
 by person; run;  
 %mend;
 
-  
+
 
 %past_state(leo.eph_pannel_2015_t1_t2,leo.eph_past_state,labour_market_state,47,48);
 %past_state(leo.eph_pannel_2015_t4_t1,leo.eph_past_state,labour_market_state,46,47);
@@ -893,5 +914,4 @@ set leo.eph_past_state_period_2-leo.eph_past_state_period_16
 leo.eph_past_state_period_19-leo.eph_past_state_period_43 
 leo.eph_past_state_period_46-leo.eph_past_state_period_48;
 run;  
-
 

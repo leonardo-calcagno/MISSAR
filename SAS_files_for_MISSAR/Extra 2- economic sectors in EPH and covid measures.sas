@@ -254,3 +254,55 @@ proc freq data=leo.eph_formatted_2016_2019;
 	where labour_market_state<4; 
 	table sector*ch04; 
 run; 
+
+
+proc freq data=leo.eph_formatted_2016_2019; 
+	weight pondera; 
+	where labour_market_state<4; 
+	table pp04b_cod*pp04a; 
+	table sector*pp04a; 
+run; 
+
+proc freq data=leo.eph_formatted_2016_2019; 
+	weight pondera; 
+	where labour_market_state<4 & sector="Primario"; 
+	table pp04d_cod*pp04b_cod; 
+run; 
+
+proc freq data=leo.eph_data_formatted_2014; 
+table pp04b_cod; 
+where labour_Market_state<4; 
+run; 
+
+proc contents data=leo.eph_data_formatted_2003_2015; 
+run; 
+proc contents data=leo.eph_data_formatted_2014; run; 
+proc contents data=leo.eph_data_formatted_2005; run; 
+
+proc freq data=test_2005; 
+table labour_market_state*cat_ocup; 
+run; 
+data test_2005; 
+	length qualif_wag $32. ; 
+set leo.eph_data_formatted_2005;
+	new_labour_market_state=labour_market_state; 
+		qualif_wag="Non_qualif"; 
+	if (estado=1)&(cat_ocup=3 | cat_ocup=4) 
+		then do; 
+				/*We tag independent workers that occupy a position that needs a professional or a technical qualification. Those who 
+						have only an operative qualification or no qualification at all are non qualified*/
+ 			qualification=substr(pp04d_cod,5);
+			if qualification^=1 & qualification^=2 
+				then qualif_wag="Non_qualif"; 
+			else qualif_wag="Qualif"; 
+		end; 
+	if labour_market_state=3 & (cat_ocup=1 | cat_ocup=2)
+		then new_labour_market_state=6; 
+	if labour_market_state=1 & pp04a=2
+		then new_labour_market_state=7; 
+run; 
+data 
+proc freq data=test_2005; 
+where labour_market_state<4; 
+table labour_market_state*qualif_wag; 
+run;  

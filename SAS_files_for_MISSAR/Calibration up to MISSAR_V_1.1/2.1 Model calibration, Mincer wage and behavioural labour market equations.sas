@@ -362,24 +362,6 @@ if labour_market_state=4 | labour_market_state=5 then sect_quartile=0;
 run; 
 
 
-/*We introduce the civil servant and informal independent worker categories, as explanatory variables for Mincer wage equations. 
-		To avoid colinearity with the labour_market_state variable, we create a new one for the Mincer wage equations where 
-		6 equals informal independent workers and 7 civil servants. */
-
-data leo.eph_data_formatted_2003_2015; 
-set leo.eph_data_formatted_2003_2015; 
-drop new_labour_market_state; 
-run; 
-
-data leo.eph_data_formatted_2003_2015; 
-set leo.eph_data_formatted_2003_2015; 
-
-	new_lms=labour_market_state; 
-	if civil_servant=1 
-		then new_lms=7; 
-	if informal_independent=1
-		then new_lms=6; 
-run; 
 /****************************************Next, the actual Mincer wage regressions****************************************************/
 
 /*Read section 2.3.3. of the thesis, and particularly since page 189, for a detailed explanation on the design of our Mincer wage equations. */
@@ -399,10 +381,10 @@ run;
 /*These ods instruction are optional, uncomment them with your own path to run them
 ods pdf file="H:\Leonardo_orléans\Sorties_SAS\régressions\10_FOLD_REG_ln_wage_resid_art.pdf"; 
 ods csv file="H:\Leonardo_orléans\Sorties_SAS\régressions\csv\10_FOLD_REG_ln_wage_resid_art.csv";*/
-dm 'odsresults; clear'; 
-dm 'clear log'; 
 
 ods graphics on; 
+/*ods trace on; */
+
 title "10-fold cross validation on wages: men"; 
 
 proc glmselect data=leo.eph_data_formatted_2003_2015 testdata=leo.eph_data_formatted_2003_2015
@@ -412,7 +394,7 @@ where estado=1 & ageconti>15 & ageconti<65 & ch04=1 & ((ITL > cent2) & ITL < cen
 
    class  /*age_16_19(split) age_20_24(split) age_25_29(split) age_30_34(split) age_35_39(split) age_40_44(split) age_45_49(split) age_50_54(split) age_55_59(split) age_60_64(split)*/ agegroup(split) formation(split) new_lms(split) seniority(split) ;  
    
-   model ln_wage = new_lms*agegroup| seniority*agegroup |formation*agegroup  /*
+   model ln_wage =labour_market_state*agegroup| seniority*agegroup |formation*agegroup  /*
 |age_16_19*formation|age_20_24*formation|age_25_29*formation|age_30_34*formation|age_35_39*formation|age_40_44*formation|age_45_49*formation|age_50_54*formation|age_55_59*formation|age_60_64*formation
 |age_16_19*seniority|age_20_24*seniority|age_25_29*seniority|age_30_34*seniority|age_35_39*seniority|age_40_44*seniority|age_45_49*seniority|age_50_54*seniority|age_55_59*seniority|age_60_64*seniority
 |age_16_19*new_lms|age_20_24*new_lms|age_25_29*new_lms|age_30_34*new_lms|age_35_39*new_lms|age_40_44*new_lms|age_45_49*new_lms|age_50_54*new_lms|age_55_59*new_lms|age_60_64*new_lms*/ @2
@@ -424,36 +406,32 @@ where estado=1 & ageconti>15 & ageconti<65 & ch04=1 & ((ITL > cent2) & ITL < cen
              cvDetails = all 
              hierarchy = single
 			showpvalues;
-   output out=leo.new_lms_all_men r=resid;
+   output out=leo.outData_all_men r=resid;
    ODS OUTPUT ParameterEstimates =_pe /*CVDetail= _cv*/;
   
 run; 
  ods output close; 
 ods graphics off; 
-
 /*ods trace off; */
 	/*We store the estimated parameters in a distinct dataset, which we later export. This helps when hard-coding Mincer wage equations in 
 			the LIAM2 microsimulation toolbox*/
-data leo.pe_men_mwe_forw_new_lms; 
+data leo.pe_men_mwe_forw; 
 set _pe; 
-regression="Mincer_men_forw_new_lms"; 
-run; 
-
-
-ods graphics on; 
-title "10-fold cross validation on wages: women"; 
-
+regression="Mincer_men_forw"; 
+run; /*
+PROC PRINT DATA=_cv (obs=1000); run; */
+title "10-fold cross validation on wages: women";  
 proc glmselect data=leo.eph_data_formatted_2003_2015 testdata=leo.eph_data_formatted_2003_2015
                plots(stepAxis=number)=(criterionPanel ASEPlot) seed=17101945;
 			   weight pondera ; 
 where estado=1 & ageconti>15 & ageconti<60 & ch04=2 & ((ITL > cent2) & ITL < cent98); 
 
-   class  /*age_16_19(split) age_20_24(split) age_25_29(split) age_30_34(split) age_35_39(split) age_40_44(split) age_45_49(split) age_50_54(split) age_55_59(split) age_60_64(split)*/ agegroup(split) formation(split) new_lms(split) seniority(split) ;  
+   class  /*age_16_19(split) age_20_24(split) age_25_29(split) age_30_34(split) age_35_39(split) age_40_44(split) age_45_49(split) age_50_54(split) age_55_59(split) age_60_64(split)*/ agegroup(split) formation(split) labour_market_state(split) seniority(split) ;  
    
-   model ln_wage = new_lms*agegroup| seniority*agegroup |formation*agegroup   /*
+   model ln_wage =labour_market_state*agegroup| seniority*agegroup |formation*agegroup/*
 |age_16_19*formation|age_20_24*formation|age_25_29*formation|age_30_34*formation|age_35_39*formation|age_40_44*formation|age_45_49*formation|age_50_54*formation|age_55_59*formation|age_60_64*formation
 |age_16_19*seniority|age_20_24*seniority|age_25_29*seniority|age_30_34*seniority|age_35_39*seniority|age_40_44*seniority|age_45_49*seniority|age_50_54*seniority|age_55_59*seniority|age_60_64*seniority
-|age_16_19*new_lms|age_20_24*new_lms|age_25_29*new_lms|age_30_34*new_lms|age_35_39*new_lms|age_40_44*new_lms|age_45_49*new_lms|age_50_54*new_lms|age_55_59*new_lms|age_60_64*new_lms*/ @2
+|age_16_19*labour_market_state|age_20_24*labour_market_state|age_25_29*labour_market_state|age_30_34*labour_market_state|age_35_39*labour_market_state|age_40_44*labour_market_state|age_45_49*labour_market_state|age_50_54*labour_market_state|age_55_59*labour_market_state|age_60_64*labour_market_state*/ @2
            / selection = stepwise(choose = cv 
                                   select = sl
 								SLE=0.10 SLS=0.1)  
@@ -462,7 +440,7 @@ where estado=1 & ageconti>15 & ageconti<60 & ch04=2 & ((ITL > cent2) & ITL < cen
              cvDetails = all 
              hierarchy = single
 			showpvalues;
-   output out=leo.new_lms_all_women r=resid;
+   output out=leo.outData_all_women r=resid;
    ODS OUTPUT ParameterEstimates =_pe /*CVDetail= _cv*/;
   
 run; 
@@ -470,24 +448,23 @@ run;
 ods graphics off; 
 
 
+
+
 /*ods csv close;  
 ods pdf close; 
 */
-data leo.pe_women_mwe_forw_new_lms; 
+/**************************************************************************************************************************************************************/
+data leo.pe_women_mwe_forw; 
 set _pe; 
-regression="Mincer_women_forw_new_lms"; 
+regression="Mincer_women_forw"; 
 run; 
-
-
-/**We don't change the backwards Mincer wage equations, mainly because there is no difference in retirement rights between being a civil servant or a formal wage-earner; 
-		or between being an independent or wage-earner informal worker.***********/
 /*
 ods pdf file="H:\Leonardo_orléans\Sorties_SAS\régressions\10_FOLD_REG_ln_wage_resid_back_art.pdf";
 ods csv file="H:\Leonardo_orléans\Sorties_SAS\régressions\csv\10_FOLD_REG_ln_wage_resid_back_art.csv";*/
 ods graphics on; 
 title "10-fold cross validation on wages: men"; 
 proc glmselect data=leo.eph_data_formatted_2003_2015 testdata=leo.eph_data_formatted_2003_2015
-               plots(stepAxis=number)=(criterionPanel ASEPlot) seed=17101945;
+               plots(stepAxis=number)=(criterionPanel ASEPlot);
 			   weight pondera ; 
 where estado=1 & ageconti>15 & ageconti<65 & ch04=1 & ((ITL > cent2) & ITL < cent98); 
 
@@ -518,7 +495,7 @@ run;
 title "10-fold cross validation on wages: women"; 
 ods graphics on; 
 proc glmselect data=leo.eph_data_formatted_2003_2015 testdata=leo.eph_data_formatted_2003_2015
-               plots(stepAxis=number)=(criterionPanel ASEPlot) seed=17101945;
+               plots(stepAxis=number)=(criterionPanel ASEPlot);
 			   weight pondera; 
 where estado=1 & ageconti>15 & ageconti<60 & ch04=2 & ((ITL > cent2) & ITL < cent98); 
 
@@ -550,11 +527,17 @@ data leo.pe_women_mwe_back;
 set _pe; 
 regression="Mincer_women_back"; 
 run; 
-data leo.Mincer_wage_parameters_new; 
-set leo.pe_men_mwe_forw_new_lms leo.pe_women_mwe_forw_new_lms  leo.pe_men_mwe_back leo.pe_women_mwe_back; 
+data leo.Mincer_wage_parameters; 
+set leo.pe_men_mwe_forw leo.pe_women_mwe_forw  leo.pe_men_mwe_back leo.pe_women_mwe_back; 
 run; 
 
-proc print data=Leo.mincer_wage_parameters_new; run;
+proc print data=Leo.mincer_wage_parameters; run;
+proc print data=leo.pe_mwe; run; 
+data leo.pe_mwe; 
+set leo.pe_mwe; 
+keep effect agegroup formation labour_market_state seniority Estimate Probt regression; 
+if Probt>0.1 then delete; 
+run; 
 	/*These parameters need to be hard-coded in LIAM2, in the retrospective and prospective modules and separately for men and women. 
 			Only parameters with p-values under the 10% threshold must be transcribed in the model.*/ 
 proc export data=leo.pe_men_mwe_back outfile="H:\Tout_LIAM2\Équations comportementales\Équations de salaire\mincer_back_men.csv"
@@ -564,10 +547,10 @@ proc export data=leo.pe_women_mwe_back outfile="H:\Tout_LIAM2\Équations comporte
 dbms=csv replace; 
 run; 
 
-proc export data=leo.pe_men_mwe_forw_new_lms outfile="H:\Tout_LIAM2\Équations comportementales\Équations de salaire\mincer_forw_men_new_lms.csv"
+proc export data=leo.pe_men_mwe_forw outfile="H:\Tout_LIAM2\Équations comportementales\Équations de salaire\mincer_forw_men.csv"
 dbms=csv replace; 
 run; 
-proc export data=leo.pe_women_mwe_forw_new_lms outfile="H:\Tout_LIAM2\Équations comportementales\Équations de salaire\mincer_forw_women_new_lms.csv"
+proc export data=leo.pe_women_mwe_forw outfile="H:\Tout_LIAM2\Équations comportementales\Équations de salaire\mincer_forw_women.csv"
 dbms=csv replace; 
 run; 
 
