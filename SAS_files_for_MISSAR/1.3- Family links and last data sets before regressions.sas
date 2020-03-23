@@ -682,17 +682,19 @@ run;
 data leo.eph_data_formatted_2003_2015; 
 set leo.eph_data_formatted_2003_2015; 
 	civil_servant=0; 
-	if labour_market_state=1 & pp04a=2 
+	if labour_market_state=1 & pp04a=1 
 		then civil_servant=1; 
 	informal_independent=0; 
 	if labour_market_state=3 & (cat_ocup=1 | cat_ocup=2)
 		then informal_independent=1; 
 run; 
-
+proc freq data=leo.eph_data_formatted_2003_2015; 
+table civil_servant*pp04a; 
+table civil_servant*labour_market_state; 
+run; 
 /***Now we carry out some data steps for studying quarterly transitions: we make datasets made up of people surveyed in period t and period 
 		t+1. The idea is then to track their evolution in said quarter. Thus, 50% of the dataset is made up of people surveyed in t, 
 		and the other half is the same people, but surveyed in t+1.****/
-
 
 %macro couple_trim(indata,outdata,unit_var,date_var,from,to);
 

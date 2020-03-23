@@ -570,7 +570,6 @@ run;
 proc export data=leo.pe_women_mwe_forw_new_lms outfile="H:\Tout_LIAM2\Équations comportementales\Équations de salaire\mincer_forw_women_new_lms.csv"
 dbms=csv replace; 
 run; 
-
 /*********************************************BEHAVIOURAL EQUATIONS************************************************/
 
 /*The remaining equations are behavioural. They simulate the transition of individuals between labour-market states, but also the evolution
@@ -579,6 +578,12 @@ run;
 	/*First, we carry out the labour-market behavioural equations. We create some variable that are needed for them, and that exploit 
 			the pannel characteristics of our dataset.*/
 data leo.eph_past_state; 
+set leo.eph_past_state; 
+	rename lag_civil_servant=was_civil_servant; 
+	rename lag_inf_indep=was_inf_indep; 
+run; 
+data leo.eph_past_state; 
+	length little_children_qual $32.; 
 set leo.eph_past_state;
 	/*We need to format the starting dataset so as to make 
 			each labour-market state a dummy (for instance, whether a respondent is a formal wage-earner or not)*/ 
@@ -652,6 +657,31 @@ set leo.eph_past_state;
 	/*We put people with unreported marital status as single*/
 		if marital_status=0 then marital_status=5; 
 		if lag_marital_status=9 then lag_marital_status=5; 
+	/*We add the civil servant and informal independent worker variables. These are nested behavioural equations: we first determine who
+			is a registered wage-earner (resp. informal worker). Then, within formal wage-earners (informal workers), we make another 
+			behavioural equation to see who is a civil servant / independent informal worker. Both civil servant and independent worker
+			are however explanatory variables for labour market state.*/
+		priv_wage_earner=0; 
+		was_priv_wage_earner=0; 
+		informal_we=0; 
+		was_informal_we=0; 
+		if wage_earner=1 & civil_servant=0 
+			then priv_wage_earner=1; 
+		if was_wage_earner=1 & was_civil_servant=0 
+			then was_priv_wage_earner=1; 
+		if informal=1 & informal_independent=0 
+			then informal_we=1; 
+		if was_informal=1 & was_inf_indep=0
+			then was_informal_we=1; 
+	/*Finally, we had forgotten to simplify the little_children variable: we only keep 0, 1, 2 or more as values. */
+		if little_children=0
+			then little_children_qual="0"; 
+		if little_children=1 
+			then little_children_qual="1"; 
+		if little_children>=2
+			then little_children_qual="2+"; 
+		if lag_seniority="-1"
+			then lag_seniority="0"; 
 run; 
 
 /*Then we start our 5-fold stepwise selection procedure. Unfortunately SAS does not support a cross-validation procedure for logistic 
@@ -789,7 +819,6 @@ if lag_seniority="3" & lag_labour_market_state=5 then lag_sen_3_lms_5=1; if lag_
 if lag_seniority="4" & lag_labour_market_state=5 then lag_sen_4_lms_5=1; if lag_seniority^="4" | lag_labour_market_state^=5 then lag_sen_4_lms_5=0; 
 
 run; 
-
 data valid; 
 set valid; 
 		if missing(lag_seniority) | lag_seniority="-" then lag_seniority="-1";
@@ -1046,7 +1075,7 @@ formation (param=ref ref="1")/*
 from_state (param=ref ref="1")*/
 marital_status (param=ref ref="2")
 partner_lab_mar_state (param=ref ref="1")
-little_children (param=ref ref="0")/*
+little_children_qual (param=ref ref="0")/*
 lag_sect_quartile (param=ref ref="1")*/
 lag_sec_qua_1_lms_1 (param=ref ref="1")
 lag_sec_qua_0_lms_1 (param=ref ref="0")
@@ -1106,19 +1135,22 @@ lag_sen_0_lms_3 (param=ref ref="0")
 lag_sen_0_lms_4 (param=ref ref="0")
 lag_sen_0_lms_5 (param=ref ref="0")
 
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
+agegroup (param=ref ref="35")
 /*lag_sect_quartile (param=ref ref="1")
 from_state (param=ref ref="1")
 lag_anciennete (param=ref ref="5")
 */
 /*
 num_child (param=ref ref="3")*/
-out_of_education (param=ref ref="0")
-agegroup (param=ref ref="35")
+/*out_of_education (param=ref ref="0")*/
 ;
-model wage_earner(ref="0")= /*lag_sect_quartile lag_anciennete from_state*/ formation agegroup marital_status partner_lab_mar_state little_children  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
+model wage_earner(ref="0")= /*lag_sect_quartile lag_anciennete from_state*/ formation agegroup marital_status partner_lab_mar_state little_children_qual  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5
 lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
-lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 ods output close;  
 score data=valid out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
 run; quit; 
@@ -1127,22 +1159,22 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="wage_earner_men"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="wage_earner_men"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="wage_earner_men"; if last then delete; run;
-data leo.auc_train_logit_w_earners_men; 
+data leo.auc_train_logit_w_earners_men_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_w_earners_men; 
+data leo.auc_valid_logit_w_earners_men_12; 
 set auc2; 
 run;
-data leo.par_est_w_earners_men; 
+data leo.par_est_w_earners_men_12; 
 set _pe; 
 run;
-proc export data=leo.par_est_w_earners_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\wage_earner_men.csv"
+proc export data=leo.par_est_w_earners_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\wage_earner_men_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_w_earners_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_wage_earner_men.csv"
+proc export data=leo.auc_valid_logit_w_earners_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_wage_earner_men_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_w_earners_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_wage_earner_men.csv"
+proc export data=leo.auc_train_logit_w_earners_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_wage_earner_men_12.csv"
 label dbms=csv replace;  
 run;
 /*In the above exported datasets, you get the parameters of the behavioural equation as estimated in the training dataset, and the AUC
@@ -1162,7 +1194,7 @@ formation (param=ref ref="1")
 /*from_state (param=ref ref="1")*/
 marital_status (param=ref ref="2")
 partner_lab_mar_state (param=ref ref="1")
-little_children (param=ref ref="0")
+little_children_qual (param=ref ref="0")
 /*lag_sect_quartile (param=ref ref="1")*/
 /*
 num_child (param=ref ref="3")*/
@@ -1226,11 +1258,14 @@ lag_sen_0_lms_4 (param=ref ref="0")
 lag_sen_0_lms_5 (param=ref ref="0")
 out_of_education (param=ref ref="0")
 agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
 ;
-model wage_earner(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
+model wage_earner(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5
 lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
-lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 
 ods output close;  
 score data=valid_women out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
@@ -1239,23 +1274,23 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="wage_earner_women"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="wage_earner_women"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="wage_earner_women"; if last then delete; run;
-data leo.auc_train_logit_w_earners_wom; 
+data leo.auc_train_logit_w_earners_wom_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_w_earners_wom; 
+data leo.auc_valid_logit_w_earners_wom_12; 
 set auc2; 
 run;
-data leo.par_est_w_earners_wom; 
+data leo.par_est_w_earners_wom_12; 
 set _pe; 
 run;
 
-proc export data=leo.par_est_w_earners_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\wage_earner_women.csv"
+proc export data=leo.par_est_w_earners_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\wage_earner_wom_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_w_earners_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_wage_earner_women.csv"
+proc export data=leo.auc_valid_logit_w_earners_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_wage_earner_wom_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_w_earners_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_wage_earner_women.csv"
+proc export data=leo.auc_train_logit_w_earners_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_wage_earner_wom_12.csv"
 label dbms=csv replace;  
 run; 
 /*
@@ -1277,7 +1312,7 @@ formation (param=ref ref="3")/*
 from_state (param=ref ref="1")*/
 marital_status (param=ref ref="2")
 partner_lab_mar_state (param=ref ref="2")
-little_children (param=ref ref="1")/*
+little_children_qual (param=ref ref="1")/*
 lag_sect_quartile (param=ref ref="1")*/
 lag_sec_qua_1_lms_1 (param=ref ref="0")
 lag_sec_qua_0_lms_1 (param=ref ref="0")
@@ -1340,11 +1375,14 @@ lag_sen_0_lms_5 (param=ref ref="0")
 num_child (param=ref ref="3")*/
 out_of_education (param=ref ref="0")
 agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
 ;
-model independent(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
+model independent(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5
 lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
-lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 ods output close;  
 score data=valid out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
 run; quit; 
@@ -1353,24 +1391,24 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="independent_men"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="independent_men"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="independent_men"; if last then delete; run;
-data leo.auc_train_logit_indep_men; 
+data leo.auc_train_logit_indep_men_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_indep_men; 
+data leo.auc_valid_logit_indep_men_12; 
 set auc2; 
 run;
-data leo.par_est_indep_men; 
+data leo.par_est_indep_men_12; 
 set _pe; 
 run;
 
 
-proc export data=leo.par_est_indep_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\independent_men.csv"
+proc export data=leo.par_est_indep_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\independent_men_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_indep_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_independent_men.csv"
+proc export data=leo.auc_valid_logit_indep_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_independent_men_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_indep_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_independent_men.csv"
+proc export data=leo.auc_train_logit_indep_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_independent_men_12.csv"
 label dbms=csv replace;  
 run; 
 /*
@@ -1388,7 +1426,7 @@ formation (param=ref ref="3")
 /*from_state (param=ref ref="1")*/
 marital_status (param=ref ref="2")
 partner_lab_mar_state (param=ref ref="2")
-little_children (param=ref ref="1")
+little_children_qual (param=ref ref="1")
 /*lag_sect_quartile (param=ref ref="1")*/
 /*
 num_child (param=ref ref="3")*/
@@ -1452,11 +1490,14 @@ lag_sen_0_lms_4 (param=ref ref="0")
 lag_sen_0_lms_5 (param=ref ref="0")
 out_of_education (param=ref ref="0")
 agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
 ;
-model independent(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
+model independent(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5
 lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
-lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 
 ods output close;  
 score data=valid_women out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
@@ -1465,25 +1506,25 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="independent_women"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="independent_women"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="independent_women"; if last then delete; run;
-data leo.auc_train_logit_indep_wom; 
+data leo.auc_train_logit_indep_wom_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_indep_wom; 
+data leo.auc_valid_logit_indep_wom_12; 
 set auc2; 
 run;
-data leo.par_est_indep_wom; 
+data leo.par_est_indep_wom_12; 
 set _pe; 
 run;
 
 
 
-proc export data=leo.par_est_indep_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\independent_women.csv"
+proc export data=leo.par_est_indep_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\independent_wom_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_indep_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_independent_women.csv"
+proc export data=leo.auc_valid_logit_indep_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_independent_wom_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_indep_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_independent_women.csv"
+proc export data=leo.auc_train_logit_indep_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_independent_wom_12.csv"
 label dbms=csv replace;  
 run; 
 /*
@@ -1504,7 +1545,7 @@ formation (param=ref ref="3")/*
 from_state (param=ref ref="1")*/
 marital_status (param=ref ref="1")
 partner_lab_mar_state (param=ref ref="3")
-little_children (param=ref ref="2+")/*
+little_children_qual (param=ref ref="2+")/*
 lag_sect_quartile (param=ref ref="1")*/
 lag_sec_qua_1_lms_1 (param=ref ref="0")
 lag_sec_qua_0_lms_1 (param=ref ref="0")
@@ -1563,15 +1604,18 @@ lag_sen_0_lms_2 (param=ref ref="0")
 lag_sen_0_lms_3 (param=ref ref="0")
 lag_sen_0_lms_4 (param=ref ref="0")
 lag_sen_0_lms_5 (param=ref ref="0")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
 /*
 num_child (param=ref ref="3")*/
 out_of_education (param=ref ref="0")
 agegroup (param=ref ref="35")
 ;
-model informal(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
+model informal(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5 
 lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
-lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 ods output close;  
 score data=valid out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
 run; quit; 
@@ -1580,25 +1624,25 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="informal_men"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="informal_men"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="informal_men"; if last then delete; run;
-data leo.auc_train_logit_infor_men; 
+data leo.auc_train_logit_infor_men_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_infor_men; 
+data leo.auc_valid_logit_infor_men_12; 
 set auc2; 
 run;
-data leo.par_est_infor_men; 
+data leo.par_est_infor_men_12; 
 set _pe; 
 run;
 
 
 
-proc export data=leo.par_est_infor_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\informal_men.csv"
+proc export data=leo.par_est_infor_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\informal_men_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_infor_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_informal_men.csv"
+proc export data=leo.auc_valid_logit_infor_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_informal_men_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_infor_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_informal_men.csv"
+proc export data=leo.auc_train_logit_infor_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_informal_men_12.csv"
 label dbms=csv replace;  
 run; 
 /*
@@ -1616,7 +1660,7 @@ formation (param=ref ref="3")
 /*from_state (param=ref ref="1")*/
 marital_status (param=ref ref="2")
 partner_lab_mar_state (param=ref ref="1")
-little_children (param=ref ref="2+")
+little_children_qual (param=ref ref="2+")
 /*lag_sect_quartile (param=ref ref="1")*/
 /*
 num_child (param=ref ref="3")*/
@@ -1679,11 +1723,14 @@ lag_sen_0_lms_4 (param=ref ref="0")
 lag_sen_0_lms_5 (param=ref ref="0")
 out_of_education (param=ref ref="0")
 agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
 ;
-model informal(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
+model informal(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5
 lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
-lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 
 ods output close;  
 score data=valid_women out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
@@ -1692,24 +1739,24 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="informal_women"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="informal_women"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="informal_women"; if last then delete; run;
-data leo.auc_train_logit_infor_wom; 
+data leo.auc_train_logit_infor_wom_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_infor_wom; 
+data leo.auc_valid_logit_infor_wom_12; 
 set auc2; 
 run;
-data leo.par_est_infor_wom; 
+data leo.par_est_infor_wom_12; 
 set _pe; 
 run;
 
 
-proc export data=leo.par_est_infor_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\informal_women.csv"
+proc export data=leo.par_est_infor_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\informal_wom_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_infor_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_informal_women.csv"
+proc export data=leo.auc_valid_logit_infor_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_informal_wom_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_infor_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_informal_women.csv"
+proc export data=leo.auc_train_logit_infor_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_informal_wom_12.csv"
 label dbms=csv replace;  
 run; 
 
@@ -1731,7 +1778,7 @@ formation (param=ref ref="3")/*
 from_state (param=ref ref="1")*/
 marital_status (param=ref ref="5")
 partner_lab_mar_state (param=ref ref="-1")
-little_children (param=ref ref="1")/*
+little_children_qual (param=ref ref="1")/*
 lag_sect_quartile (param=ref ref="1")*/
 lag_sec_qua_1_lms_1 (param=ref ref="0")
 lag_sec_qua_0_lms_1 (param=ref ref="0")
@@ -1794,11 +1841,14 @@ lag_sen_0_lms_5 (param=ref ref="0")
 num_child (param=ref ref="3")*/
 out_of_education (param=ref ref="0")
 agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
 ;
-model unemployed(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
+model unemployed(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5 
 lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
-lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 ods output close;  
 score data=valid out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
 run; quit; 
@@ -1807,24 +1857,24 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="unemployed_men"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="unemployed_men"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="unemployed_men"; if last then delete; run;
-data leo.auc_train_logit_unem_men; 
+data leo.auc_train_logit_unem_men_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_unem_men; 
+data leo.auc_valid_logit_unem_men_12; 
 set auc2; 
 run;
-data leo.par_est_unem_men; 
+data leo.par_est_unem_men_12; 
 set _pe; 
 run;
 
 
-proc export data=leo.par_est_unem_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\unemployed_men.csv"
+proc export data=leo.par_est_unem_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\unemployed_men_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_unem_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_unemployed_men.csv"
+proc export data=leo.auc_valid_logit_unem_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_unemployed_men_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_unem_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_unemployed_men.csv"
+proc export data=leo.auc_train_logit_unem_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_unemployed_men_12.csv"
 label dbms=csv replace;  
 run; 
 /*
@@ -1842,7 +1892,7 @@ formation (param=ref ref="3")
 /*from_state (param=ref ref="1")*/
 marital_status (param=ref ref="5")
 partner_lab_mar_state (param=ref ref="-1")
-little_children (param=ref ref="2+")
+little_children_qual (param=ref ref="2+")
 /*lag_sect_quartile (param=ref ref="1")*/
 /*
 num_child (param=ref ref="3")*/
@@ -1906,11 +1956,14 @@ lag_sen_0_lms_3 (param=ref ref="0")
 lag_sen_0_lms_4 (param=ref ref="1")
 lag_sen_0_lms_5 (param=ref ref="0")
 agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
 ;
-model unemployed(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
+model unemployed(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5 
 lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
-lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 
 ods output close;  
 score data=valid_women out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
@@ -1919,23 +1972,23 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="unemployed_women"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="unemployed_women"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="unemployed_women"; if last then delete; run;
-data leo.auc_train_logit_unem_wom; 
+data leo.auc_train_logit_unem_wom_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_unem_wom; 
+data leo.auc_valid_logit_unem_wom_12; 
 set auc2; 
 run;
-data leo.par_est_unem_wom; 
+data leo.par_est_unem_wom_12; 
 set _pe; 
 run;
 
-proc export data=leo.par_est_unem_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\unemployed_women.csv"
+proc export data=leo.par_est_unem_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\unemployed_wom_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_unem_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_unemployed_women.csv"
+proc export data=leo.auc_valid_logit_unem_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_unemployed_wom_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_unem_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_unemployed_women.csv"
+proc export data=leo.auc_train_logit_unem_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_unemployed_wom_12.csv"
 label dbms=csv replace;  
 run; 
 
@@ -1956,7 +2009,7 @@ formation (param=ref ref="3")/*
 from_state (param=ref ref="1")*/
 marital_status (param=ref ref="5")
 partner_lab_mar_state (param=ref ref="-1")
-little_children (param=ref ref="1")/*
+little_children_qual (param=ref ref="1")/*
 lag_sect_quartile (param=ref ref="1")*/
 lag_sec_qua_1_lms_1 (param=ref ref="0")
 lag_sec_qua_0_lms_1 (param=ref ref="0")
@@ -2020,11 +2073,14 @@ lag_sen_0_lms_5 (param=ref ref="1")
 num_child (param=ref ref="3")*/
 out_of_education (param=ref ref="0")
 agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
 ;
-model inactive(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
+model inactive(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5
 lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
-lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 
 ods output close;  
 score data=valid out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
@@ -2034,24 +2090,24 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="inactive_men"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="inactive_men"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="inactive_men"; if last then delete; run;
-data leo.auc_train_logit_inac_men; 
+data leo.auc_train_logit_inac_men_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_inac_men; 
+data leo.auc_valid_logit_inac_men_12; 
 set auc2; 
 run;
-data leo.par_est_inac_men; 
+data leo.par_est_inac_men_12; 
 set _pe; 
 run;
 
 
-proc export data=leo.par_est_inac_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\inactive_men.csv"
+proc export data=leo.par_est_inac_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\inactive_men_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_inac_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_inactive_men.csv"
+proc export data=leo.auc_valid_logit_inac_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_inactive_men_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_inac_men outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_inactive_men.csv"
+proc export data=leo.auc_train_logit_inac_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_inactive_men_12.csv"
 label dbms=csv replace;  
 run; 
 /*
@@ -2069,7 +2125,7 @@ formation (param=ref ref="3")
 /*from_state (param=ref ref="1")*/
 marital_status (param=ref ref="2")
 partner_lab_mar_state (param=ref ref="1")
-little_children (param=ref ref="2+")
+little_children_qual (param=ref ref="2+")
 /*lag_sect_quartile (param=ref ref="1")*/
 /*
 num_child (param=ref ref="3")*/
@@ -2134,11 +2190,14 @@ lag_sen_0_lms_4 (param=ref ref="0")
 lag_sen_0_lms_5 (param=ref ref="1")
 out_of_education (param=ref ref="0")
 agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="0")
 ;
-model inactive(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
+model inactive(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
 lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5 
 lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
-lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
 
 ods output close;  
 score data=valid_women out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
@@ -2148,23 +2207,496 @@ ods output close;
 data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="inactive_women"; run; 
 data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="inactive_women"; run; 
 data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="inactive_women"; if last then delete; run;
-data leo.auc_train_logit_inac_wom; 
+data leo.auc_train_logit_inac_wom_12; 
 set auc; where ROCMODEL="Model"; 
 run; 
-data leo.auc_valid_logit_inac_wom; 
+data leo.auc_valid_logit_inac_wom_12; 
 set auc2; 
 run;
-data leo.par_est_inac_wom; 
+data leo.par_est_inac_wom_12; 
 set _pe; 
 run;
 
 
-proc export data=leo.par_est_inac_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\inactive_women.csv"
+proc export data=leo.par_est_inac_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\inactive_wom_12.csv"
 label dbms=csv replace;  
 run;
-proc export data=leo.auc_valid_logit_inac_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_inactive_women.csv"
+proc export data=leo.auc_valid_logit_inac_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_inactive_wom_12.csv"
 label dbms=csv replace;  
 run; 
-proc export data=leo.auc_train_logit_inac_wom outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_inactive_women.csv"
+proc export data=leo.auc_train_logit_inac_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_inactive_wom_12.csv"
+label dbms=csv replace;  
+run; 
+
+
+
+
+
+
+
+
+
+title " Civil servant, men  "; 
+proc logistic data=train;
+ weight pondera /norm; 
+where (ch04=1&(16<=ageconti<65) & labour_market_state=1);
+class 
+formation (param=ref ref="3")/*
+from_state (param=ref ref="1")*/
+marital_status (param=ref ref="5")
+partner_lab_mar_state (param=ref ref="-1")
+little_children_qual (param=ref ref="1")/*
+lag_sect_quartile (param=ref ref="1")*/
+lag_sec_qua_1_lms_1 (param=ref ref="1")
+lag_sec_qua_0_lms_1 (param=ref ref="0")
+lag_sec_qua_2_lms_1 (param=ref ref="0")
+lag_sec_qua_3_lms_1 (param=ref ref="0")
+lag_sec_qua_4_lms_1 (param=ref ref="0")
+lag_sec_qua_1_lms_2 (param=ref ref="0")
+lag_sec_qua_0_lms_2 (param=ref ref="0")
+lag_sec_qua_2_lms_2 (param=ref ref="0")
+lag_sec_qua_3_lms_2 (param=ref ref="0")
+lag_sec_qua_4_lms_2 (param=ref ref="0")
+lag_sec_qua_1_lms_3 (param=ref ref="0")
+lag_sec_qua_0_lms_3 (param=ref ref="0")
+lag_sec_qua_2_lms_3 (param=ref ref="0")
+lag_sec_qua_3_lms_3 (param=ref ref="0")
+lag_sec_qua_4_lms_3 (param=ref ref="0")
+lag_sec_qua_1_lms_4 (param=ref ref="0")
+lag_sec_qua_0_lms_4 (param=ref ref="0")
+lag_sec_qua_2_lms_4 (param=ref ref="0")
+lag_sec_qua_3_lms_4 (param=ref ref="0")
+lag_sec_qua_4_lms_4 (param=ref ref="0")
+lag_sec_qua_1_lms_5 (param=ref ref="0")
+lag_sec_qua_0_lms_5 (param=ref ref="0")
+lag_sec_qua_2_lms_5 (param=ref ref="0")
+lag_sec_qua_3_lms_5 (param=ref ref="0")
+lag_sec_qua_4_lms_5 (param=ref ref="0")
+
+
+lag_sen_1_lms_1 (param=ref ref="0")
+lag_sen_5_lms_1 (param=ref ref="1")
+lag_sen_2_lms_1 (param=ref ref="0")
+lag_sen_3_lms_1 (param=ref ref="0")
+lag_sen_4_lms_1 (param=ref ref="0")
+lag_sen_1_lms_2 (param=ref ref="0")
+lag_sen_5_lms_2 (param=ref ref="0")
+lag_sen_2_lms_2 (param=ref ref="0")
+lag_sen_3_lms_2 (param=ref ref="0")
+lag_sen_4_lms_2 (param=ref ref="0")
+lag_sen_1_lms_3 (param=ref ref="0")
+lag_sen_5_lms_3 (param=ref ref="0")
+lag_sen_2_lms_3 (param=ref ref="0")
+lag_sen_3_lms_3 (param=ref ref="0")
+lag_sen_4_lms_3 (param=ref ref="0")
+lag_sen_1_lms_4 (param=ref ref="0")
+lag_sen_5_lms_4 (param=ref ref="0")
+lag_sen_2_lms_4 (param=ref ref="0")
+lag_sen_3_lms_4 (param=ref ref="0")
+lag_sen_4_lms_4 (param=ref ref="0")
+lag_sen_1_lms_5 (param=ref ref="0")
+lag_sen_5_lms_5 (param=ref ref="0")
+lag_sen_2_lms_5 (param=ref ref="0")
+lag_sen_3_lms_5 (param=ref ref="0")
+lag_sen_4_lms_5 (param=ref ref="0")
+
+lag_sen_0_lms_1 (param=ref ref="0")
+lag_sen_0_lms_2 (param=ref ref="0")
+lag_sen_0_lms_3 (param=ref ref="0")
+lag_sen_0_lms_4 (param=ref ref="0")
+lag_sen_0_lms_5 (param=ref ref="0")
+/*
+num_child (param=ref ref="3")*/
+out_of_education (param=ref ref="0")
+agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="1")
+was_inf_indep (param=ref ref="0")
+;
+model civil_servant(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
+lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5
+lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+
+ods output close;  
+score data=valid out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
+run; quit; 
+ods output close; 
+
+data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="civil_servant_men"; run; 
+data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="civil_servant_men"; run; 
+data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="civil_servant_men"; if last then delete; run;
+data leo.auc_train_logit_civ_ser_men_12; 
+set auc; where ROCMODEL="Model"; 
+run; 
+data leo.auc_valid_logit_civ_ser_men_12; 
+set auc2; 
+run;
+data leo.par_est_civ_ser_men_12; 
+set _pe; 
+run;
+
+
+proc export data=leo.par_est_civ_ser_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\civil_servant_men_12.csv"
+label dbms=csv replace;  
+run;
+proc export data=leo.auc_valid_logit_civ_ser_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_civil_servant_men_12.csv"
+label dbms=csv replace;  
+run; 
+proc export data=leo.auc_train_logit_civ_ser_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_civil_servant_men_12.csv"
+label dbms=csv replace;  
+run; 
+/*
+proc print data=leo.par_est_civ_ser_men; run; 
+proc print data=leo.auc_valid_logit_civ_ser_men; run; 
+proc print data=leo.auc_train_logit_civ_ser_men; run; */
+
+
+title " civil_servant, women"; 
+proc logistic data=train_women;
+ weight pondera /norm; 
+where (ch04=2&(16<=ageconti<60)& labour_market_state=1);
+class 
+formation (param=ref ref="3")
+/*from_state (param=ref ref="1")*/
+marital_status (param=ref ref="2")
+partner_lab_mar_state (param=ref ref="1")
+little_children_qual (param=ref ref="2+")
+/*lag_sect_quartile (param=ref ref="1")*/
+/*
+num_child (param=ref ref="3")*/
+lag_sec_qua_1_lms_1 (param=ref ref="1")
+lag_sec_qua_0_lms_1 (param=ref ref="0")
+lag_sec_qua_2_lms_1 (param=ref ref="0")
+lag_sec_qua_3_lms_1 (param=ref ref="0")
+lag_sec_qua_4_lms_1 (param=ref ref="0")
+lag_sec_qua_1_lms_2 (param=ref ref="0")
+lag_sec_qua_0_lms_2 (param=ref ref="0")
+lag_sec_qua_2_lms_2 (param=ref ref="0")
+lag_sec_qua_3_lms_2 (param=ref ref="0")
+lag_sec_qua_4_lms_2 (param=ref ref="0")
+lag_sec_qua_1_lms_3 (param=ref ref="0")
+lag_sec_qua_0_lms_3 (param=ref ref="0")
+lag_sec_qua_2_lms_3 (param=ref ref="0")
+lag_sec_qua_3_lms_3 (param=ref ref="0")
+lag_sec_qua_4_lms_3 (param=ref ref="0")
+lag_sec_qua_1_lms_4 (param=ref ref="0")
+lag_sec_qua_0_lms_4 (param=ref ref="0")
+lag_sec_qua_2_lms_4 (param=ref ref="0")
+lag_sec_qua_3_lms_4 (param=ref ref="0")
+lag_sec_qua_4_lms_4 (param=ref ref="0")
+lag_sec_qua_1_lms_5 (param=ref ref="0")
+lag_sec_qua_0_lms_5 (param=ref ref="0")
+lag_sec_qua_2_lms_5 (param=ref ref="0")
+lag_sec_qua_3_lms_5 (param=ref ref="0")
+lag_sec_qua_4_lms_5 (param=ref ref="0")
+
+
+
+lag_sen_1_lms_1 (param=ref ref="0")
+lag_sen_5_lms_1 (param=ref ref="1")
+lag_sen_2_lms_1 (param=ref ref="0")
+lag_sen_3_lms_1 (param=ref ref="0")
+lag_sen_4_lms_1 (param=ref ref="0")
+lag_sen_1_lms_2 (param=ref ref="0")
+lag_sen_5_lms_2 (param=ref ref="0")
+lag_sen_2_lms_2 (param=ref ref="0")
+lag_sen_3_lms_2 (param=ref ref="0")
+lag_sen_4_lms_2 (param=ref ref="0")
+lag_sen_1_lms_3 (param=ref ref="0")
+lag_sen_5_lms_3 (param=ref ref="0")
+lag_sen_2_lms_3 (param=ref ref="0")
+lag_sen_3_lms_3 (param=ref ref="0")
+lag_sen_4_lms_3 (param=ref ref="0")
+lag_sen_1_lms_4 (param=ref ref="0")
+lag_sen_5_lms_4 (param=ref ref="0")
+lag_sen_2_lms_4 (param=ref ref="0")
+lag_sen_3_lms_4 (param=ref ref="0")
+lag_sen_4_lms_4 (param=ref ref="0")
+lag_sen_1_lms_5 (param=ref ref="0")
+lag_sen_5_lms_5 (param=ref ref="0")
+lag_sen_2_lms_5 (param=ref ref="0")
+lag_sen_3_lms_5 (param=ref ref="0")
+lag_sen_4_lms_5 (param=ref ref="0")
+
+lag_sen_0_lms_1 (param=ref ref="0")
+lag_sen_0_lms_2 (param=ref ref="0")
+lag_sen_0_lms_3 (param=ref ref="0")
+lag_sen_0_lms_4 (param=ref ref="0")
+lag_sen_0_lms_5 (param=ref ref="0")
+out_of_education (param=ref ref="0")
+agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="1")
+was_inf_indep (param=ref ref="0")
+;
+model civil_servant(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
+lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5 
+lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+
+ods output close;  
+score data=valid_women out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
+run; quit; 
+
+ods output close; 
+data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="civil_servant_women"; run; 
+data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="civil_servant_women"; run; 
+data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="civil_servant_women"; if last then delete; run;
+data leo.auc_train_logit_civ_ser_wom_12; 
+set auc; where ROCMODEL="Model"; 
+run; 
+data leo.auc_valid_logit_civ_ser_wom_12; 
+set auc2; 
+run;
+data leo.par_est_civ_ser_wom_12; 
+set _pe; 
+run;
+
+
+proc export data=leo.par_est_civ_ser_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\civil_servant_wom_12.csv"
+label dbms=csv replace;  
+run;
+proc export data=leo.auc_valid_logit_civ_ser_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_civil_servant_wom_12.csv"
+label dbms=csv replace;  
+run; 
+proc export data=leo.auc_train_logit_civ_ser_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_civil_servant_wom_12.csv"
+label dbms=csv replace;  
+run; 
+
+
+
+
+
+
+
+
+
+
+title " Informal independent, men  "; 
+proc logistic data=train;
+ weight pondera /norm; 
+where (ch04=1&(16<=ageconti<65) & labour_market_state=3);
+class 
+formation (param=ref ref="3")/*
+from_state (param=ref ref="1")*/
+marital_status (param=ref ref="5")
+partner_lab_mar_state (param=ref ref="-1")
+little_children_qual (param=ref ref="1")/*
+lag_sect_quartile (param=ref ref="1")*/
+lag_sec_qua_1_lms_1 (param=ref ref="0")
+lag_sec_qua_0_lms_1 (param=ref ref="0")
+lag_sec_qua_2_lms_1 (param=ref ref="0")
+lag_sec_qua_3_lms_1 (param=ref ref="0")
+lag_sec_qua_4_lms_1 (param=ref ref="0")
+lag_sec_qua_1_lms_2 (param=ref ref="0")
+lag_sec_qua_0_lms_2 (param=ref ref="0")
+lag_sec_qua_2_lms_2 (param=ref ref="0")
+lag_sec_qua_3_lms_2 (param=ref ref="0")
+lag_sec_qua_4_lms_2 (param=ref ref="0")
+lag_sec_qua_1_lms_3 (param=ref ref="0")
+lag_sec_qua_0_lms_3 (param=ref ref="0")
+lag_sec_qua_2_lms_3 (param=ref ref="1")
+lag_sec_qua_3_lms_3 (param=ref ref="0")
+lag_sec_qua_4_lms_3 (param=ref ref="0")
+lag_sec_qua_1_lms_4 (param=ref ref="0")
+lag_sec_qua_0_lms_4 (param=ref ref="0")
+lag_sec_qua_2_lms_4 (param=ref ref="0")
+lag_sec_qua_3_lms_4 (param=ref ref="0")
+lag_sec_qua_4_lms_4 (param=ref ref="0")
+lag_sec_qua_1_lms_5 (param=ref ref="0")
+lag_sec_qua_0_lms_5 (param=ref ref="0")
+lag_sec_qua_2_lms_5 (param=ref ref="0")
+lag_sec_qua_3_lms_5 (param=ref ref="0")
+lag_sec_qua_4_lms_5 (param=ref ref="0")
+
+
+lag_sen_1_lms_1 (param=ref ref="0")
+lag_sen_5_lms_1 (param=ref ref="0")
+lag_sen_2_lms_1 (param=ref ref="0")
+lag_sen_3_lms_1 (param=ref ref="0")
+lag_sen_4_lms_1 (param=ref ref="0")
+lag_sen_1_lms_2 (param=ref ref="0")
+lag_sen_5_lms_2 (param=ref ref="0")
+lag_sen_2_lms_2 (param=ref ref="0")
+lag_sen_3_lms_2 (param=ref ref="0")
+lag_sen_4_lms_2 (param=ref ref="0")
+lag_sen_1_lms_3 (param=ref ref="0")
+lag_sen_5_lms_3 (param=ref ref="1")
+lag_sen_2_lms_3 (param=ref ref="0")
+lag_sen_3_lms_3 (param=ref ref="0")
+lag_sen_4_lms_3 (param=ref ref="0")
+lag_sen_1_lms_4 (param=ref ref="0")
+lag_sen_5_lms_4 (param=ref ref="0")
+lag_sen_2_lms_4 (param=ref ref="0")
+lag_sen_3_lms_4 (param=ref ref="0")
+lag_sen_4_lms_4 (param=ref ref="0")
+lag_sen_1_lms_5 (param=ref ref="0")
+lag_sen_5_lms_5 (param=ref ref="0")
+lag_sen_2_lms_5 (param=ref ref="0")
+lag_sen_3_lms_5 (param=ref ref="0")
+lag_sen_4_lms_5 (param=ref ref="0")
+
+lag_sen_0_lms_1 (param=ref ref="0")
+lag_sen_0_lms_2 (param=ref ref="0")
+lag_sen_0_lms_3 (param=ref ref="0")
+lag_sen_0_lms_4 (param=ref ref="0")
+lag_sen_0_lms_5 (param=ref ref="0")
+/*
+num_child (param=ref ref="3")*/
+out_of_education (param=ref ref="0")
+agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="1")
+;
+model informal_independent(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual  /*lag_sect_quartile*from_state lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education 
+lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5
+lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+
+ods output close;  
+score data=valid out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
+run; quit; 
+ods output close; 
+
+data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="civil_servant_men"; run; 
+data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="civil_servant_men"; run; 
+data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="civil_servant_men"; if last then delete; run;
+data leo.auc_train_logit_inf_indep_men_12; 
+set auc; where ROCMODEL="Model"; 
+run; 
+data leo.auc_valid_logit_inf_indep_men_12; 
+set auc2; 
+run;
+data leo.par_est_inf_indep_men_12; 
+set _pe; 
+run;
+
+
+proc export data=leo.par_est_inf_indep_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\civil_servant_men_12.csv"
+label dbms=csv replace;  
+run;
+proc export data=leo.auc_valid_logit_inf_indep_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_civil_servant_men_12.csv"
+label dbms=csv replace;  
+run; 
+proc export data=leo.auc_train_logit_inf_indep_men_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_civil_servant_men_12.csv"
+label dbms=csv replace;  
+run; 
+/*
+proc print data=leo.par_est_inf_indep_men; run; 
+proc print data=leo.auc_valid_logit_inf_indep_men; run; 
+proc print data=leo.auc_train_logit_inf_indep_men; run; */
+
+
+title " Informal independent, women"; 
+proc logistic data=train_women;
+ weight pondera /norm; 
+where (ch04=2&(16<=ageconti<60)& labour_market_state=3);
+class 
+formation (param=ref ref="3")
+/*from_state (param=ref ref="1")*/
+marital_status (param=ref ref="2")
+partner_lab_mar_state (param=ref ref="1")
+little_children_qual (param=ref ref="2+")
+/*lag_sect_quartile (param=ref ref="1")*/
+/*
+num_child (param=ref ref="3")*/
+lag_sec_qua_1_lms_1 (param=ref ref="0")
+lag_sec_qua_0_lms_1 (param=ref ref="0")
+lag_sec_qua_2_lms_1 (param=ref ref="0")
+lag_sec_qua_3_lms_1 (param=ref ref="0")
+lag_sec_qua_4_lms_1 (param=ref ref="0")
+lag_sec_qua_1_lms_2 (param=ref ref="0")
+lag_sec_qua_0_lms_2 (param=ref ref="0")
+lag_sec_qua_2_lms_2 (param=ref ref="0")
+lag_sec_qua_3_lms_2 (param=ref ref="0")
+lag_sec_qua_4_lms_2 (param=ref ref="0")
+lag_sec_qua_1_lms_3 (param=ref ref="0")
+lag_sec_qua_0_lms_3 (param=ref ref="0")
+lag_sec_qua_2_lms_3 (param=ref ref="1")
+lag_sec_qua_3_lms_3 (param=ref ref="0")
+lag_sec_qua_4_lms_3 (param=ref ref="0")
+lag_sec_qua_1_lms_4 (param=ref ref="0")
+lag_sec_qua_0_lms_4 (param=ref ref="0")
+lag_sec_qua_2_lms_4 (param=ref ref="0")
+lag_sec_qua_3_lms_4 (param=ref ref="0")
+lag_sec_qua_4_lms_4 (param=ref ref="0")
+lag_sec_qua_1_lms_5 (param=ref ref="0")
+lag_sec_qua_0_lms_5 (param=ref ref="0")
+lag_sec_qua_2_lms_5 (param=ref ref="0")
+lag_sec_qua_3_lms_5 (param=ref ref="0")
+lag_sec_qua_4_lms_5 (param=ref ref="0")
+
+
+
+lag_sen_1_lms_1 (param=ref ref="0")
+lag_sen_5_lms_1 (param=ref ref="0")
+lag_sen_2_lms_1 (param=ref ref="0")
+lag_sen_3_lms_1 (param=ref ref="0")
+lag_sen_4_lms_1 (param=ref ref="0")
+lag_sen_1_lms_2 (param=ref ref="0")
+lag_sen_5_lms_2 (param=ref ref="0")
+lag_sen_2_lms_2 (param=ref ref="0")
+lag_sen_3_lms_2 (param=ref ref="0")
+lag_sen_4_lms_2 (param=ref ref="0")
+lag_sen_1_lms_3 (param=ref ref="0")
+lag_sen_5_lms_3 (param=ref ref="1")
+lag_sen_2_lms_3 (param=ref ref="0")
+lag_sen_3_lms_3 (param=ref ref="0")
+lag_sen_4_lms_3 (param=ref ref="0")
+lag_sen_1_lms_4 (param=ref ref="0")
+lag_sen_5_lms_4 (param=ref ref="0")
+lag_sen_2_lms_4 (param=ref ref="0")
+lag_sen_3_lms_4 (param=ref ref="0")
+lag_sen_4_lms_4 (param=ref ref="0")
+lag_sen_1_lms_5 (param=ref ref="0")
+lag_sen_5_lms_5 (param=ref ref="0")
+lag_sen_2_lms_5 (param=ref ref="0")
+lag_sen_3_lms_5 (param=ref ref="0")
+lag_sen_4_lms_5 (param=ref ref="0")
+
+lag_sen_0_lms_1 (param=ref ref="0")
+lag_sen_0_lms_2 (param=ref ref="0")
+lag_sen_0_lms_3 (param=ref ref="0")
+lag_sen_0_lms_4 (param=ref ref="0")
+lag_sen_0_lms_5 (param=ref ref="0")
+out_of_education (param=ref ref="0")
+agegroup (param=ref ref="35")
+was_civil_servant (param=ref ref="0")
+was_inf_indep (param=ref ref="1")
+;
+model informal_independent(ref="0")= formation agegroup marital_status partner_lab_mar_state little_children_qual /*lag_sect_quartile*/ /*enf_bas_age*/ /*from_state*/ out_of_education
+lag_sec_qua_0_lms_1 lag_sec_qua_1_lms_1 lag_sec_qua_2_lms_1 lag_sec_qua_3_lms_1 lag_sec_qua_4_lms_1 lag_sec_qua_0_lms_2 lag_sec_qua_1_lms_2 lag_sec_qua_2_lms_2 lag_sec_qua_3_lms_2 lag_sec_qua_4_lms_2 lag_sec_qua_0_lms_3 lag_sec_qua_1_lms_3 lag_sec_qua_2_lms_3 lag_sec_qua_3_lms_3 lag_sec_qua_4_lms_3  lag_sec_qua_0_lms_4 lag_sec_qua_1_lms_4 lag_sec_qua_2_lms_4 lag_sec_qua_3_lms_4 lag_sec_qua_4_lms_4 lag_sec_qua_0_lms_5 lag_sec_qua_1_lms_5 lag_sec_qua_2_lms_5 lag_sec_qua_3_lms_5 lag_sec_qua_4_lms_5 
+lag_sen_0_lms_1 lag_sen_0_lms_2 lag_sen_0_lms_3 lag_sen_0_lms_4 lag_sen_0_lms_5
+lag_sen_5_lms_1 lag_sen_1_lms_1 lag_sen_2_lms_1 lag_sen_3_lms_1 lag_sen_4_lms_1 lag_sen_5_lms_2 lag_sen_1_lms_2 lag_sen_2_lms_2 lag_sen_3_lms_2 lag_sen_4_lms_2 lag_sen_5_lms_3 lag_sen_1_lms_3 lag_sen_2_lms_3 lag_sen_3_lms_3 lag_sen_4_lms_3  lag_sen_5_lms_4 lag_sen_1_lms_4 lag_sen_2_lms_4 lag_sen_3_lms_4 lag_sen_4_lms_4 lag_sen_5_lms_5 lag_sen_1_lms_5 lag_sen_2_lms_5 lag_sen_3_lms_5 lag_sen_4_lms_5
+was_civil_servant was_inf_indep/ selection=stepwise slstay=0.10 slentry=0.10 scale=none clparm=wald clodds=pl rsq outroc=train_roc;
+
+ods output close;  
+score data=valid_women out=valpred outroc=valid_roc fitstat; roc; ODS OUTPUT ROCASSOCIATION = AUC  ScoreFitStat=AUC2  ParameterEstimates =_pe;
+run; quit; 
+
+ods output close; 
+data AUC; length regression $32.; length dataset $32.;  set AUC; Regression="civil_servant_women"; run; 
+data AUC2; length regression $32.; length dataset $32.;  set AUC2; Regression="civil_servant_women"; run; 
+data _pe; length regression $32.; length dataset $32.; length classval0 $32.; length classval1 $32.; set _pe end=last; Regression="civil_servant_women"; if last then delete; run;
+data leo.auc_train_logit_inf_indep_wom_12; 
+set auc; where ROCMODEL="Model"; 
+run; 
+data leo.auc_valid_logit_inf_indep_wom_12; 
+set auc2; 
+run;
+data leo.par_est_inf_indep_wom_12; 
+set _pe; 
+run;
+
+
+proc export data=leo.par_est_inf_indep_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\Paramètres\civil_servant_wom_12.csv"
+label dbms=csv replace;  
+run;
+proc export data=leo.auc_valid_logit_inf_indep_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_valid\AUC_V_civil_servant_wom_12.csv"
+label dbms=csv replace;  
+run; 
+proc export data=leo.auc_train_logit_inf_indep_wom_12 outfile="H:\Leonardo_orléans\Sorties_SAS\régressions\Équations comportementales\AUC_train\AUC_T_civil_servant_wom_12.csv"
 label dbms=csv replace;  
 run; 
