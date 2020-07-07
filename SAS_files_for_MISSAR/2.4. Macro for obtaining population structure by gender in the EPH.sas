@@ -32,6 +32,9 @@ set women_&period.;
 	drop &gender_var.; 
 run; 
 %mend; 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,66,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,65,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,64,agegroup,ch04); 
 %age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,63,agegroup,ch04); 
 %age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,62,agegroup,ch04); 
 %age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,61,agegroup,ch04); 
@@ -45,11 +48,11 @@ run;
 %age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,53,agegroup,ch04); 
 %age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,52,agegroup,ch04); 
 data men_2016_2019; 
-merge men_63-men_52; 
+merge men_66-men_52; 
 	by agegroup; 
 run; 
 data women_2016_2019; 
-merge women_63-women_52; 
+merge women_66-women_52; 
 	by agegroup; 
 run; 
 %age_group_and_gender_for_indep(leo.eph_data_formatted_2003_2015,48,agegroup,ch04); 
@@ -127,22 +130,22 @@ data women_2003_2015;
 set women_2003_2015; 
 run; 
 proc export data=men_2016_2019
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\demographic_men_post_2016.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_men_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=women_2016_2019
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\demographic_women_post_2016.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_women_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=men_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\demographic_men_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_men_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=women_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\demographic_women_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_women_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 %macro independent_proportion(indata,period,agegroup_var,gender_var); 
@@ -191,6 +194,9 @@ run;
 %mend; 
 
 
+%independent_proportion(leo.eph_formatted_2016_2019,66,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2019,65,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2019,64,agegroup,ch04); 
 %independent_proportion(leo.eph_formatted_2016_2019,63,agegroup,ch04); 
 %independent_proportion(leo.eph_formatted_2016_2019,62,agegroup,ch04); 
 %independent_proportion(leo.eph_formatted_2016_2019,61,agegroup,ch04); 
@@ -205,12 +211,12 @@ run;
 %independent_proportion(leo.eph_formatted_2016_2019,52,agegroup,ch04); 
 
 data indep_women_2016_2019; 
-merge indep_women_63-indep_women_52; 
+merge indep_women_66-indep_women_52; 
 	by agegroup; 
 run; 
 
 data indep_men_2016_2019; 
-merge indep_men_63-indep_men_52; 
+merge indep_men_66-indep_men_52; 
 	by agegroup; 
 run; 
 
@@ -292,23 +298,23 @@ run;
 
 
 proc export data=indep_men_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\indep_demographic_men_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_demographic_men_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=indep_women_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\indep_demographic_women_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_demographic_women_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 
 
 proc export data=indep_men_2016_2019
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\indep_men_post_2016.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_men_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=indep_women_2016_2019
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\indep_women_post_2016.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_women_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
@@ -362,13 +368,16 @@ run;
 %age_group_for_indep (leo.eph_formatted_2016_2019,61,agegroup); 
 %age_group_for_indep (leo.eph_formatted_2016_2019,62,agegroup); 
 %age_group_for_indep (leo.eph_formatted_2016_2019,63,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,64,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,65,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2019,66,agegroup); 
 
 data leo.indep_population_post_2016; 
-merge indep_63-indep_52; 
+merge indep_66-indep_52; 
 	by agegroup; 
 run; 
 data leo.demographic_post_2016; 
-merge demographic_63-demographic_52; 
+merge demographic_66-demographic_52; 
 	by agegroup; 
 run; 
 
@@ -377,12 +386,12 @@ run;
 
 
 proc export data=leo.indep_population_post_2016
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\indep_population_post_2016.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_population_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=leo.demographic_post_2016
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\demographic_post_2016.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_post_2016.csv' 
 	dbms=csv replace; 
 run;  
 proc freq data=leo.eph_data_formatted_2003_2015; 
@@ -472,11 +481,11 @@ run;
 proc print data=leo.indep_population_2003_2015; run; 
 proc print data=leo.demographic_2003_2015; run; 
 proc export data=leo.indep_population_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\indep_population_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_population_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=leo.demographic_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\Historical_indexes\Computed_proportions_of_monotributistas_and_autonomous_workers\demographic_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_2003_2015.csv' 
 	dbms=csv replace; 
 run; 

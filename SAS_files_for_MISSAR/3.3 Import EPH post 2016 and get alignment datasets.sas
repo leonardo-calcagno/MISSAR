@@ -3230,7 +3230,7 @@ run;
 		by labour-market state.*/
 dm 'odsresults; clear'; 
 dm 'clear log'; 
-proc freq data=leo.eph_formatted_2019; table labour_market_state*ch04 /noprint outpct out=leo.lms_996; weight pondera; where 70>ageconti>15 & period=65; run; data leo.lms_996; set leo.lms_996; period2="2019_4"; run;
+proc freq data=leo.eph_formatted_2019; table labour_market_state*ch04 /noprint outpct out=leo.lms_996; weight pondera; where 70>ageconti>15 & period=66; run; data leo.lms_996; set leo.lms_996; period2="2019_4"; run;
 proc freq data=leo.eph_formatted_2019; table labour_market_state*ch04 /noprint outpct out=leo.lms_997; weight pondera; where 70>ageconti>15 & period=65; run; data leo.lms_997; set leo.lms_997; period2="2019_3"; run;
 proc freq data=leo.eph_formatted_2019; table labour_market_state*ch04 /noprint outpct out=leo.lms_998; weight pondera; where 70>ageconti>15 & period=64; run; data leo.lms_998; set leo.lms_998; period2="2019_2"; run;
 proc freq data=leo.eph_formatted_2019; table labour_market_state*ch04 /noprint outpct out=leo.lms_999; weight pondera; where 70>ageconti>15 & period=63; run; data leo.lms_999; set leo.lms_999; period2="2019_1"; run;
@@ -3247,7 +3247,7 @@ proc freq data=leo.eph_formatted_2016; table labour_market_state*ch04 /noprint o
 proc freq data=leo.eph_formatted_2016; table labour_market_state*ch04 /noprint outpct out=leo.lms_1010; weight pondera; where 70>ageconti>15 & period=52; run; data leo.lms_1010; set leo.lms_1010; period2="2016_2"; run;
 
 data leo.hist_lms_post_2016; 
-set leo.lms_997-leo.lms_1010; 
+set leo.lms_996-leo.lms_1010; 
 run; 
 
 proc sort data=leo.hist_lms_post_2016; 
@@ -3640,4 +3640,3 @@ proc export data=leo.post_2016_lms_men_wom
 outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_men_wom.csv' 
 dbms=csv replace; 
 run; 
-
