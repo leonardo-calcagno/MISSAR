@@ -14,11 +14,11 @@ globals:
             - GROSS_WAGE_HIGH_2014_T4: float
             - REAL_WAGE_HIGH: float
             - NET_WAGE_HIGH_2014_T4: float
-            - ANSES_GROSS_WAGE_2014_T4: float
-            - ANSES_NET_WAGE_2014_T4: float
+            - ANSES_GROSS_WAGE_HIGH_2014_T4: float
+            - ANSES_NET_WAGE_HIGH_2014_T4: float
             - MINIMUM_WAGE_HIGH_2014_T4: float
         #The CPI_ANSES_INDEX_HIGH is equal to the CPI divided by the ANSES actualisation index. 
-            #It links real wage variables together (ANSES_GROSS_WAGE_2014_T4*CPI_ANSES_INDEX_HIGH=GROSS_WAGE_HIGH_2014_T4). 
+            #It links real wage variables together (ANSES_GROSS_WAGE_HIGH_2014_T4*CPI_ANSES_INDEX_HIGH=GROSS_WAGE_HIGH_2014_T4). 
             # This variable is useful for computing the family-group income.  
             - CPI_ANSES_INDEX_HIGH: float
             #The coefficient variables (h for men, f for women) are computed following Duc et. al. 2013
@@ -28,7 +28,7 @@ globals:
             - CONT_PAT_1: float
             - CONT_PAT_2: float
             - CONT_PAT_4: float
-            - NON_TAXABLE_INCOME_2014_T4: float
+            - NON_TAXABLE_INCOME_HIGH_2014_T4: float
             #Then, we list variables related to social security contributions and categorisations
             - MIN_PENSION_HIGH_2014_T4: float
             - MAX_PENSION_HIGH_2014_T4: float
@@ -2211,8 +2211,8 @@ entities:
                #mobility, these discounting indexes are strictly equal. 
                 #Finally, we only take into account gross ANSES income, as it is this gross income that enters in the computation of retirement benefits. 
                 - itl_anses: if(ISMALE,
-                                ln_wage_h * COEFFICIENT_H * ANSES_GROSS_WAGE_2014_T4 /0.83, 
-                                    ln_wage_f * COEFFICIENT_F * ANSES_GROSS_WAGE_2014_T4/0.83)     
+                                ln_wage_h * COEFFICIENT_H * ANSES_GROSS_WAGE_HIGH_2014_T4 /0.83, 
+                                    ln_wage_f * COEFFICIENT_F * ANSES_GROSS_WAGE_HIGH_2014_T4/0.83)     
                 - itl_anses: if(IS_UNEMPLOYED or IS_INACTIVE, 0, itl_anses)
     #3- We compute labour-market state specific labour income quartiles, which are another explanatory variable in our behavioural equations. 
             #For instance, if a registered wage-earner has a sect_quartile==1 then this means he is among the poorest 25% of registered wage-earners. 
@@ -2573,8 +2573,8 @@ entities:
                 #3- Although unclear, limitation number 1 will be applied only after factoring in the thirteenth month.            
                 - taxable_income: if(labour_market_state!=1, 0, 
                                     if(period<61,discounted_itl_gross+medio_aguinaldo_gross,
-                                        if((discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6)<= MIN_PENSION_HIGH_2014_T4, MIN_PENSION_HIGH_2014_T4
-                                            ,discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6
+                                        if((discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_HIGH_2014_T4/6)<= MIN_PENSION_HIGH_2014_T4, MIN_PENSION_HIGH_2014_T4
+                                            ,discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_HIGH_2014_T4/6
                                     )))
             #We have a weird bug that automatically transforms global variables of the type 0.195 into 195, although it does not affect values such as 0.18. 
                     #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.    
