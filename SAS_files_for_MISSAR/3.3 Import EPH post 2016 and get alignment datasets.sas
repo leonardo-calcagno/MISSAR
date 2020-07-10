@@ -651,7 +651,9 @@ run;
 
 %mend; 
 
-
+proc freq data=leo.eph_formatted_2016; 
+table ch07*marital_status; 
+run; 
 %indep_endo_2016(leo.new_eph_2016,leo.eph_formatted_2016);
 %indep_endo_2016(leo.new_eph_2017,leo.eph_formatted_2017);
 %indep_endo_2016(leo.new_eph_2018,leo.eph_formatted_2018);
