@@ -1017,6 +1017,8 @@ entities:
             #COUNTERFACTUAL SCENARIO 2015: take out pension benefits whose initial values were discounted following post June 2016 indexes.     
        #     - discounted_v2_m_2: {type: float, initialdata: false}
         #    - disc_cost_v2_m_2: {type: float, initialdata: false}
+        #####COUNTERFACTUAL SCENARIO 2015: tag retirement pensions that should be counted for computing the Law 26.417 pension mobility formula. 
+            - counts_for_26417: {type: bool, initialdata: false}
 
 
             
@@ -1182,7 +1184,27 @@ entities:
         #Fifth, having all individuals age at the same time was a problem for our education module. We thus assume respondents had a 25% chance of being born during a given quarter.        
                 
                 - age_quarters: age_quarters + choice([0, 1, 2, 3], [0.25, 0.25, 0.25, 0.25]) 
-        #Sixth, we are going to export aggregate files to determine the sustainability, adequacy and redistributive impact of social security. We create here the headers of such csv 
+                ################################################ COUNTERFACTUAL 2015 LEGISLATION########################################     
+        #Sixth, the Law 26.417 pension mobility Law makes half of the mobility depend on the yearly evolution of ANSES Fiscal Income by SIPA benefit. Res. 6/2009 
+                # Art. 14, that implements Art. 32 of Law 26.417, states the following: "The benefits that will be considered in the implementation of this formula 
+                # will be all benefits given by the Argentinian Integrated Previsional System (SIPA), and all given by previous Laws that are distributed by the ANSES, 
+                # with the exclusion of the payment of pensions that used to be from Provincial Pension systems transferred to the ANSES, Non Contributive Pensions, 
+                # Malvinas war veteran benefits, and pensions granted by Law 25.994 (art. 6) and Chapter II of Law 24.476". 
+        #Therefore, the 2006-2007 moratorium pensions do not count when computing Law 26.417 pension mobility, but there's nothing in the Law that says the Law 26.970
+                #2014 moratorium benefits should not be taken into consideration. As such, we consider for the sake of recalculating this benefit that all future 
+                #retirement and survivor benefits' pensioners simulated by the model count towards the computation of Law 26.417 mobility; but that only some 
+                #of the initial pensioners count for computing future pension mobility. 
+        #We must hence tag among initial pensioners those receiving a 2006-2007 pension moratorium or transferred provincial pension. We know from the 2014 Investment 
+                #Account's Physical-Financial Follow-up of Social Security Institutions (Cuenta de Inversión 2014, Seguimiento Físico Financiero de Instituciones de 
+                #Seguridad Social) that 53.05% of all retirement and survivor's pension benefits were given by Law 24.241, the remaining 46.95% being either Law 24.476 or 
+                # 25.994 moratorium benefit or benefits from transferred provincial social security schemes. We take these proportions for randomly tagging among initial pensioners
+                #those who count for computing the counter-factual pension mobility, and consider all simulated benefits in the model will be tagged as counting 
+                #for Law 26.417 pension mobility computation. 
+                - counts_for_26417: True
+                - counts_for_26417: if(not retired and not initial_pensioner, counts_for_26417, 
+                                            choice([True, False],[0.5305, 0.4695])
+                                        )
+        #Seventh, we are going to export aggregate files to determine the sustainability, adequacy and redistributive impact of social security. We create here the headers of such csv 
                 #files, so it is not repeated at each loop of the simulation in the output files. 
                 - csv('Period', 'Gini per capita, all income', 'Gini per capita, labour income','Gini per capita, labour and pension income', 'Gini per capita, labour and family benefits income', 
                                 'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
@@ -1199,6 +1221,8 @@ entities:
                                     'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
                                         'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
                                             fname='redistribution_high_sedlac.csv',mode='a')   
+                                            
+        
         ################################################################################################################
                 - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
                                                 fname='active_age_men.csv',mode='a')
@@ -1233,6 +1257,7 @@ entities:
                                                     'Child_benefit_coverage','Contributory_child_benefit_coverage','AUH_coverage',
                                                         'Gini_retirement_age','Gini_retirement_age_non_labour_income','Gini_65+','Gini_65+_non_labour_income', 
                                                             'Gini_retirement_age_has_income','Gini_retirement_age_(has)_non_labour_income','Gini_65+_has_income','Gini_65+_(has)_non_labour_income',
+                                                                  'Total_SIPA_benefits','Total_not_for_26417',
                                                         fname='adequacy_high.csv',mode='a')
 
 
@@ -1570,9 +1595,9 @@ entities:
                       male = choice([True, False], [0.51, 0.49]), 
                       birth= period,
                       discounted_v2_m=0,
-
                       discounted_v5_m=0,
-                      father_id=partner_id)
+                      father_id=partner_id,
+                      counts_for_26417=True)
     #We then update the variables including the number of children. 
                 - nb_children: if(ISFEMALE,children.count(),0)
                 - nb_children_bis: if(ISMALE,children_bis.count(),0)
@@ -3091,7 +3116,12 @@ entities:
             #We thus add this instruction to correct this error at every simulated period.
                 #COUNTERFACTUAL SCENARIO 2015: we do not use discounting indexes established after June 2016. 
                 - liqui_retirement: if(discounted_v2_m==0, False, liqui_retirement)                
-    #12- We export total paid retirement benefits by type and computation method. This allows for a faster computation of ANSES deficit.       
+    #12- COUNTERFACTUAL SCENARIO 2015: we tag new Law 26.970 pension moratorium beneficiaries as not counting towards the computation of the pension mobility formula
+            #established by Law 26.417. 
+                - counts_for_26417: if(new_moratoria, False, 
+                                        counts_for_26417
+                                       )
+    #13- We export total paid retirement benefits by type and computation method. This allows for a faster computation of ANSES deficit.       
                 #COUNTERFACTUAL SCENARIO 2015: we do not use discounting indexes established after June 2016. There are no universal pensions.
                 - csv(period,sum(disc_cost_v2_m*pondera)/1000,sum(discounted_v2_m*pondera)/1000,
                                 sum(net_retirement*pondera)/1000,sum(net_pension*pondera)/1000,
@@ -3520,6 +3550,16 @@ entities:
                                             filter=age>=65 and (all_pension_income+discounted_v5_m)!=0,weights=pondera)
                 
             #COUNTERFACTUAL SCENARIO 2015: there are no universal pensions. 
+            #COUNTERFACTUAL SCENARIO 2015: We count how many beneficiaries receive a benefit that counts toward computing the Law 26.417 pension mobility formula.
+                    #See the comments in the prelim module for the legal analysis of who is considered in the formula. 
+                - not_counts_26417: if(not has_any_benefit, False, 
+                                        if(counts_for_26417, False, 
+                                            True
+                                        ))
+                - total_sipa_benefits: sum(has_any_benefit, weights=pondera)
+                - total_not_for_26417: sum(not_counts_26417, weights=pondera)
+                                  
+                                
                 
                 - csv(period, contributory_pensioners_share, moratorium_pensioners_share,
                             retirement_coverage_legal_age,retirement_coverage_65,all_coverage_legal_age,all_coverage_65,contributory_coverage_legal_age,contributory_coverage_65,survivors_coverage_legal_age,survivors_coverage_65,moratorium_coverage_legal_age,moratorium_coverage_65,
@@ -3529,6 +3569,7 @@ entities:
                                             child_benefit_coverage, contributory_child_benefit_coverage, auh_coverage,
                                                 gini_ret_age_all, gini_ret_age_non_labour, gini_65_all, gini_65_non_labour,
                                                     gini_ret_age_has_income_all, gini_ret_age_has_income_non_labour, gini_65_has_income_all, gini_65_has_income_non_labour,
+                                                        total_sipa_benefits,total_not_for_26417,
                                             fname='adequacy_high.csv',mode='a')  
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.               
 #############################################################################################################################################
