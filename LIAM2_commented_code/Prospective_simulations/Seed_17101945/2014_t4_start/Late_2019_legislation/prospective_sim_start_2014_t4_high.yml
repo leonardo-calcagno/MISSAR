@@ -433,7 +433,6 @@ entities:
                                     share_bottom_10, share_bottom_10_labour,share_bottom_10_labour_pension,share_bottom_10_labour_fam_ben,
                                         fname='redistribution_high.csv',mode='a') 
         ################################################################################################################                                
-                
                 - csv(period,gini_insee_all_income,gini_insee_labour_income,gini_insee_labour_pension_income,gini_insee_labour_fam_benefits,
                             decile_ratio_insee_all_income, decile_ratio_insee_labour_income, decile_ratio_insee_labour_pension_income, decile_ratio_insee_labour_fam_ben_income, 
                                 share_top_10_insee, share_top_10_insee_labour,share_top_10_insee_labour_pension,share_top_10_insee_labour_fam_ben,
@@ -444,8 +443,7 @@ entities:
                             decile_ratio_sedlac_all_income, decile_ratio_sedlac_labour_income, decile_ratio_sedlac_labour_pension_income, decile_ratio_sedlac_labour_fam_ben_income, 
                                 share_top_10_sedlac, share_top_10_sedlac_labour,share_top_10_sedlac_labour_pension,share_top_10_sedlac_labour_fam_ben,
                                     share_bottom_10_sedlac, share_bottom_10_sedlac_labour,share_bottom_10_sedlac_labour_pension,share_bottom_10_sedlac_labour_fam_ben,
-                                        fname='redistribution_high_sedlac.csv',mode='a')   
-            
+                                        fname='redistribution_high_sedlac.csv',mode='a')
             count_formal_workers:
                 - formal_workers_align_hh: persons.count(wage_earner_align==True)+ persons.count(independent_align==True)
                 - oldest_working_age_hh: persons.max(age,15<age and age<70)
@@ -1137,7 +1135,7 @@ entities:
                 # as shown by the pdf Normality of forward residuals. We thus randomly assign each individual that does not have a wage residual at the beginning 
                 #of the simulation a residual drawn from this normal distribution. Once assigned, this residual stays unchanged for the rest of the individual's life.
                 - resid: if(resid!=0, resid, 
-                            normal(loc=-0.13869,scale=0.580294))    
+                            normal(loc=-0.13869,scale=0.580294))
         #Fifth, having all individuals age at the same time was a problem for our education module. We thus assume respondents had a 25% chance of being born during a given quarter.        
                 
                 - age_quarters: age_quarters + choice([0, 1, 2, 3], [0.25, 0.25, 0.25, 0.25]) 
@@ -1169,7 +1167,7 @@ entities:
                 - csv('Period', 'Total_SIPA_income',
                                     'Total_wage-earners_SIPA_contributions','Total_taxable_income','Total_gross_wages','Total_SAC',
                                         'Total_autonomous_workers_SIPA_contributions','Total_Monotributo_SIPA_contributions','Monotributo_integrated_tax',
-                                                fname='high_SIPA_income.csv',mode='a')  
+                                                fname='high_SIPA_income.csv',mode='a') 
                 - csv('Period', 'SIPA_missing_contributions', 'PAMI_missing_contributions', 'Obras_sociales_missing_contributions',
                                                 fname='high_27430_reform_cost.csv',mode='a')                                                 
                 - csv('period','Total_pensions_pre-2016_cost','Total_net_pensions_pre-2016', 'Total_pensions_post-2016_cost','Total_net_pensions_post-2016',
@@ -1863,16 +1861,16 @@ entities:
             #Moreover, children that have known parents and are unemployed stay in their parents' household.
                     #We also allow for going back to parents' place for people not working and not in a relationship up to 40.
                 - household_id: if(age<40 and not IN_RELATIONSHIP and (labour_market_state==4 or labour_market_state==5),
-                            if(mother_id!=UNSET, mother.household_id,
-                                if(father_id!=UNSET, father.household_id,
-                                    household_id)), 
-                                        household_id)       
+                                    if(mother_id!=UNSET, mother.household_id,
+                                        if(father_id!=UNSET, father.household_id,
+                                            household_id)), 
+                                                household_id)       
             #We repeat this, in the second round there are some more  individuals that go back to parents' house.
                 - household_id: if(age<40 and not IN_RELATIONSHIP and (labour_market_state==4 or labour_market_state==5),
                             if(mother_id!=UNSET, mother.household_id,
                                 if(father_id!=UNSET, father.household_id,
                                     household_id)),
-                                        household_id)                                          
+                                        household_id)                                   
                 - marital_status: if(justcoupled or partner.justcoupled, COUPLED, marital_status)
                 - marital_status: if(partner.marital_status==1, COUPLED, marital_status)
             #We also make sure people in a couple live together. Indeed, there are some one person households which have people in a common-law union or marriage,
@@ -1904,7 +1902,7 @@ entities:
                 
                 - temp_2:  (labour_market_state==1 and sect_quartile== 1)*(-0.7981)+(labour_market_state==1 and sect_quartile== 2)*(-1.7823)+(labour_market_state==1 and sect_quartile== 4)*(-0.4383)+(labour_market_state!=2 or sect_quartile!=1)*(-3.3208)
                                                         +(labour_market_state==2 and sect_quartile== 2)*(3.5073)+(labour_market_state==2 and sect_quartile== 3)*(3.7082)+(labour_market_state==2 and sect_quartile== 4)*(4.1695)
-                                                        +(labour_market_state==3 and sect_quartile== 3)*(0.8403)+(labour_market_state==3 and sect_quartile== 4)*(1.3470)+(labour_market_state==5)*(-1.1619)                                                       
+                                                        +(labour_market_state==3 and sect_quartile== 3)*(0.8403)+(labour_market_state==3 and sect_quartile== 4)*(1.3470)+(labour_market_state==5)*(-1.1619)
                 - wage_earner_score: if(ACTIVEAGE,
                                         if(ISMALE, 
                                            logit_score((2.4008)+(IS_FORMATION2)*(0.3469)+(IS_FORMATION3)*(0.5928)+(age>=16 and age<20)*(-1.0280)+(age>=25 and age<30)*(0.1381)
@@ -2015,7 +2013,7 @@ entities:
                 - temp_4:  (labour_market_state==1 and sect_quartile== 2)*(-1.4080)+(labour_market_state==1 and sect_quartile== 3)*(-0.9099)+(labour_market_state==1 and sect_quartile== 4)*(-1.8524)
                                                         +(labour_market_state==2 and sect_quartile==1)*(0.5792)+(labour_market_state==2 and sect_quartile== 2)*(0.3398)+(labour_market_state!=3 or sect_quartile!=1)*(-1.8805)
                                                         +(labour_market_state==3 and sect_quartile== 2)*(2.2168)+(labour_market_state==3 and sect_quartile== 3)*(2.2966)+(labour_market_state==3 and sect_quartile== 4)*(2.1187)
-                                                        +(labour_market_state==5)*(-1.0093)                                                    
+                                                        +(labour_market_state==5)*(-1.0093)
                 - unregistered_score: if(ACTIVEAGE,
                                         if(ISMALE, logit_score((0.4251)+(IS_FORMATION1)*(1.1038)+(IS_FORMATION2)*(0.6866)+(age>=16 and age<20)*(-0.7414)+(age>=20 and age<25)*(-0.1981)
                                                                 +(age>=25 and age<30)*(-0.0477)+(age>=45 and age<50)*(0.0956)+(age>=60 and age<65)*(-0.2403)+(ISMARRIED)*(-0.2368)
@@ -2571,12 +2569,16 @@ entities:
                 #2- The "medio aguinaldo" (half of the thirteenth month paid on June and on December) will not pay employer's contributions for earning below 6000 constant 
                 # October 2017 pesos. Since our variable medio_aguinaldo is divided by 3 to consider it as an average monthly income derived from the thirteenth month, 
                 # the 12000 pesos of non-taxable income, when applied to the "medio aguinaldo", is divided by 6.  
-                #3- Although unclear, limitation number 1 will be applied only after factoring in the thirteenth month.            
+                #3- Although unclear, limitation number 1 will be applied only after factoring in the thirteenth month.       
+                #4 - Finally, Art. 167 of Law 27430 restricts the application of the non-taxable income  to workers taken into account by the labour contract Law 20744,
+                # thus excluding civil servants and domestic service workers. Rural workers are explicitly included. 
+                #We do simulate civil servants in this model, so we do not apply non-taxable income to social security contributions made by their employers.
                 - taxable_income: if(labour_market_state!=1, 0, 
                                     if(period<61,discounted_itl_gross+medio_aguinaldo_gross,
-                                        if((discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_HIGH_2014_T4/6)<= MIN_PENSION_HIGH_2014_T4, MIN_PENSION_HIGH_2014_T4
-                                            ,discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_HIGH_2014_T4/6
-                                    )))
+                                        if(contribution==4, discounted_itl+medio_aguinaldo_gross,
+                                            if((discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_HIGH_2014_T4/6)<= MIN_PENSION_HIGH_2014_T4, MIN_PENSION_HIGH_2014_T4
+                                                ,discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_HIGH_2014_T4/6
+                                    ))))
             #We have a weird bug that automatically transforms global variables of the type 0.195 into 195, although it does not affect values such as 0.18. 
                     #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.                            
                 - contribution_sal_SIPA: if(labour_market_state!=1, 0, 
@@ -2800,7 +2802,6 @@ entities:
                 #sum_count_40_sal. 
                 - temp_sal_1: lag_count_sal_1+lag_count_sal_2+lag_count_sal_3+lag_count_sal_4+lag_count_sal_5+lag_count_sal_6+lag_count_sal_7+lag_count_sal_8+lag_count_sal_9+lag_count_sal_10+lag_count_sal_11+lag_count_sal_12+lag_count_sal_13+lag_count_sal_14+lag_count_sal_15+lag_count_sal_16+lag_count_sal_17+lag_count_sal_18+lag_count_sal_19+lag_count_sal_20
                 - temp_sal_2: lag_count_sal_21+lag_count_sal_22+lag_count_sal_23+lag_count_sal_24+lag_count_sal_25+lag_count_sal_26+lag_count_sal_27+lag_count_sal_28+lag_count_sal_29+lag_count_sal_30+lag_count_sal_31+lag_count_sal_32+lag_count_sal_33+lag_count_sal_34+lag_count_sal_35+lag_count_sal_36+lag_count_sal_37+lag_count_sal_38+lag_count_sal_39+lag_count_sal_40
-                
                 - sum_count_40_sal: temp_sal_1 + temp_sal_2       
             #Past income that enters in the computation of retirement pensions is discounted as if the individual retired in November 2014. To get actual retirement rights 
                     #that take into account the increase in real wages since November 2014, we multiply the reference income by the gross real wage of the period where the individual
@@ -3152,9 +3153,8 @@ entities:
                                 if(period==67, 666.98,
                                     if(period==68, 583.17, 
                                          auh)))) 
-                
                 - auh: if(auh==0, auh, 
-                            auh+temporary_auh_bonus)                         
+                            auh+temporary_auh_bonus)
     #6- We compute the yearly school aid (paid on March). This benefit is meant for minors that attend school. 
         #It is accessible to children that receive a contributive child benefit (as explicited de jure by Res. 606/2011 Art. 2).
                 #"Wage-earners, those receiving a labour hazards (...), unemployment or SIPA [retirement] benefit (...) will get the family benefit for yearly school aid as long as they are entitled to the child benefit". 

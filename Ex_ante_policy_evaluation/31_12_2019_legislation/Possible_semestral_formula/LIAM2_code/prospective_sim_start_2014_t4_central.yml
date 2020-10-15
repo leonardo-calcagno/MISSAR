@@ -2628,12 +2628,16 @@ entities:
                 #2- The "medio aguinaldo" (half of the thirteenth month paid on June and on December) will not pay employer's contributions for earning below 6000 constant 
                 # October 2017 pesos. Since our variable medio_aguinaldo is divided by 3 to consider it as an average monthly income derived from the thirteenth month, 
                 # the 12000 pesos of non-taxable income, when applied to the "medio aguinaldo", is divided by 6.  
-                #3- Although unclear, limitation number 1 will be applied only after factoring in the thirteenth month.            
+                #3- Although unclear, limitation number 1 will be applied only after factoring in the thirteenth month.     
+                #4 - Finally, Art. 167 of Law 27430 restricts the application of the non-taxable income  to workers taken into account by the labour contract Law 20744,
+                # thus excluding civil servants and domestic service workers. Rural workers are explicitly included. 
+                #We do simulate civil servants in this model, so we do not apply non-taxable income to social security contributions made by their employers.
                 - taxable_income: if(labour_market_state!=1, 0, 
                                     if(period<61,discounted_itl_gross+medio_aguinaldo_gross,
+                                        if(contribution==4, discounted_itl+medio_aguinaldo_gross,
                                         if((discounted_itl_gross-NON_TAXABLE_INCOME_CENTRAL_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_CENTRAL_2014_T4/6)<= MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4
                                             ,discounted_itl_gross-NON_TAXABLE_INCOME_CENTRAL_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_CENTRAL_2014_T4/6
-                                    )))
+                                    ))))
             #We have a weird bug that automatically transforms global variables of the type 0.195 into 195, although it does not affect values such as 0.18. 
                     #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.    
             #Art. 9 of Law 24.241 specifies there is a maximum taxable wage, above which there are no employee's contributions. Employers' contributions are
