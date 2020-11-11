@@ -458,6 +458,7 @@ format ch05 DDMMYYN10.;
  		variables. */
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,4,xls); 
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,1,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,2,xlsx); 
  /*The second quarter of 2018 has format problems with the date of birth variable ch05. We correct them here. Before that, we 
  		corrected the csv file, putting as missing all the entries where the date of birth was 01/01/1900 (roughly 4800).*/
 data leo.ephc_2018_t02; 
