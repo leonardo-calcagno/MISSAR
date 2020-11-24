@@ -152,6 +152,7 @@ entities:
             - household_id2: int
             - formal_workers_align_hh: {type: int, initialdata: false}
             - oldest_working_age_hh: {type: int, initialdata: false}
+            - historical_IFE_hh: {type: float, initialdata: false}
             
         links:
             persons: {type: one2many, target: person, field: household_id}
@@ -171,7 +172,8 @@ entities:
             #Legislation: following Art. 2 of Decree 1667/2012, 
                 #(...) must be considered as income [for the means-test of family benefits] registered wage-earners remuneration, the rents of reference 
                 #of autonomous workers and monotributistas, pension income [be it contributive or non-contributive] (...)"
-        #We therefore sum in variable IGF formal wages, rents of reference of people listed in the Autonomous workers regime and pension income (be them direct, survivor's benefits, or non-contributive pensions). 
+        #We therefore sum in variable IGF formal wages, rents of reference of people listed in the Autonomous workers regime and pension income (be them direct, survivor's benefits
+                #, or non-contributive pensions). 
         #Our rent_aut variable, depicting the rent of reference of Autonomous workers, is not however discounted with the CPI. Instead, it is discounted following 
                 #ANSES discounting indexes. This is the discounting method necessary for computing retirement rights. We however need to discount it with the CPI
                 #to compute the IGF. We thus add a conversion key between ANSES discounting and the Consumer's Price Index in our globals file, which converts 
@@ -185,6 +187,24 @@ entities:
                 - monotributistas_hh: persons.count(lag_mono_1==1)
                 - autonomous_hh: persons.count(lag_count_ind_1==1)
                 - inactive_hh: persons.count(IS_INACTIVE)
+            # We can use this process to easily compute the IFE: it goes to each household where there is neither a formal worker, nor a retirement pensioner. 
+                    # Following Decree 310/2020, small independent workers in the Monotributo regime, from the lowest earning categories (A and B) can have access
+                    # to the IFE. 
+            # There were three payments of $10000 pesos. The first one, spread through April and May; the second one, paid on June and July; and the third one, paid 
+                    #on August and September. We thus model the IFE as being a monthly payment of $5000 given between April and September 2020. 
+                    # We thus consider one payment in period 70 (May 2020), one and a half payment in period 71 (August 2020), and half a payment for
+                    # period 72 (November 2020). We always discount these increases by the actual inflation rates, so we work with real inflation rates
+                    # We also divide by 3 the sum of the IFE, as we work with quarterly income taken to the monthly level . 
+                - auton_cat_over_B_hh: persons.count(monotributo_cat>2)
+                - historical_IFE_hh: if(wage_earners_hh>0 or autonomous_hh>0 or auton_cat_over_B_hh>0 or persons.sum(disc_cost_v2_m)>=MIN_PENSION_CENTRAL_2014_T4*0.8,0,
+                                        if(period==70, (971.57+956.8)/3, 
+                                            if(period==71, (935.81 + 918.05 + 893.92)/3, 
+                                                if(period==72, 869.27/3, 
+                                                    0
+                                        ))))   
+                - permanent_IFE_hh: if(period<70, 0, 
+                                        if(period<72, historical_IFE_hh, 
+                                           if(period==72, (869.27/3 + 
             redistribution:
 #This module computes the redistributive impact of social security benefits among households. This is to take advantage of one of the added values of microsimulation, 
         #studying the adequacy of social security benefits as well as their redistributive impact at the individual level
@@ -207,9 +227,10 @@ entities:
                 #- all_pension_income: if(period<=54,persons.sum(discounted_v2_m),
                  #                           persons.sum(discounted_v2_m_2))
             #Incidentally, we decide to store other household income variables, useful to track in particular simulated households with no revenue.                                
-                - all_income: persons.sum(discounted_itl)+ all_pension_income + persons.sum(discounted_v5_m)
+                - all_income: persons.sum(discounted_itl)+ all_pension_income + persons.sum(discounted_v5_m) + historical_IFE_hh
                 - all_labour_income: persons.sum(discounted_itl)
                 - all_fam_benefits: persons.sum(discounted_v5_m)
+                - all_IFE_benefits: persons.sum(historical_IFE_hh + permanent_IFE_hh)
         #Second, we compute various combinations of per capita income. The two most interesting comparisons are per capita income before and after social transfers.
                 - per_capita_income: all_income/persons.count()
                 - per_capita_labour_income: all_labour_income/persons.count()
@@ -3751,12 +3772,12 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49
-    periods: 44
+    periods: 25
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
     #It is important to store in the comments the number of periods we should instruct this model to run before reaching the fourth quarter of 2014.
-        #104
+        #104 44
     default_entity: person
     
     
