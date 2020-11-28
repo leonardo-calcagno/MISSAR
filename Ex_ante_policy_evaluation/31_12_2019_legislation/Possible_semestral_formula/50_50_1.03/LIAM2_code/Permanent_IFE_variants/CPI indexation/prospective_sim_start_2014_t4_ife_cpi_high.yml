@@ -124,7 +124,9 @@ globals:
                     #instead of proportional increases. We put the hypothesised increases in the globals file. 
             - FIXED_SUM_INCREASE_2014_T4: float
             - PROPORTIONAL_PENSION_INCREASE: float
-
+            # We add our hypothetical permanent IFE benefits, discounted following inflation or pension mobility. 
+            #- IFE_2014_T4_HIGH: float
+            - IFE_CPI_2014_T4_HIGH: float
         
 entities:
     household:
@@ -153,6 +155,7 @@ entities:
             - formal_workers_align_hh: {type: int, initialdata: false}
             - oldest_working_age_hh: {type: int, initialdata: false}
             - historical_IFE_hh: {type: float, initialdata: false}
+            - permanent_IFE_CPI_hh: {type: float, initialdata: false}
             
         links:
             persons: {type: one2many, target: person, field: household_id}
@@ -203,10 +206,12 @@ entities:
                                                     0
                                         ))))  
                                                 
-                                                
-               # - permanent_IFE_hh: if(period<70, 0, 
-                #                        if(period<72, historical_IFE_hh, 
-                 #                          if(period==72, (869.27/3 + 
+            # We introduce our first hypothesis for permanent IFE implementation, an indexation on inflation rates.
+                - permanent_IFE_CPI_hh: if(period<70, 0, 
+                                            if(period<72, historical_IFE_hh, 
+                                                if(wage_earners_hh>0 or autonomous_hh>0 or auton_cat_over_B_hh>0 or persons.sum(disc_cost_v2_m)>=MIN_PENSION_HIGH_2014_T4*0.8,0,
+                                                    IFE_CPI_2014_T4_HIGH/3
+                                            )))                        
             redistribution:
 #This module computes the redistributive impact of social security benefits among households. This is to take advantage of one of the added values of microsimulation, 
         #studying the adequacy of social security benefits as well as their redistributive impact at the individual level
@@ -229,10 +234,10 @@ entities:
                 #- all_pension_income: if(period<=54,persons.sum(discounted_v2_m),
                  #                           persons.sum(discounted_v2_m_2))
             #Incidentally, we decide to store other household income variables, useful to track in particular simulated households with no revenue.                                
-                - all_income: persons.sum(discounted_itl)+ all_pension_income + persons.sum(discounted_v5_m) + historical_IFE_hh
+                - all_income: persons.sum(discounted_itl)+ all_pension_income + persons.sum(discounted_v5_m) + permanent_IFE_CPI_hh
                 - all_labour_income: persons.sum(discounted_itl)
                 - all_fam_benefits: persons.sum(discounted_v5_m)
-                - all_IFE_benefits: historical_IFE_hh
+                - all_IFE_benefits: permanent_IFE_CPI_hh
         #Second, we compute various combinations of per capita income. The two most interesting comparisons are per capita income before and after social transfers.
                 - per_capita_income: all_income/persons.count()
                 - per_capita_labour_income: all_labour_income/persons.count()
@@ -571,11 +576,11 @@ entities:
                                             gini_sedlac_labour_IFE_comp, decile_ratio_sedlac_labour_IFE_comp, share_top_10_sedlac_labour_IFE_comp, share_bottom_10_sedlac_labour_IFE_comp,
                                                 fname='redistribution_high_sedlac.csv',mode='a')
     # 6- We export the total cost of the IFE in this step, as it is a household-level benefit.
-                - historical_IFE_coverage: if(historical_IFE_hh>0, 1, 
+                - historical_IFE_coverage: if(permanent_IFE_CPI_hh>0, 1, 
                                                 0
                                              )
                 - csv(period,sum(all_IFE_benefits*pondera)/1000, sum(all_pension_income*pondera)/1000, sum(all_labour_income*pondera)/1000, sum(all_fam_benefits*pondera)/1000,
-                        sum(historical_IFE_coverage)/count(), count(all_income+all_pension_income==0)/count(),sum(persons.count(age>=18 and age<=65),filter=historical_IFE_hh>0),sum(persons.count(age>=18 and age<=65)),
+                        sum(historical_IFE_coverage)/count(), count(all_income+all_pension_income==0)/count(),sum(persons.count(age>=18 and age<=65),filter=permanent_IFE_CPI_hh>0),sum(persons.count(age>=18 and age<=65)),
                             fname='IFE_cost_high.csv',mode='a')
     # 7- We measure household income by source, it gives
             count_formal_workers:
