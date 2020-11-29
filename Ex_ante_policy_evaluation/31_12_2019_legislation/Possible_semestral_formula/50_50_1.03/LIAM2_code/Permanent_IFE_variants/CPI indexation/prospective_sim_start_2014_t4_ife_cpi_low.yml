@@ -210,7 +210,7 @@ entities:
                 - permanent_IFE_CPI_hh: if(period<70, 0, 
                                             if(period<72, historical_IFE_hh, 
                                                 if(wage_earners_hh>0 or autonomous_hh>0 or auton_cat_over_B_hh>0 or persons.sum(disc_cost_v2_m)>=MIN_PENSION_LOW_2014_T4*0.8,0,
-                                                    IFE_CPI_2014_T4_LOW/3
+                                                    IFE_CPI_2014_T4_LOW
                                             )))                        
             redistribution:
 #This module computes the redistributive impact of social security benefits among households. This is to take advantage of one of the added values of microsimulation, 
@@ -444,14 +444,6 @@ entities:
                 - share_bottom_10_labour_IFE_ben: sum(all_labour_income+ all_IFE_benefits,
                                             filter=per_capita_income<=percentile(per_capita_income,10,
                                                 filter=per_capita_income!=0,weights=pondera),weights=pondera)
-                                                    /sum(all_labour_income+all_IFE_benefits,weights=pondera)      
-                - share_top_10_labour_IFE_comp: sum(all_labour_income,
-                                            filter=per_capita_income>=percentile(per_capita_income,90,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
-                                                    /sum(all_labour_income+all_IFE_benefits,weights=pondera)
-                - share_bottom_10_labour_IFE_comp: sum(all_labour_income,
-                                            filter=per_capita_income<=percentile(per_capita_income,10,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)  
         #Second, we classify households by their equivalised income following INSEE and OCDE's consumptions units. 
                 - share_top_10_insee: sum(all_income,
@@ -491,14 +483,6 @@ entities:
                                                 filter=insee_income!=0,weights=pondera),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)
                 - share_bottom_10_insee_labour_IFE_ben: sum(all_labour_income+ all_IFE_benefits,
-                                            filter=insee_income<=percentile(insee_income,10,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
-                                                    /sum(all_labour_income+all_IFE_benefits,weights=pondera)
-                - share_top_10_insee_labour_IFE_comp: sum(all_labour_income,
-                                            filter=insee_income>=percentile(insee_income,90,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
-                                                    /sum(all_labour_income+all_IFE_benefits,weights=pondera)
-                - share_bottom_10_insee_labour_IFE_comp: sum(all_labour_income,
                                             filter=insee_income<=percentile(insee_income,10,
                                                 filter=insee_income!=0,weights=pondera),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)
@@ -542,22 +526,14 @@ entities:
                 - share_bottom_10_sedlac_labour_IFE_ben: sum(all_labour_income+ all_IFE_benefits,
                                             filter=sedlac_income<=percentile(sedlac_income,10,
                                                 filter=sedlac_income!=0,weights=pondera),weights=pondera)
-                                                    /sum(all_labour_income+all_IFE_benefits,weights=pondera)        
-                - share_top_10_sedlac_labour_IFE_comp: sum(all_labour_income,
-                                            filter=sedlac_income>=percentile(sedlac_income,90,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
-                                                    /sum(all_labour_income+all_IFE_benefits,weights=pondera)
-                - share_bottom_10_sedlac_labour_IFE_comp: sum(all_labour_income,
-                                            filter=sedlac_income<=percentile(sedlac_income,10,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
-                                                    /sum(all_labour_income+all_IFE_benefits,weights=pondera)                                                  
+                                                    /sum(all_labour_income+all_IFE_benefits,weights=pondera)                                                    
     # 5- We export these redistribution indicators into a separate csv file.
                 - csv(period,gini_all_income,gini_labour_income,gini_labour_pension_income,gini_labour_fam_benefits,
                             decile_ratio_all_income, decile_ratio_labour_income, decile_ratio_labour_pension_income, decile_ratio_labour_fam_ben_income, 
                                 share_top_10, share_top_10_labour,share_top_10_labour_pension,share_top_10_labour_fam_ben,
                                     share_bottom_10, share_bottom_10_labour,share_bottom_10_labour_pension,share_bottom_10_labour_fam_ben,
                                         gini_labour_IFE_benefits, decile_ratio_labour_IFE_income, share_top_10_labour_IFE_ben, share_bottom_10_labour_IFE_ben, 
-                                            gini_labour_IFE_comp, decile_ratio_labour_IFE_comp, share_top_10_labour_IFE_comp, share_bottom_10_labour_IFE_comp, 
+                                            gini_labour_IFE_comp, decile_ratio_labour_IFE_comp,
                                                 fname='redistribution_low.csv',mode='a') 
         ################################################################################################################                                
                 - csv(period,gini_insee_all_income,gini_insee_labour_income,gini_insee_labour_pension_income,gini_insee_labour_fam_benefits,
@@ -565,7 +541,7 @@ entities:
                                 share_top_10_insee, share_top_10_insee_labour,share_top_10_insee_labour_pension,share_top_10_insee_labour_fam_ben,
                                     share_bottom_10_insee, share_bottom_10_insee_labour,share_bottom_10_insee_labour_pension,share_bottom_10_insee_labour_fam_ben,
                                         gini_insee_labour_IFE_benefits,decile_ratio_insee_labour_IFE_income, share_top_10_insee_labour_IFE_ben, share_bottom_10_insee_labour_IFE_ben,
-                                            gini_insee_labour_IFE_comp,decile_ratio_insee_labour_IFE_comp, share_top_10_insee_labour_IFE_comp, share_bottom_10_insee_labour_IFE_comp,
+                                            gini_insee_labour_IFE_comp,decile_ratio_insee_labour_IFE_comp, 
                                                 fname='redistribution_low_insee.csv',mode='a') 
         ################################################################################################################ 
                 - csv(period,gini_sedlac_all_income,gini_sedlac_labour_income,gini_sedlac_labour_pension_income,gini_sedlac_labour_fam_benefits,
@@ -573,7 +549,7 @@ entities:
                                 share_top_10_sedlac, share_top_10_sedlac_labour,share_top_10_sedlac_labour_pension,share_top_10_sedlac_labour_fam_ben,
                                     share_bottom_10_sedlac, share_bottom_10_sedlac_labour,share_bottom_10_sedlac_labour_pension,share_bottom_10_sedlac_labour_fam_ben,
                                         gini_sedlac_labour_IFE_benefits, decile_ratio_sedlac_labour_IFE_income, share_top_10_sedlac_labour_IFE_ben, share_bottom_10_sedlac_labour_IFE_ben,
-                                            gini_sedlac_labour_IFE_comp, decile_ratio_sedlac_labour_IFE_comp, share_top_10_sedlac_labour_IFE_comp, share_bottom_10_sedlac_labour_IFE_comp,
+                                            gini_sedlac_labour_IFE_comp, decile_ratio_sedlac_labour_IFE_comp, 
                                                 fname='redistribution_low_sedlac.csv',mode='a')
     # 6- We export the total cost of the IFE in this step, as it is a household-level benefit.
                 - historical_IFE_coverage: if(permanent_IFE_CPI_hh>0, 1, 
@@ -1285,21 +1261,21 @@ entities:
                                     'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income', 
                                         'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
                                              'Gini per capita, labour and IFE income', 'Decile ratio, labour and IFE income', 'Top 10%, share of labour and IFE income', 'Bottom 10%, share of labour and IFE income',   
-                                                'Gini per capita, measure IFE impact', 'Decile ratio,  measure IFE impact', 'Top 10%,  measure IFE impact', 'Bottom 10%,  measure IFE impact', 
+                                                'Gini per capita, measure IFE impact', 'Decile ratio,  measure IFE impact',
                                                     fname='redistribution_low.csv',mode='a')
                 - csv('Period', 'Gini insee, all income', 'Gini insee, labour income','Gini insee, labour and pension income', 'Gini insee, labour and family benefits income', 
                                 'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
                                     'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
                                         'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income', 
                                              'Gini insee, labour and IFE income', 'Decile ratio, labour and IFE income','Top 10%, share of labour and IFE income','Bottom 10%, share of labour and IFE income',
-                                                'Gini insee, measure IFE impact', 'Decile ratio, measure IFE impact','Top 10%, measure IFE impact','Bottom 10%, measure IFE impact',
+                                                'Gini insee, measure IFE impact', 'Decile ratio, measure IFE impact',
                                                     fname='redistribution_low_insee.csv',mode='a')     
                 - csv('Period', 'Gini sedlac, all income', 'Gini sedlac, labour income','Gini sedlac, labour and pension income', 'Gini sedlac, labour and family benefits income', 
                                 'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income', 
                                     'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income',
                                         'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income', 
                                             'Gini sedlac, labour and IFE income', 'Decile ratio, labour and IFE income', 'Top 10%, share of labour and IFE income', 'Bottom 10%, share of labour and IFE income', 
-                                                'Gini sedlac, measure IFE impact', 'Decile ratio, measure IFE impact', 'Top 10%, measure IFE impact', 'Bottom 10%, measure IFE impact', 
+                                                'Gini sedlac, measure IFE impact', 'Decile ratio, measure IFE impact',
                                                 fname='redistribution_low_sedlac.csv',mode='a')                                              
         ################################################################################################################   
                 - csv('Period', 'Total_IFE_expenditure', 'Total_pension_expenditure', 'Total_labour_income', 'Total_fam_benefits', 
