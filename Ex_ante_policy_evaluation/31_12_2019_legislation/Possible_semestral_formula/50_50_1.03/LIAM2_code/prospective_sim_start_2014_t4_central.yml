@@ -550,9 +550,10 @@ entities:
                 - historical_IFE_coverage: if(historical_IFE_hh>0, 1, 
                                                 0
                                              )
-                - csv(period,sum(all_IFE_benefits*pondera)/1000, sum(all_pension_income*pondera)/1000, sum(all_labour_income*pondera)/1000, sum(all_fam_benefits*pondera)/1000,
-                        sum(historical_IFE_coverage)/count(), count(all_income+all_pension_income==0)/count(),sum(persons.count(age>=18 and age<=65),filter=historical_IFE_hh>0),sum(persons.count(age>=18 and age<=65)),
-                            fname='IFE_cost_central.csv',mode='a')
+                - csv(period,sum(all_IFE_benefits,weights=pondera)/1000, sum(all_pension_income,weights=pondera)/1000, sum(all_labour_income,weights=pondera)/1000, sum(all_fam_benefits,weights=pondera)/1000,
+                        sum(historical_IFE_coverage,weights=pondera)/count(weights=pondera), count(all_income+all_pension_income==0,weights=pondera)/count(weights=pondera),
+                            sum(persons.count(age>=18 and age<=65),filter=historical_IFE_hh>0,weights=pondera),sum(persons.count(age>=18 and age<=65),weights=pondera),
+                                fname='IFE_cost_central.csv',mode='a')
     # 7- We measure household income by source, it gives
             count_formal_workers:
                 - formal_workers_align_hh: persons.count(wage_earner_align==True)+ persons.count(independent_align==True)

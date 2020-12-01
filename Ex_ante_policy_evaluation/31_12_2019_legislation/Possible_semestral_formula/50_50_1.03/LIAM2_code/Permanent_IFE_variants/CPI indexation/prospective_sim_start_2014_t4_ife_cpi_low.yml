@@ -552,12 +552,13 @@ entities:
                                             gini_sedlac_labour_IFE_comp, decile_ratio_sedlac_labour_IFE_comp, 
                                                 fname='redistribution_low_sedlac.csv',mode='a')
     # 6- We export the total cost of the IFE in this step, as it is a household-level benefit.
-                - historical_IFE_coverage: if(permanent_IFE_CPI_hh>0, 1, 
+                - permanent_IFE_coverage: if(permanent_IFE_CPI_hh>0, 1, 
                                                 0
                                              )
-                - csv(period,sum(all_IFE_benefits*pondera)/1000, sum(all_pension_income*pondera)/1000, sum(all_labour_income*pondera)/1000, sum(all_fam_benefits*pondera)/1000,
-                        sum(historical_IFE_coverage)/count(), count(all_income+all_pension_income==0)/count(),sum(persons.count(age>=18 and age<=65),filter=permanent_IFE_CPI_hh>0),sum(persons.count(age>=18 and age<=65)),
-                            fname='IFE_cost_low.csv',mode='a')
+                - csv(period,sum(all_IFE_benefits,weights=pondera)/1000, sum(all_pension_income,weights=pondera)/1000, sum(all_labour_income,weights=pondera)/1000, sum(all_fam_benefits,weights=pondera)/1000,
+                        sum(permanent_IFE_coverage,weights=pondera)/count(weights=pondera), count(all_income==0,weights=pondera)/count(weights=pondera),
+                            sum(persons.count(age>=18 and age<=65),filter=permanent_IFE_mobility_hh>0,weights=pondera),sum(persons.count(age>=18 and age<=65),weights=pondera),
+                                fname='IFE_cost_low.csv',mode='a')
     # 7- We measure household income by source, it gives
             count_formal_workers:
                 - formal_workers_align_hh: persons.count(wage_earner_align==True)+ persons.count(independent_align==True)
