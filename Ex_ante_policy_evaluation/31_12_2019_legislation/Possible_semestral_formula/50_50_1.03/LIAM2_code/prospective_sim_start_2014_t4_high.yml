@@ -1053,6 +1053,7 @@ entities:
                 #We list here variables related to survivors benefits. 
                     #initial_pensioner is True when we consider the recipiendary of a penison or retirement benefit is exclusively a survivors benefits pensioner (and may yet retire on its own)
             - initial_pensioner: {type: bool, initialdata: false}
+            - tag_second_pension: {type: bool, initialdata: false}
             - net_pension: {type: float, initialdata: false}
                     # The suffix c indicates a survivors benefit earned by the deceased's child, while the suffix p indicates a pension received by the departed's spouse. 
             - net_pension_child: {type: float, initialdata: false}
@@ -1238,7 +1239,29 @@ entities:
                                         net_pension_2/0.97)
                 - gross_pension_p: if(age>=18, gross_pension, 0)
                 - gross_pension_2_p: if(age>=18, gross_pension_2, 0)
-                
+                # We know from administrative data that there were in 2014 16.86% more social security benefits paid than social security beneficiaries. This means 
+                        #20% of SIPA beneficiaries receive both a survivors benefit and a retirement pension. This is irrelevant for computing total ANSES expenditure, 
+                        #but the 2020 pension mobility formula, as well as the 26.417 pension mobility formula in force between 2009 and 2017, makes pension mobility
+                        #depend on total benefits paid. As such, it is important we correctly flag beneficiaries that also receive a survivors' benefit. 
+              #  - score_pensioner: if(initial_pensioner, -10000+uniform(), 
+               #                         if(male, -10000 + uniform(), 
+                #                            if(marital_status==4, 1000 + discounted_v2_m + uniform(),
+                 #                                   (discounted_v2_m + uniform()
+                  #                    ))))
+                                      
+                - score_pensioner: if(initial_pensioner, -10000+uniform(), 
+                                        if(marital_status!=4, -100000 + uniform(), 
+                                            if(male, discounted_v2_m/3 + uniform(), 
+                                                (discounted_v2_m + uniform()
+                                      ))))
+                #We know on 2014 16,86% of SIPA beneficiaries received two benefits, and 17,02% in 2015, from the Boletín Estadístico de la Seguridad Social of September 2020. 
+                        #We have trouble however aligning this exact proportions due to the align instruction not allowing for a weights option. We thus experimented
+                        #until we found an align value that resulted in around 17% of SIPA beneficiaries earning two benefits at the same time in 2015, and found it 
+                        #to be 20.75%. Once we correct the problems with weights as pointed out by Gijs Dekkers, this should no longer be an issue.
+                - tag_second_pension: if(discounted_v2_m>0,
+                                        align(score_pensioner,0.2075,leave=initial_pensioner), 
+                                            False
+                                        )
             # Also, since we start our simulations before the implementation of the universal pension, none of our starting individual receive this universal pension. 
                 - tag_pension_uni: False
         #Fourth, we have shown the residuals of our Mincer wage equations follow a Normal distribution in all of our starting datasets. For the fourth quarter of 
@@ -1310,7 +1333,7 @@ entities:
                                                 'Child_benefit_coverage','Contributory_child_benefit_coverage','AUH_coverage',
                                                     'Gini_retirement_age','Gini_retirement_age_non_labour_income','Gini_65+','Gini_65+_non_labour_income',
                                                         'Gini_retirement_age_has_income', 'Gini_retirement_age_(has)_non_labour_income','Gini_65+_has_income','Gini_65+_(has)_non_labour_income',
-                                                            'Total_SIPA_benefits',
+                                                            'Total_SIPA_beneficiaries','Total_SIPA_benefits',
                                                     fname='adequacy_high.csv',mode='a')
         ###############################################################################################################
                 - csv('Period','All_pensions','Contributory_pensions','Moratorium_and_PUAM',
@@ -3606,7 +3629,9 @@ entities:
                     #determine part of the mobility. Non-SIPA benefits, such as family benefits, do not count. We assume PUAM beneficiaries however do count:
                     #since they replace moratorium pensioners, not taking them into account would push pension mobility up, contrary to the spirit of the 
                     #formula by which it is the evolution of fiscal income by beneficiary that should be taken into account. 
-                - total_sipa_benefits: sum(has_any_benefit, weights=pondera)
+                - total_sipa_beneficiaries: sum(has_any_benefit, weights=pondera)
+                #- total_sipa_benefits: sum(has_retirement_pension,weights=pondera) + sum(has_survivors_benefit and not tag_second_pension, weights=pondera) + sum(tag_second_pension,weights=pondera)
+                - total_sipa_benefits: sum(has_retirement_pension,weights=pondera) + sum(has_survivors_benefit,weights=pondera) + sum(tag_second_pension,weights=pondera)
                 - csv(period, contributory_pensioners_share, moratorium_pensioners_share, universal_pensioners_share,
                             retirement_coverage_legal_age,retirement_coverage_65,all_coverage_legal_age,all_coverage_65,contributory_coverage_legal_age,contributory_coverage_65,survivors_coverage_legal_age,survivors_coverage_65,moratorium_coverage_legal_age,moratorium_coverage_65,PUAM_coverage_legal_age,PUAM_coverage_65,
                                 mean_contributory_retirement,mean_survivors_pension, mean_moratorium_pension, mean_universal_pension, mean_retirement_pension, mean_pension_benefit,
@@ -3615,7 +3640,7 @@ entities:
                                             child_benefit_coverage, contributory_child_benefit_coverage, auh_coverage,
                                                 gini_ret_age_all, gini_ret_age_non_labour, gini_65_all, gini_65_non_labour,
                                                     gini_ret_age_has_income_all, gini_ret_age_has_income_non_labour, gini_65_has_income_all, gini_65_has_income_non_labour,
-                                                        total_sipa_benefits,
+                                                        total_sipa_beneficiaries,total_sipa_benefits,
                                             fname='adequacy_high.csv',mode='a')
             temporary_measures_pensions: 
             #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri government. 
