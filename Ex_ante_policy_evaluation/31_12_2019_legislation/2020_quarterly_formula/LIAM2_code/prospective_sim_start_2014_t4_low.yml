@@ -3738,9 +3738,9 @@ entities:
                         #pensions and no PUAM); or we take all benefits (including the PUAM and moratorium pensions). We thus export total SIPA beneficiaries and 
                         #benefits, non-moratorium SIPA benefits; as well as PUAM benefits, for the sake of descriptive statistics. 
                 - total_sipa_beneficiaries: sum(has_any_benefit, weights=pondera)
-                - total_sipa_benefits: sum(has_retirement_pension,weights=pondera) + sum(has_survivors_benefit,weights=pondera) + sum(tag_second_pension,weights=pondera)
+                - total_sipa_benefits: sum(has_retirement_pension,weights=pondera) + sum(has_survivors_benefit and not tag_second_pension,weights=pondera) + sum(tag_second_pension,weights=pondera)
                 - total_sipa_non_moratorium_beneficiaries: sum(has_contributory_retirement or has_contributory_survivors_benefit, weights=pondera)
-                - total_sipa_non_moratorium_benefits: sum(has_contributory_retirement,weights=pondera) + sum(has_contributory_survivors_benefit, weights=pondera) 
+                - total_sipa_non_moratorium_benefits: sum(has_contributory_retirement,weights=pondera) + sum(has_contributory_survivors_benefit and not tag_second_pension, weights=pondera) 
                                                            + sum(tag_second_pension and not tag_second_pension_moratorium,weights=pondera)
                 - total_PUAM_benefits: sum(has_universal_pension,weights=pondera)
                 - csv(period, contributory_pensioners_share, moratorium_pensioners_share, universal_pensioners_share,
