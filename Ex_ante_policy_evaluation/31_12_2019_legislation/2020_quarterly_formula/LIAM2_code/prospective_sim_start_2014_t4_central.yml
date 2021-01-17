@@ -1273,6 +1273,7 @@ entities:
         #Fifth, having all individuals age at the same time was a problem for our education module. We thus assume respondents had a 25% chance of being born during a given quarter.        
                 
                 - age_quarters: age_quarters + choice([0, 1, 2, 3], [0.25, 0.25, 0.25, 0.25]) 
+       
         #Sixth, we are going to export aggregate files to determine the sustainability, adequacy and redistributive impact of social security. We create here the headers of such csv 
                 #files, so it is not repeated at each loop of the simulation in the output files. 
                 - csv('Period', 'Gini per capita, all income', 'Gini per capita, labour income','Gini per capita, labour and pension income', 'Gini per capita, labour and family benefits income',
