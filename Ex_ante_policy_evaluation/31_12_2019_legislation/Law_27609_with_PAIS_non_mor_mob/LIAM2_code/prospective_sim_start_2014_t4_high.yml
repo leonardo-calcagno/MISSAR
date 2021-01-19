@@ -3191,14 +3191,16 @@ entities:
                 - gross_retirement: if(moratorium_date==0 or moratorium_date==-1, gross_retirement, moratorium_value)
                 - gross_retirement_2: if(moratorium_date==0 or moratorium_date==-1, gross_retirement_2, moratorium_value)
     #4- We compute universal pension beneficiaries. These pensions were given starting from period 56 (fourth quarter of 2016) to people aged 65 or more 
-                #that did not have any other retirement pension (survivors pensions can be accumulated with a universal benefit).  
+                #that did not have any other retirement pension (survivors pensions can not be accumulated with a universal benefit).  
                 - new_pension_uni: if(period<56, False, 
-                                    if(liqui_retirement or gross_retirement>0,False, 
+                                    if(liqui_retirement or gross_retirement>0 or gross_pension>0,False, 
                                         if(age>=65, True,False)))
                 - tag_pension_uni: if(new_pension_uni, True,
                                       if(new_contributory_pension, False,
-                                         if(liqui_retirement,False, 
-                                            tag_pension_uni)))
+                                         if(liqui_retirement,False,
+                                            if(gross_pension>0, False, 
+                                                tag_pension_uni
+                                     ))))
         #The 2019 budget Law 27467 forbids formal workers from earning the universal pension, except those in the social monotributo program. 
                 - forbid_pension_uni: if(period<65, False, 
                                           if(labour_market_state==1 or labour_market_state==2, True, 
