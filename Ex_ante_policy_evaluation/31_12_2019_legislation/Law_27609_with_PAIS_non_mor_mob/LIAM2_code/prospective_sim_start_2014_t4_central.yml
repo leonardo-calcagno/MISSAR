@@ -1363,9 +1363,11 @@ entities:
                             fname='IFE_cost_central.csv',mode='a')        
         ################################################################################################################
         
-                - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
+                - csv('Period', '0','[1;5[', '[5;10[', '[10;15[', '15', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
+                                '[70;75[','[75;80[','[80;85[','[85;90[','[90;95[','100+',
                                                 fname='active_age_men.csv',mode='a')
-                - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
+                - csv('Period', '0','[1;5[', '[5;10[', '[10;15[', '15', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
+                                '[70;75[','[75;80[','[80;85[','[85;90[','[90;95[','100+',
                                                 fname='active_age_women.csv',mode='a')
                 - csv('Period','Mean_real_labour_income','Total_workers',
                                     fname='workers_and_wage_central.csv',mode='a')
@@ -1806,14 +1808,18 @@ entities:
             #dependent labour-market scenarios, so as to reach the desired rate of, say, dependent wage-earners while taking into account the demographic 
             #structure of the starting population.
         #This active age population is the same whatever the economic scenario. As such, we only compute it once for each starting period. 
-                - csv(period,sum(pondera*male,filter=agegroup==16), sum(pondera*male,filter=agegroup==20),  sum(pondera*male,filter=agegroup==25),  sum(pondera*male,filter=agegroup==30), 
-                                 sum(pondera*male,filter=agegroup==35),  sum(pondera*male,filter=agegroup==40),  sum(pondera*male,filter=agegroup==45),  sum(pondera*male,filter=agegroup==50),  sum(pondera*male,filter=agegroup==55), 
-                                  sum(pondera*male,filter=agegroup==60),  sum(pondera*male,filter=agegroup==65), 
-                                    fname='active_age_men.csv',mode='a')
-                - csv(period,sum(pondera*(not male),filter=agegroup==16), sum(pondera*(not male),filter=agegroup==20),  sum(pondera*(not male),filter=agegroup==25),  sum(pondera*(not male),filter=agegroup==30), 
-                                 sum(pondera*(not male),filter=agegroup==35),  sum(pondera*(not male),filter=agegroup==40),  sum(pondera*(not male),filter=agegroup==45),  sum(pondera*(not male),filter=agegroup==50),  sum(pondera*(not male),filter=agegroup==55), 
-                                  sum(pondera*(not male),filter=agegroup==60),  sum(pondera*(not male),filter=agegroup==65), 
-                                    fname='active_age_women.csv',mode='a')
+                - csv(period,sum(age<=0 and male,weights=pondera),sum(age>=1 and age<5 and male,weights=pondera),sum(age>=5 and age<10 and male,weights=pondera),sum(age>=10 and age<15 and male,weights=pondera),sum(age==15 and male,weights=pondera),
+                                    sum(age>=16 and age<20 and male,weights=pondera),sum(age>=20 and age<25 and male,weights=pondera), sum(age>=25 and age<30 and male,weights=pondera),sum(age>=30 and age<35 and male,weights=pondera),
+                                        sum(age>=35 and age<40 and male,weights=pondera),sum(age>=40 and age<45 and male,weights=pondera),sum(age>=45 and age<50 and male,weights=pondera),sum(age>=50 and age<55 and male,weights=pondera),
+                                            sum(age>=55 and age<60 and male,weights=pondera),sum(age>=60 and age<65 and male,weights=pondera),sum(age>=65 and age<70 and male,weights=pondera),sum(age>=70 and age<75 and male,weights=pondera),
+                                                sum(age>=75 and age<80 and male,weights=pondera),sum(age>=80 and age<85 and male,weights=pondera),sum(age>=85 and age<90 and male,weights=pondera),sum(age>=90 and age<95 and male,weights=pondera),sum(age>=95 and male,weights=pondera),
+                                                    fname='active_age_men.csv',mode='a')
+                - csv(period,sum(age<=0 and not male,weights=pondera),sum(age>=1 and age<5 and not male,weights=pondera),sum(age>=5 and age<10 and not male,weights=pondera),sum(age>=10 and age<15 and not male,weights=pondera),sum(age==15 and not male,weights=pondera),
+                                    sum(age>=16 and age<20 and not male,weights=pondera),sum(age>=20 and age<25 and not male,weights=pondera), sum(age>=25 and age<30 and not male,weights=pondera),sum(age>=30 and age<35 and not male,weights=pondera),
+                                        sum(age>=35 and age<40 and not male,weights=pondera),sum(age>=40 and age<45 and not male,weights=pondera),sum(age>=45 and age<50 and not male,weights=pondera),sum(age>=50 and age<55 and not male,weights=pondera),
+                                            sum(age>=55 and age<60 and not male,weights=pondera),sum(age>=60 and age<65 and not male,weights=pondera),sum(age>=65 and age<70 and not male,weights=pondera),sum(age>=70 and age<75 and not male,weights=pondera),
+                                                sum(age>=75 and age<80 and not male,weights=pondera),sum(age>=80 and age<85 and not male,weights=pondera),sum(age>=85 and age<90 and not male,weights=pondera),sum(age>=90 and age<95 and not male,weights=pondera),sum(age>=95 and not male,weights=pondera),
+                                                    fname='active_age_women.csv',mode='a')
             studying: 
 #This module simulates the end of studies of our young population. Starting from age 16, it determines their date of exit of the education system and their attained level of education. 
     #1- We assume all children aged 15 or less are students. We also reset some initial variables. 
