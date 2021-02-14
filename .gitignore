@@ -51,3 +51,5 @@ $RECYCLE.BIN/
 
 #Ignore LIAM2 error logs
 *.log
+# Ignore temporary files
+*.tmp
