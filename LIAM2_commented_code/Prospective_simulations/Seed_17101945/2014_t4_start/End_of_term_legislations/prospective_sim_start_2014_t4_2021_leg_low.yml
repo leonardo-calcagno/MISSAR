@@ -5,7 +5,7 @@
 
 globals:
     periodic:
-        path: C:\Users\Leonardo\Documents\MISSAR_private\LIAM2_commented_code\globals\globals_prosp_feb_2021_leg.csv   
+        path: C:\Users\Leonardo\Documents\MISSAR_private\LIAM2_commented_code\globals\globals_prosp_feb_2021_leg.csv  
         transposed: true
         fields: 
     #A large part of our economic scenarios revolve around fixed values of global variables. These change following historically observed values and our economic scenarios.
@@ -202,11 +202,7 @@ entities:
                                                 if(period==72, 869.27/3, 
                                                     0
                                         ))))  
-                                                
-                                                
-               # - permanent_IFE_hh: if(period<70, 0, 
-                #                        if(period<72, historical_IFE_hh, 
-                 #                          if(period==72, (869.27/3 + 
+                                      
             redistribution:
 #This module computes the redistributive impact of social security benefits among households. This is to take advantage of one of the added values of microsimulation, 
         #studying the adequacy of social security benefits as well as their redistributive impact at the individual level
@@ -1341,7 +1337,7 @@ entities:
                                     'Top 10%, share of all income', 'Top 10%, share of labour income', 'Top 10%, share of labour and pension income', 'Top 10%, share of labour and familiy benefits income', 
                                         'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
                                              'Gini per capita, labour and IFE income', 'Decile ratio, labour and IFE income', 'Top 10%, share of labour and IFE income', 'Bottom 10%, share of labour and IFE income',   
-                                                'Gini per capita, measure IFE impact', 'Decile ratio,  measure IFE impact', 
+                                                'Gini per capita, measure IFE impact', 'Decile ratio,  measure IFE impact',
                                                     fname='redistribution_low.csv',mode='a')
                 - csv('Period', 'Gini insee, all income', 'Gini insee, labour income','Gini insee, labour and pension income', 'Gini insee, labour and family benefits income', 
                                 'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
@@ -3740,7 +3736,7 @@ entities:
                                             filter=age>=65 and (discounted_itl+all_pension_income+discounted_v5_m)!=0,weights=pondera)
                 - gini_65_has_income_non_labour: gini(all_pension_income+discounted_v5_m+temporary_pension_bonus,
                                             filter=age>=65 and (all_pension_income+discounted_v5_m)!=0,weights=pondera)
-            #The ne Law 27.609 formula follows closely Law 26.417 mobility: we need to input the evolution of total retirement and survivors' benefits paid, as they
+            #The new Law 27.609 formula follows closely Law 26.417 mobility: we need to input the evolution of total retirement and survivors' benefits paid, as they
                     #determine part of the mobility. Non-SIPA benefits, such as family benefits, do not count. 
                 # There are two reglamentation hypotheses: we either adopt Res. 6/2009, as with Law 26.417, and only take contributory SIPA benefits (so no moratorium
                         #pensions and no PUAM); or we take all benefits (including the PUAM and moratorium pensions). We thus export total SIPA beneficiaries and 
