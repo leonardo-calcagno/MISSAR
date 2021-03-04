@@ -5,7 +5,7 @@
 output: H:\LIAM2_commented_code\Prospective_simulations\Import_files\Seed_17101945_start_2014_t4\LIAM2_files\microsim_base_2014_t4.h5
 #globals:
  #   periodic:
-  #      path: H:\LIAM2_commented_code\globals\globals_transposed_prosp.csv
+  #      path: C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\globals_transposed_prosp.csv
    #     transposed: true
 
 entities:

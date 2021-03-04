@@ -21,7 +21,7 @@
 
 globals:
     periodic:
-        path: H:\LIAM2_commented_code\globals\globals_transposed_prosp_scenarios_2017_leg.csv 
+        path: C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\globals_transposed_prosp_scenarios_2017_leg.csv 
         transposed: true
         fields: 
     #A large part of our economic scenarios revolve around fixed values of global variables. These change following historically observed values and our economic scenarios.
@@ -1137,7 +1137,12 @@ entities:
                 
             # Also, since we start our simulations before the implementation of the universal pension, none of our starting individual receive this universal pension. 
                 - tag_pension_uni: False
-                
+        #Fourth, we have shown the residuals of our Mincer wage equations follow a Normal distribution in all of our starting datasets. For the second quarter of 
+                #2015, the mean equals -0.13862 and the standard deviation 0.568956
+                # as shown by the pdf Normality of forward residuals. We thus randomly assign each individual that does not have a wage residual at the beginning 
+                #of the simulation a residual drawn from this normal distribution. Once assigned, this residual stays unchanged for the rest of the individual's life.
+                - resid: if(resid!=0, resid, 
+                            normal(loc=-0.13862,scale=0.568956))      
         #Finally, having all individuals age at the same time was a problem for our education module. We thus assume respondents had a 25% chance of being born during a given quarter.        
                 
                 - age_quarters: age_quarters + choice([0, 1, 2, 3], [0.25, 0.25, 0.25, 0.25]) 
@@ -1433,6 +1438,8 @@ entities:
             #variable score_birth). This is nevertheless not a priority of this model and is thus left for future work. 
     
     #We assume 51% of newborns are boys and 49% girls, in accordance with Argentinian data taken from the "Serie de Estadísticas vitales básicas".                                  
+    #The wage residual follows a normal distribution of mean -0.13862 and standard error 0.568956 for the second quarter of 2015, as shown in the PDF 
+            #Normality of wage residuals. We thus assign a wage residual upon birth following this distribution.
                 - new('person', filter=to_give_birth,
                       mother_id = id,
                       household_id = household_id,
@@ -1446,7 +1453,7 @@ entities:
                       polimodal = 0, 
                       university_year = 0,
                       student = True,
-                      resid = 0, 
+                      resid = normal(loc=-0.13862,scale=0.568956),
                       seniority = 0, 
                       quarterly_seniority = 0,
                       male = choice([True, False], [0.51, 0.49]), 

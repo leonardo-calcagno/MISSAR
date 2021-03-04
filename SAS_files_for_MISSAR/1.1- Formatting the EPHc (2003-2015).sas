@@ -12,225 +12,76 @@ dm 'odsresults; clear'; */
 libname leo "H:\Leonardo_orléans\EPH_base\lib";
 
 /*****************************************1- First, we import all the datasets************************************************************/
-/*The EPHc starts the third quarter of 2003, so this year only has two waves.*/
-PROC IMPORT OUT=leo.eph_2003_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2003\individual_t303.sav"
-            DBMS=sav REPLACE;
-RUN;
-		/*individual_t303.sav is the name of the datafiles as downloaded from INDEC's website https://www.indec.gov.ar/bases-de-datos.asp */
-PROC IMPORT OUT=leo.eph_2003_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2003\individual_t403.sav"
-            DBMS=sav REPLACE;
-RUN;
+%macro import_EPH(path,year,quarter); 
 
-/*2004*/
-PROC IMPORT OUT=leo.eph_2004_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2004\individual_t104.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2004_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2004\individual_t204.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-PROC IMPORT OUT=leo.eph_2004_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2004\individual_t304.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2004_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2004\individual_t404.sav"
+/*individual_t&quarter.&year..sav is the name of the datafiles as downloaded from INDEC's website https://www.indec.gov.ar/bases-de-datos.asp */
+PROC IMPORT OUT=leo.eph_20&year._t0&quarter.
+            DATAFILE="&path.individual_t&quarter.&year..sav"
             DBMS=sav REPLACE;
 RUN;
 
 
-
-/*2005*/
-PROC IMPORT OUT=leo.eph_2005_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2005\individual_t105.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2005_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2005\individual_t205.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-PROC IMPORT OUT=leo.eph_2005_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2005\individual_t305.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2005_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2005\individual_t405.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-
-/*2006*/
-PROC IMPORT OUT=leo.eph_2006_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2006\individual_t106.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2006_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2006\individual_t206.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-PROC IMPORT OUT=leo.eph_2006_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2006\individual_t306.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2006_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2006\individual_t406.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-
+%mend; 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2003\,03,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2003\,03,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2004\,04,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2004\,04,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2004\,04,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2004\,04,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2005\,05,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2005\,05,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2005\,05,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2005\,05,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2006\,06,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2006\,06,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2006\,06,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2006\,06,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2007\,07,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2007\,07,2);
 /*In 2007, there was a strike of INDEC workers that made carrying out the survey during the third quarter of that year impossible. This is 
 		why this wave is missing.*/
-PROC IMPORT OUT=leo.eph_2007_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2007\individual_t107.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2007_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2007\individual_t207.sav"
-            DBMS=sav REPLACE;
-RUN;
+/*
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2007\,07,3); */
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2007\,07,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2008\,08,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2008\,08,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2008\,08,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2008\,08,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2009\,09,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2009\,09,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2009\,09,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2009\,09,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2010\,10,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2010\,10,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2010\,10,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2010\,10,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2011\,11,1);
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2011\,11,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2011\,11,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2011\,11,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2012\,12,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2012\,12,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2012\,12,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2012\,12,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2013\,13,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2013\,13,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2013\,13,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2013\,13,4); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2014\,14,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2014\,14,2); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2014\,14,3); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2014\,14,4); 
+ /*Only the two first quarters of 2015 were ever released. The administration sworn in December 2015 accused the previous INDEC administration
+		to have manipulated EPHc statistics (a claim unverifiable by external observers, although there should be an ongoing lawsuit to 
+		judge on this matter) and thus proposed a new survey starting from the second quarter of 2016. As a result, there were no EPHc 
+		surveys for the second semester of 2015 and the first quarter of 2016. Pundits accuse this is part of a statistical blackout in order
+		to hide the nefarious effects of the significant devaluation of December 2015 on inflation, employment and poverty. */
 
-PROC IMPORT OUT=leo.eph_2007_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2007\individual_t407.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-
-
-/*2008*/
-PROC IMPORT OUT=leo.eph_2008_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2008\individual_t108.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2008_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2008\individual_t208.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-PROC IMPORT OUT=leo.eph_2008_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2008\individual_t308.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2008_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2008\individual_t408.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-
-/*2009*/
-PROC IMPORT OUT=leo.eph_2009_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2009\individual_t109.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2009_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2009\individual_t209.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-PROC IMPORT OUT=leo.eph_2009_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2009\individual_t309.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2009_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2009\individual_t409.sav"
-            DBMS=sav REPLACE;
-RUN;
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2015\,15,1); 
+%import_EPH(H:\Leonardo_orléans\EPH_base\EPH_2015\,15,2); 
 
 
 
-/*2010*/
-PROC IMPORT OUT=leo.eph_2010_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2010\individual_t110.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2010_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2010\individual_t210.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-PROC IMPORT OUT=leo.eph_2010_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2010\individual_t310.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2010_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2010\individual_t410.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-
-
-/*2011*/
-PROC IMPORT OUT=leo.eph_2011_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2011\individual_t111.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2011_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2011\individual_t211.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-PROC IMPORT OUT=leo.eph_2011_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2011\individual_t311.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2011_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2011\individual_t411.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-/*2012*/
-PROC IMPORT OUT=leo.eph_2012_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2012\individual_t112.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2012_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2012\individual_t212.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2012_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2012\individual_t312.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-PROC IMPORT OUT=leo.eph_2012_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2012\individual_t412.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-
-
- /*2013*/
-PROC IMPORT OUT=leo.eph_2013_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2013\individual_t113.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2013_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2013\individual_t213.sav"
-            DBMS=sav REPLACE;
-RUN;
-
-PROC IMPORT OUT=leo.eph_2013_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2013\individual_t313.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2013_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2013\individual_t413.sav"
-            DBMS=sav REPLACE;
-RUN;
-/*****************************************2014 WARNING ****************************************************************/
-PROC IMPORT OUT=leo.eph_2014_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2014\individual_t114.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2014_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2014\individual_t214.sav"
-            DBMS=sav REPLACE;
-RUN;
 		/*We import household datasets just to show there is a problem with the second quarter of 2014 dataset.*/
 PROC IMPORT OUT=leo.eph_hh_2014_t01
             DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2014\hogar_t114.sav"
@@ -241,7 +92,7 @@ PROC IMPORT OUT=leo.eph_hh_2014_t02
             DBMS=sav REPLACE;
 RUN;
 /************************************************** DATABASE ERROR***********************************************************
-The variable CODUSU, which personentifies a given household, is broken for the second quarter of 2014 wave. Any pannel comparisons using this
+The variable CODUSU, which identifies a given household, is broken for the second quarter of 2014 wave. Any pannel comparisons using this
 		survey are thus impossible. This is proven by the code below, where the same CODUSU (which is supposed to be invariable across
 		periods) is used to refer to two different households between the first and second quarters of 2014. 
 proc print data=leo.eph_hh_2014_t02 (obs=10); 
@@ -255,15 +106,6 @@ run;
 proc print data=leo.eph_2014_t01 (obs=10); 
 where codusu="393354"; run; */
  /*Thankfully, this error only affects the second quarter of 2014. You can see it with the datasets below.*/
-PROC IMPORT OUT=leo.eph_2014_t03
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2014\individual_t314.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2014_t04
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2014\individual_t414.sav"
-            DBMS=sav REPLACE;
-RUN;
-
 PROC IMPORT OUT=leo.eph_hh_2014_t03
             DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2014\hogar_t314.sav"
             DBMS=sav REPLACE;
@@ -273,19 +115,7 @@ PROC IMPORT OUT=leo.eph_hh_2014_t04
             DBMS=sav REPLACE;
 RUN;
 
- /*Only the two first quarters of 2015 were ever released. The administration sworn in December 2015 accused the previous INDEC administration
-		to have manipulated EPHc statistics (a claim unverifiable by external observers, although there should be an ongoing lawsuit to 
-		judge on this matter) and thus proposed a new survey starting from the second quarter of 2016. As a result, there were no EPHc 
-		surveys for the second semester of 2015 and the first quarter of 2016. Pundits accuse this is part of a statistical blackout in order
-		to hpersone the nefarious effects of the significant devaluation of December 2015 on inflation, employment and poverty. */
-PROC IMPORT OUT=leo.eph_2015_t01
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2015\individual_t115.sav"
-            DBMS=sav REPLACE;
-RUN;
-PROC IMPORT OUT=leo.eph_2015_t02
-            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2015\individual_t215.sav"
-            DBMS=sav REPLACE;
-RUN;
+
 
 /***********************2- Re-load the formats to avoid any formatting error. See file 0- import formats for more details on the code below.************/
 libname formats "h:\Leonardo_orléans\EPH_base\formats";

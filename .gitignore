@@ -46,5 +46,10 @@ $RECYCLE.BIN/
 
 # End of https://www.gitignore.io/api/sas,windows
 *.h5
-#Ignore LibreOffice lock files
+# Ignore LibreOffice lock files
 *.~lock*
+
+#Ignore LIAM2 error logs
+*.log
+# Ignore temporary files
+*.tmp
