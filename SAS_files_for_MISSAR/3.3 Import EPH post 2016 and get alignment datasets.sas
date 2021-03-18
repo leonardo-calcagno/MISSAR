@@ -3476,7 +3476,7 @@ set leo.itl_mean_post_2016;
 keep coefficient_men coefficient_women period; 
 run;
 proc export data=leo.coeffs_ripte_post_2016
-outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\Structure_coefficients\structure_coefficients_post_2016.csv' 
+outfile='C:\Users\Leonardo\Documents\MISSAR_private\LIAM2_commented_code\globals\Structure_coefficients\structure_coefficients_post_2016.csv' 
 dbms=csv replace; 
 run; 
 

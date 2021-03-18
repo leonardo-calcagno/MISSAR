@@ -53,3 +53,7 @@ $RECYCLE.BIN/
 *.log
 # Ignore temporary files
 *.tmp
+
+*Ignore Excel files 
+*.xls
+*.xlsx
