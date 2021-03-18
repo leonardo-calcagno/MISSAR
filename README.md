@@ -14,10 +14,8 @@ Once a newer version of the model is considered stable enough, it will be stored
 If you have any questions on the model, the code, or think you've spotted an error or a way to improve the model in any way, feel free to contact me and/or 
 to propose any changes. I speak Spanish, French and English, so you can use any of these languages to get in touch. 
 
+Be sure to check the changelog for features added or modified since Version 1.0. 
+
 Thank you for reading this, I hope this model will be useful to you, and have fun!
 
 Leonardo Eric Calcagno
-
-
-
-
