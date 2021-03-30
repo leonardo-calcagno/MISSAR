@@ -17,10 +17,10 @@ globals:
             - ANSES_GROSS_WAGE_CENTRAL_2014_T4: float
             - ANSES_NET_WAGE_CENTRAL_2014_T4: float
             - MINIMUM_WAGE_CENTRAL_2014_T4: float
-        #The CPI_ANSES_INDEX_CENTRAL is equal to the CPI divided by the ANSES actualisation index. 
-            #It links real wage variables together (ANSES_GROSS_WAGE_CENTRAL_2014_T4*CPI_ANSES_INDEX_CENTRAL=GROSS_WAGE_CENTRAL_2014_T4). 
+        #The CPI_ANSES_CENTRAL is equal to the CPI divided by the ANSES actualisation index. 
+            #It links real wage variables together (ANSES_GROSS_WAGE_CENTRAL_2014_T4*CPI_ANSES_CENTRAL=GROSS_WAGE_CENTRAL_2014_T4). 
             # This variable is useful for computing the family-group income.  
-            - CPI_ANSES_INDEX_CENTRAL: float
+            - CPI_ANSES_CENTRAL: float
             #The coefficient variables (h for men, f for women) are computed following Duc et. al. 2013
             - COEFFICIENT_H: float
             - COEFFICIENT_F: float
@@ -171,7 +171,7 @@ entities:
                 #ANSES discounting indexes. This is the discounting method necessary for computing retirement rights. We however need to discount it with the CPI
                 #to compute the IGF. We thus add a conversion key between ANSES discounting and the Consumer's Price Index in our globals file, which converts 
                 #the rent of reference into real November 2014 pesos discounted with official inflation figures. 
-                - igf_hh: persons.sum(discounted_itl_sal_gross) + persons.sum(disc_cost_v2_m) + persons.sum(rent_aut*CPI_ANSES_INDEX_CENTRAL)
+                - igf_hh: persons.sum(discounted_itl_sal_gross) + persons.sum(disc_cost_v2_m) + persons.sum(rent_aut*CPI_ANSES_CENTRAL)
             # We need for some benefits to know what is the maximum income reached by a formal wage-earner and monotributo category for a given household. 
                 - max_itl_sal_hh: persons.max(discounted_itl_sal_gross)
                 - max_monotributo_cat_hh: persons.max(monotributo_cat)

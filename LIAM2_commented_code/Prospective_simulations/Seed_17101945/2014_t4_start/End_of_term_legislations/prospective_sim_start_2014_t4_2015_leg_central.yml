@@ -28,7 +28,7 @@
 #We do not need to change the globals file between the 2017 legislation counter-factual scenario and this simulation. 
 globals:
     periodic:
-        path: C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\LIAM2_commented_code\globals\globals_transposed_prosp_scenarios_2017_leg.csv 
+        path: C:\Users\Leonardo\Documents\MISSAR_private\LIAM2_commented_code\globals\globals_transposed_prosp_scenarios_2017_leg.csv 
         transposed: true
         fields: 
     #A large part of our economic scenarios revolve around fixed values of global variables. These change following historically observed values and our economic scenarios.
@@ -37,11 +37,11 @@ globals:
             - GROSS_WAGE_CENTRAL_2014_T4: float
             - REAL_WAGE_CENTRAL: float
             - NET_WAGE_CENTRAL_2014_T4: float
-            - ANSES_GROSS_WAGE_2014_T4: float
-            - ANSES_NET_WAGE_2014_T4: float
+            - ANSES_GROSS_WAGE_CENTRAL_2014_T4: float
+            - ANSES_NET_WAGE_CENTRAL_2014_T4: float
             - MINIMUM_WAGE_CENTRAL_2014_T4: float
         #The CPI_ANSES_INDEX_CENTRAL is equal to the CPI divided by the ANSES actualisation index. 
-            #It links real wage variables together (ANSES_GROSS_WAGE_2014_T4*CPI_ANSES_INDEX_CENTRAL=GROSS_WAGE_CENTRAL_2014_T4). 
+            #It links real wage variables together (ANSES_GROSS_WAGE_CENTRAL_2014_T4*CPI_ANSES_INDEX_CENTRAL=GROSS_WAGE_CENTRAL_2014_T4). 
             # This variable is useful for computing the family-group income.  
             - CPI_ANSES_INDEX_CENTRAL: float
             #The coefficient variables (h for men, f for women) are computed following Duc et. al. 2013
@@ -103,20 +103,20 @@ globals:
             # AUT refers to independent workers that contribute to the Autonomous Workers regime.
             # Categories I and II are reserved for own-account workers while categories III to V are those of the entrepreneurs.
             # LIM_AUT_ACTU_I: income limit to belong to category I in real terms.
-            # RENT_AUT_ACTU_I: reference income associated to category I in real terms.
+            # RENT_AUT_ACTU_CENTRAL_I: reference income associated to category I in real terms.
             # COT_AUT_ACTU_CENTRAL_I: social security contributions of category I workers in real terms. 
             - LIM_AUT_ACTU_I: float
-            - RENT_AUT_ACTU_I: float
+            - RENT_AUT_ACTU_CENTRAL_I: float
             - COT_AUT_ACTU_CENTRAL_I: float
-            - RENT_AUT_ACTU_II: float
+            - RENT_AUT_ACTU_CENTRAL_II: float
             - COT_AUT_ACTU_CENTRAL_II: float
             - LIM_AUT_ACTU_III: float
-            - RENT_AUT_ACTU_III: float
+            - RENT_AUT_ACTU_CENTRAL_III: float
             - COT_AUT_ACTU_CENTRAL_III: float
             - LIM_AUT_ACTU_IV: float
-            - RENT_AUT_ACTU_IV: float
+            - RENT_AUT_ACTU_CENTRAL_IV: float
             - COT_AUT_ACTU_CENTRAL_IV: float
-            - RENT_AUT_ACTU_V: float
+            - RENT_AUT_ACTU_CENTRAL_V: float
             - COT_AUT_ACTU_CENTRAL_V: float
             #Finally, we list below global variables related to family benefits. 
             # There are four relevant family income caps for child benefits. Cap 1 is the lowest in real terms, cap 4 is the highest (and exceeding it bars access to family benefits to formal workers)
@@ -2237,8 +2237,8 @@ entities:
                #mobility, these discounting indexes are strictly equal. 
                 #Finally, we only take into account gross ANSES income, as it is this gross income that enters in the computation of retirement benefits. 
                 - itl_anses: if(ISMALE,
-                                ln_wage_h * COEFFICIENT_H * ANSES_GROSS_WAGE_2014_T4 /0.83, 
-                                    ln_wage_f * COEFFICIENT_F * ANSES_GROSS_WAGE_2014_T4/0.83)     
+                                ln_wage_h * COEFFICIENT_H * ANSES_GROSS_WAGE_CENTRAL_2014_T4 /0.83, 
+                                    ln_wage_f * COEFFICIENT_F * ANSES_GROSS_WAGE_CENTRAL_2014_T4/0.83)     
                 - itl_anses: if(IS_UNEMPLOYED or IS_INACTIVE, 0, itl_anses)
     #3- We compute labour-market state specific labour income quartiles, which are another explanatory variable in our behavioural equations. 
             #For instance, if a registered wage-earner has a sect_quartile==1 then this means he is among the poorest 25% of registered wage-earners. 
@@ -2367,30 +2367,30 @@ entities:
                 #bosses being in category V. This is because the income limits to be in lower categories (I for own-account workers, III and IV for bosses) are extremely
                 #low, since they have never been adjusted for inflation. Starting from 2018, we simply assume all bosses are in Category V and all 
                 #own-account workers of the autonomous workers regime are in Category II. This lets us skip the estimation of the real values of income limits for Categories
-                #I, III and IV, which would have required we simulate future inflation rates. This is why RENT_AUT_ACTU_I, RENT_AUT_ACTU_III and RENT_AUT_ACTU_IV are all equal to 
+                #I, III and IV, which would have required we simulate future inflation rates. This is why RENT_AUT_ACTU_CENTRAL_I, RENT_AUT_ACTU_CENTRAL_III and RENT_AUT_ACTU_CENTRAL_IV are all equal to 
                 #0 starting from year 2018. 
         #For each category, Autonomous workers are assigned a reference income, which enters in the computation of their retirement rights. 
                 - rent_aut: if(autonomo==0, 0,
                                 if(boss==0, 
-                                    if(discounted_itl<=LIM_AUT_ACTU_I, RENT_AUT_ACTU_I, RENT_AUT_ACTU_II),
-                                        if(discounted_itl<=LIM_AUT_ACTU_III, RENT_AUT_ACTU_III,
-                                            if(discounted_itl<=LIM_AUT_ACTU_IV, RENT_AUT_ACTU_IV, RENT_AUT_ACTU_V))))                            
+                                    if(discounted_itl<=LIM_AUT_ACTU_I, RENT_AUT_ACTU_CENTRAL_I, RENT_AUT_ACTU_CENTRAL_II),
+                                        if(discounted_itl<=LIM_AUT_ACTU_III, RENT_AUT_ACTU_CENTRAL_III,
+                                            if(discounted_itl<=LIM_AUT_ACTU_IV, RENT_AUT_ACTU_CENTRAL_IV, RENT_AUT_ACTU_CENTRAL_V))))                            
                 #COUNTERFACTUAL SCENARIO 2015: we do not use discounting indexes established after June 2016. 
                 #- rent_aut_2: rent_aut
         #Finally, we compute their compulsory contributions to the SIPA (so to the retirement system) and to the PAMI (elderly healthcare). 
                 - contribution_aut_SIPA: if(autonomo==0, 0,
-                                     if(rent_aut==RENT_AUT_ACTU_I, COT_AUT_ACTU_CENTRAL_I*0.27/0.32, 
-                                        if(rent_aut==RENT_AUT_ACTU_II, COT_AUT_ACTU_CENTRAL_II*0.27/0.32, 
-                                            if(rent_aut==RENT_AUT_ACTU_III, COT_AUT_ACTU_CENTRAL_III*0.27/0.32, 
-                                                if(rent_aut==RENT_AUT_ACTU_IV, COT_AUT_ACTU_CENTRAL_IV*0.27/0.32, COT_AUT_ACTU_CENTRAL_V*0.27/0.32)))))
+                                     if(rent_aut==RENT_AUT_ACTU_CENTRAL_I, COT_AUT_ACTU_CENTRAL_I*0.27/0.32, 
+                                        if(rent_aut==RENT_AUT_ACTU_CENTRAL_II, COT_AUT_ACTU_CENTRAL_II*0.27/0.32, 
+                                            if(rent_aut==RENT_AUT_ACTU_CENTRAL_III, COT_AUT_ACTU_CENTRAL_III*0.27/0.32, 
+                                                if(rent_aut==RENT_AUT_ACTU_CENTRAL_IV, COT_AUT_ACTU_CENTRAL_IV*0.27/0.32, COT_AUT_ACTU_CENTRAL_V*0.27/0.32)))))
                                     
                                 
                 
                 - contribution_aut_PAMI: if(autonomo==0, 0,
-                                     if(rent_aut==RENT_AUT_ACTU_I, COT_AUT_ACTU_CENTRAL_I*0.05/0.32, 
-                                        if(rent_aut==RENT_AUT_ACTU_II, COT_AUT_ACTU_CENTRAL_II*0.05/0.32, 
-                                            if(rent_aut==RENT_AUT_ACTU_III, COT_AUT_ACTU_CENTRAL_III*0.05/0.32, 
-                                                if(rent_aut==RENT_AUT_ACTU_IV*0.05/0.32, COT_AUT_ACTU_CENTRAL_IV, COT_AUT_ACTU_CENTRAL_V*0.05/0.32)))))
+                                     if(rent_aut==RENT_AUT_ACTU_CENTRAL_I, COT_AUT_ACTU_CENTRAL_I*0.05/0.32, 
+                                        if(rent_aut==RENT_AUT_ACTU_CENTRAL_II, COT_AUT_ACTU_CENTRAL_II*0.05/0.32, 
+                                            if(rent_aut==RENT_AUT_ACTU_CENTRAL_III, COT_AUT_ACTU_CENTRAL_III*0.05/0.32, 
+                                                if(rent_aut==RENT_AUT_ACTU_CENTRAL_IV*0.05/0.32, COT_AUT_ACTU_CENTRAL_IV, COT_AUT_ACTU_CENTRAL_V*0.05/0.32)))))
     #4- We update accordingly our variables tracking recent formal independent workers' careers.             
                 - lag_mono_40: lag_mono_39
                 - lag_mono_39: lag_mono_38
