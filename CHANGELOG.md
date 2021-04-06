@@ -59,3 +59,6 @@ Version 1.3.
 	* Wages up to December 2020
 	* EPH survey up to third quarter of 2020
 - Removed excel files and results from ex-ante policy evaluation variants; moved to ZENODO repository linked to tagged versions. Included xls and xlsx files in gitignore.
+	Version 1.3.1.
+	- Include decile distribution analysis for permanent IFE hypothesis impact.
+	- Corrected top and bottom 10% decile measurement.
