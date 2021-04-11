@@ -321,9 +321,10 @@ entities:
     #3- We compute the decile ratio between the top 10% and bottom 10% households ranked by different definitions of income          
         #First, we compute this statistic with per capita household income
                 - decile_ratio_all_income: percentile(per_capita_income,90,
-                                                filter=per_capita_income!=0,weights=pondera)
+                                                filter=per_capita_income!=0)
                                                     /percentile(per_capita_income,10,
-                                                        filter=per_capita_income!=0,weights=pondera)
+
+                                                        filter=per_capita_income!=0)
                 - decile_ratio_labour_income: percentile(per_capita_labour_income,90,
                                                 filter=per_capita_labour_income!=0,weights=pondera)
                                                     /percentile(per_capita_labour_income,10,
@@ -346,9 +347,11 @@ entities:
                                                         filter=per_capita_labour_income!=0,weights=pondera)
         #Second, we apply INSEE's and OCDE's method of estimating household disposable income. 
                 - decile_ratio_insee_all_income: percentile(insee_income,90,
-                                                filter=insee_income!=0,weights=pondera)
+
+                                                filter=insee_income!=0)
                                                     /percentile(insee_income,10,
-                                                        filter=insee_income!=0,weights=pondera)
+
+                                                        filter=insee_income!=0)
                 - decile_ratio_insee_labour_income: percentile(insee_labour_income,90,
                                                 filter=insee_labour_income!=0,weights=pondera)
                                                     /percentile(insee_labour_income,10,
@@ -371,9 +374,11 @@ entities:
                                                         filter=insee_labour_IFE_income!=0,weights=pondera)
         #Third, we apply the benchmark equivalised household income used by University of La Plata's SEDLAC laboratory. 
                 - decile_ratio_sedlac_all_income: percentile(sedlac_income,90,
-                                                filter=sedlac_income!=0,weights=pondera)
+
+                                                filter=sedlac_income!=0)
                                                     /percentile(sedlac_income,10,
-                                                        filter=sedlac_income!=0,weights=pondera)
+
+                                                        filter=sedlac_income!=0)
                 - decile_ratio_sedlac_labour_income: percentile(sedlac_labour_income,90,
                                                 filter=sedlac_labour_income!=0,weights=pondera)
                                                     /percentile(sedlac_labour_income,10,
@@ -398,125 +403,125 @@ entities:
         #First, we classify households by their per capita income.        
                 - share_top_10: sum(all_income,
                                             filter=per_capita_income>=percentile(per_capita_income,90,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_income,weights=pondera)
                 - share_bottom_10: sum(all_income,
                                             filter=per_capita_income<=percentile(per_capita_income,10,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_income,weights=pondera)
                 - share_top_10_labour: sum(all_labour_income,
                                             filter=per_capita_income>=percentile(per_capita_income,90,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_labour_income,weights=pondera)
                 - share_bottom_10_labour: sum(all_labour_income,
                                             filter=per_capita_income<=percentile(per_capita_income,10,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_labour_income,weights=pondera)  
                 - share_top_10_labour_pension: sum(all_labour_income+ all_pension_income,
                                             filter=per_capita_income>=percentile(per_capita_income,90,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_pension_income,weights=pondera)
                 - share_bottom_10_labour_pension: sum(all_labour_income+ all_pension_income,
                                             filter=per_capita_income<=percentile(per_capita_income,10,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_pension_income,weights=pondera)     
                 - share_top_10_labour_fam_ben: sum(all_labour_income+ all_fam_benefits,
                                             filter=per_capita_income>=percentile(per_capita_income,90,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_fam_benefits,weights=pondera)
                 - share_bottom_10_labour_fam_ben: sum(all_labour_income+ all_fam_benefits,
                                             filter=per_capita_income<=percentile(per_capita_income,10,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_fam_benefits,weights=pondera)      
                 - share_top_10_labour_IFE_ben: sum(all_labour_income+ all_IFE_benefits,
                                             filter=per_capita_income>=percentile(per_capita_income,90,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)
                 - share_bottom_10_labour_IFE_ben: sum(all_labour_income+ all_IFE_benefits,
                                             filter=per_capita_income<=percentile(per_capita_income,10,
-                                                filter=per_capita_income!=0,weights=pondera),weights=pondera)
+                                                filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)    
         #Second, we classify households by their equivalised income following INSEE and OCDE's consumptions units. 
                 - share_top_10_insee: sum(all_income,
                                             filter=insee_income>=percentile(insee_income,90,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_income,weights=pondera)
                 - share_bottom_10_insee: sum(all_income,
                                             filter=insee_income<=percentile(insee_income,10,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_income,weights=pondera)
                 - share_top_10_insee_labour: sum(all_labour_income,
                                             filter=insee_income>=percentile(insee_income,90,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_labour_income,weights=pondera)
                 - share_bottom_10_insee_labour: sum(all_labour_income,
                                             filter=insee_income<=percentile(insee_income,10,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_labour_income,weights=pondera)  
                 - share_top_10_insee_labour_pension: sum(all_labour_income+ all_pension_income,
                                             filter=insee_income>=percentile(insee_income,90,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_pension_income,weights=pondera)
                 - share_bottom_10_insee_labour_pension: sum(all_labour_income+ all_pension_income,
                                             filter=insee_income<=percentile(insee_income,10,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_pension_income,weights=pondera)     
                 - share_top_10_insee_labour_fam_ben: sum(all_labour_income+ all_fam_benefits,
                                             filter=insee_income>=percentile(insee_income,90,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_fam_benefits,weights=pondera)
                 - share_bottom_10_insee_labour_fam_ben: sum(all_labour_income+ all_fam_benefits,
                                             filter=insee_income<=percentile(insee_income,10,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_fam_benefits,weights=pondera) 
                 - share_top_10_insee_labour_IFE_ben: sum(all_labour_income+ all_IFE_benefits,
                                             filter=insee_income>=percentile(insee_income,90,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)
                 - share_bottom_10_insee_labour_IFE_ben: sum(all_labour_income+ all_IFE_benefits,
                                             filter=insee_income<=percentile(insee_income,10,
-                                                filter=insee_income!=0,weights=pondera),weights=pondera)
+                                                filter=insee_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)
         #Third, we classify households by their equivalised income following SEDLAC's methodology. 
                 - share_top_10_sedlac: sum(all_income,
                                             filter=sedlac_income>=percentile(sedlac_income,90,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_income,weights=pondera)
                 - share_bottom_10_sedlac: sum(all_income,
                                             filter=sedlac_income<=percentile(sedlac_income,10,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_income,weights=pondera)
                 - share_top_10_sedlac_labour: sum(all_labour_income,
                                             filter=sedlac_income>=percentile(sedlac_income,90,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_labour_income,weights=pondera)
                 - share_bottom_10_sedlac_labour: sum(all_labour_income,
                                             filter=sedlac_income<=percentile(sedlac_income,10,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_labour_income,weights=pondera)  
                 - share_top_10_sedlac_labour_pension: sum(all_labour_income+ all_pension_income,
                                             filter=sedlac_income>=percentile(sedlac_income,90,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_pension_income,weights=pondera)
                 - share_bottom_10_sedlac_labour_pension: sum(all_labour_income+ all_pension_income,
                                             filter=sedlac_income<=percentile(sedlac_income,10,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_pension_income,weights=pondera)     
                 - share_top_10_sedlac_labour_fam_ben: sum(all_labour_income+ all_fam_benefits,
                                             filter=sedlac_income>=percentile(sedlac_income,90,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_fam_benefits,weights=pondera)
                 - share_bottom_10_sedlac_labour_fam_ben: sum(all_labour_income+ all_fam_benefits,
                                             filter=sedlac_income<=percentile(sedlac_income,10,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_fam_benefits,weights=pondera)       
                 - share_top_10_sedlac_labour_IFE_ben: sum(all_labour_income+ all_IFE_benefits,
                                             filter=sedlac_income>=percentile(sedlac_income,90,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)
                 - share_bottom_10_sedlac_labour_IFE_ben: sum(all_labour_income+ all_IFE_benefits,
                                             filter=sedlac_income<=percentile(sedlac_income,10,
-                                                filter=sedlac_income!=0,weights=pondera),weights=pondera)
+                                                filter=sedlac_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)                                                  
     # 5- We export these redistribution indicators into a separate csv file.
                 - csv(period,gini_all_income,gini_labour_income,gini_labour_pension_income,gini_labour_fam_benefits,
