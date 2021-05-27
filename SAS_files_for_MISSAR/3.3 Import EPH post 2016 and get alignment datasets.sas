@@ -470,6 +470,7 @@ format ch05 DDMMYYN10.;
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,1,xlsx); 
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,2,xlsx); 
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,3,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,4,xlsx); 
  /*The second quarter of 2018 has format problems with the date of birth variable ch05. We correct them here. Before that, we 
  		corrected the csv file, putting as missing all the entries where the date of birth was 01/01/1900 (roughly 4800).*/
 data leo.ephc_2018_t02; 
@@ -517,7 +518,7 @@ DATA leo.new_eph_2018;
  person=catx(',',codusu,nro_hogar,componente);
  run; 
  data leo.new_eph_2020; 
- set leo.ephc_2020_t01-leo.ephc_2020_t03; 
+ set leo.ephc_2020_t01-leo.ephc_2020_t04; 
  person=catx(',',codusu,nro_hogar,componente); 
  run; 
 data leo.new_eph_2016_2020; 
@@ -564,7 +565,8 @@ if ano4=2019 & trimestre=3 then period=65;
 if ano4=2019 & trimestre=4 then period=66; 
 if ano4=2020 & trimestre=1 then period=67; 
 if ano4=2020 & trimestre=2 then period=68; 
-if ano4=2020 & trimestre=3 then period=69; 
+if ano4=2020 & trimestre=3 then period=69;
+if ano4=2020 & trimestre=4 then period=70;  
 
 if nivel_ed=6 then formation="3"; 
 if nivel_ed=4 | nivel_ed=5 then formation="2"; 
@@ -1125,6 +1127,7 @@ weight pondera;
 where ( (ch04=1) & (period=69) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
 table labour_market_state*agegroup /noprint outpct out=lms_69; 
 run; 
+/*SEGUIR AQUI*/
 data lms_52; set lms_52; period=54; percent_col=pct_col/100; run;
 data lms_53; set lms_53; period=55; percent_col=pct_col/100; run;
 data lms_54; set lms_54; period=56; percent_col=pct_col/100; run;
