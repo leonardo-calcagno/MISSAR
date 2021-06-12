@@ -496,30 +496,27 @@ set leo.ephc_2019_t01;
 	rename ch05_date=ch05; 
 run; 
 
-proc print data=leo.ephc_2019_t04 (obs=10); 
-run; 
-
 
 DATA leo.new_eph_2016; 
  set leo.ephc_2016_t02- leo.ephc_2016_t04; 
- person=catx(',',codusu,nro_hogar,componente);
+ person=cats(codusu,nro_hogar,componente);
  run; 
 DATA leo.new_eph_2017; 
  set leo.ephc_2017_t01- leo.ephc_2017_t04; 
- person=catx(',',codusu,nro_hogar,componente);
+ person=cats(codusu,nro_hogar,componente);
  run; 
 
 DATA leo.new_eph_2018; 
  set leo.ephc_2018_t01- leo.ephc_2018_t04; 
- person=catx(',',codusu,nro_hogar,componente);
+ person=cats(codusu,nro_hogar,componente);
  run; 
  data leo.new_eph_2019; 
  set leo.ephc_2019_t01-leo.ephc_2019_t04; 
- person=catx(',',codusu,nro_hogar,componente);
+ person=cats(codusu,nro_hogar,componente);
  run; 
  data leo.new_eph_2020; 
  set leo.ephc_2020_t01-leo.ephc_2020_t04; 
- person=catx(',',codusu,nro_hogar,componente); 
+ person=cats(codusu,nro_hogar,componente); 
  run; 
 data leo.new_eph_2016_2020; 
 set leo.new_eph_2016-leo.new_eph_2020; 
@@ -537,12 +534,12 @@ if first.person  then apparition=1;
 else apparition+1;
 run;
 /*Due to the pandemic, the second quarter of 2020 survey had trouble in reaching new households. This is why there are fewer households
-		that are first interviewed in the second quarter of 2020 EPHc wave.*/
+		that are first interviewed in the second quarter of 2020 EPHc wave.
 		
 proc freq data=leo.new_eph_2016_2020; 
 table apparition*trimestre;
 where ano4=2020; 
-run; 
+run; */
 data leo.new_eph_2016_2020;
 length contributes_vol $20.; 
 length contributes_comp $20.;
@@ -1032,6 +1029,10 @@ weight pondera;
 where ageconti>=16 & ageconti<70 & labour_market_state^=5 & labour_market_state^=4 & (cat_ocup=3|cat_ocup=4); 
 table labour_market_state*period;
 run; */
+
+
+%family_links_and_id(leo,eph_formatted_2016,2,long_id_2016_t2,both_id_2016_t2,short_id_2016_t2,52,53);
+
 dm 'odsresults; clear'; 
 dm 'clear log'; 
 /*********************************************************************************************************************************/

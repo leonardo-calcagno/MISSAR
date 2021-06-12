@@ -66,7 +66,7 @@ versions. The datasets both_id are the conversion key that lets us shift from on
 
 %family_links_and_id(leo,eph_data_formatted_2015,1,long_id_2015_t1,both_id_2015_t1,short_id_2015_t1,47,48);  
 %family_links_and_id(leo,eph_data_formatted_2015,2,long_id_2015_t2,both_id_2015_t2,short_id_2015_t2,48,49); 
- 
+ proc print data=leo.short_id_2015_t2 (obs=10); run; 
 /****The short if version of family links will be used for the dataset input in LIAM2. For our regressions and descriptive statistics 
 that calibrate the microsimulation model, we keep the original long ids (which are unique throughout time and allow for a short
 pannel analysis, as two different individuals cannot have the same long id throughout the 2003-2015 period)******************/
