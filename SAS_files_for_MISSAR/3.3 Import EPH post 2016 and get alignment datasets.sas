@@ -683,24 +683,29 @@ if pp07i=2 or pp07i=0  then contributes_vol="False";
 run; 
 
 data leo.new_eph_2016; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2016; 
 run; 
 data leo.new_eph_2017; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2017; 
 run; 
 data leo.new_eph_2018; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2018; 
 run; 
 data leo.new_eph_2019; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2019; 
 run; 
 data leo.new_eph_2020; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2020; 
+run; 
+
+data leo.new_eph_2021; 
+set leo.new_eph_2016_2021; 
+	where ano4=2021; 
 run; 
 
 
@@ -766,7 +771,8 @@ run;
 %indep_endo_2016(leo.new_eph_2018,leo.eph_formatted_2018);
 %indep_endo_2016(leo.new_eph_2019,leo.eph_formatted_2019);
 %indep_endo_2016(leo.new_eph_2020,leo.eph_formatted_2020);
-%indep_endo_2016(leo.new_eph_2016_2020,leo.eph_formatted_2016_2020);
+%indep_endo_2016(leo.new_eph_2021,leo.eph_formatted_2021);
+%indep_endo_2016(leo.new_eph_2016_2020,leo.eph_formatted_2016_2021);
 /*Next, we format other variables, trying to be consistent with what we did for the 2003-2015 period.*/
 data leo.eph_formatted_2016; 
 set leo.eph_formatted_2016; 
@@ -1058,9 +1064,69 @@ if (ageconti>64 and ageconti<70) then agegroup=65;
 if ageconti>69 then agegroup=300;
  run; 
 
+ 
 
-data leo.eph_formatted_2016_2020; 
-set leo.eph_formatted_2016_2020; 
+data leo.eph_formatted_2021; 
+set leo.eph_formatted_2021; 
+
+household=cats(codusu,nro_hogar);
+ id=cats(codusu,nro_hogar,componente); 
+ if ch03=01 then hhstate=1; 
+ if ch03=02 then hhstate=2;
+ if ch03=03 then hhstate=3; 
+ if ch03=04 then hhstate=4; 
+ if ch03=05 then hhstate=5; 
+ if ch03=06 then hhstate=6; 
+ if ch03=07 then hhstate=7; 
+ if ch03=08 then hhstate=8; 
+ if ch03=09 then hhstate=9; 
+ if ch03=10 then hhstate=10;  
+ if ch07=1 then marital_status=1; 
+ if ch07=2 then marital_status=2; 
+ if ch07=3 then marital_status=3; 
+ if ch07=4 then marital_status=4; 
+ if ch07=5 then marital_status=5;
+ if ch06=-1 then ch06=0;
+ 
+if ageconti=-1 then ageconti=0; 
+if (ageconti>=-1 and ageconti<16) then agegroup_ext=1;
+if (ageconti>15 and ageconti<20) then agegroup_ext=16;
+if (ageconti>19 and ageconti<25) then agegroup_ext=20;
+if (ageconti>24 and ageconti<30) then agegroup_ext=25;
+if (ageconti>29 and ageconti<35) then agegroup_ext=30;
+if (ageconti>34 and ageconti<40) then agegroup_ext=35;
+if (ageconti>39 and ageconti<45) then agegroup_ext=40;
+if (ageconti>44 and ageconti<50) then agegroup_ext=45;
+if (ageconti>49 and ageconti<55) then agegroup_ext=50;
+if (ageconti>54 and ageconti<60) then agegroup_ext=55;
+if (ageconti>59 and ageconti<65) then agegroup_ext=60;
+if (ageconti>64 and ageconti<70) then agegroup_ext=65;
+if (ageconti>69 and ageconti<75) then agegroup_ext=70;
+if (ageconti>74 and ageconti<80) then agegroup_ext=75;
+if (ageconti>79 and ageconti<85) then agegroup_ext=80;
+if (ageconti>84 and ageconti<90) then agegroup_ext=85;
+if (ageconti>89 and ageconti<95) then agegroup_ext=90;
+if ageconti>94 then agegroup_ext=95;
+
+
+if (ageconti>=-1 and ageconti<16) then agegroup=1;
+if (ageconti>15 and ageconti<20) then agegroup=16;
+if (ageconti>19 and ageconti<25) then agegroup=20;
+if (ageconti>24 and ageconti<30) then agegroup=25;
+if (ageconti>29 and ageconti<35) then agegroup=30;
+if (ageconti>34 and ageconti<40) then agegroup=35;
+if (ageconti>39 and ageconti<45) then agegroup=40;
+if (ageconti>44 and ageconti<50) then agegroup=45;
+if (ageconti>49 and ageconti<55) then agegroup=50;
+if (ageconti>54 and ageconti<60) then agegroup=55;
+if (ageconti>59 and ageconti<65) then agegroup=60;
+if (ageconti>64 and ageconti<70) then agegroup=65;
+if ageconti>69 then agegroup=300;
+ run; 
+
+
+data leo.eph_formatted_2016_2021; 
+set leo.eph_formatted_2016_2021; 
 
 household=cats(codusu,nro_hogar);
  id=cats(codusu,nro_hogar,componente);  
@@ -1115,27 +1181,6 @@ if (ageconti>59 and ageconti<65) then agegroup=60;
 if (ageconti>64 and ageconti<70) then agegroup=65;
 if ageconti>69 then agegroup=300;
 run; 
-/* Temporary computation of labour-market state by period, not for the MISSAR model. Consider deleting in the future.
-proc freq data=leo.eph_formatted_2016_2020; 
-weight pondera; 
-where ageconti>=16 & ageconti<70; 
-table labour_market_state*period;
-run; 
-
-proc freq data=leo.eph_formatted_2016_2020; 
-weight pondera; 
-where ageconti>=16 & ageconti<70 & labour_market_state^=5; 
-table labour_market_state*period;
-run; 
-
-proc freq data=leo.eph_formatted_2016_2020; 
-weight pondera; 
-where ageconti>=16 & ageconti<70 & labour_market_state^=5 & labour_market_state^=4 & (cat_ocup=3|cat_ocup=4); 
-table labour_market_state*period;
-run; */
-
-
-%family_links_and_id(leo,eph_formatted_2016,2,long_id_2016_t2,both_id_2016_t2,short_id_2016_t2,52,53);
 
 dm 'odsresults; clear'; 
 dm 'clear log'; 
