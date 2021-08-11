@@ -190,6 +190,7 @@ format codusu $42.;
 format mas_500 $42.; 
 format pp09c_esp $100.; 
 format pp09a_esp $100.; 
+format imputa best.; 
 
 decindr_num=input (decindr, best.); drop decindr; rename decindr_num=decindr; 
 adecindr_num=input (adecindr, best.); drop adecindr; rename adecindr_num=adecindr; 
@@ -227,6 +228,122 @@ run;
 
 %mend; 
 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,2,xls);
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,3,xls);
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,4,xls);
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,1,xls);
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,2,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,3,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,4,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,1,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,2,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,3,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,4,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,1,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,2,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,3,xls); 
+ /*Beware: due to a formatting error in the original CSV, you must change the format of the CH05 value, in Excel, to DD/MM/YYYY before 
+ 		importing this fourth quarter of 2019 data file. For an unknown reason, if you fail to do so, you end up with wrong date 
+ 		variables. */
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,4,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,1,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,2,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,3,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,4,xlsx); 
+ /*For the first quarter of 2021, they decided to put all missing values as "NA", which messes with variable formats. You thus have to first 
+ 		replace NA in the starting dataset with a missing value. We then export the dataset and reimport it.  */
+dm 'odsresults; clear'; 
+dm 'clear log'; 
+ PROC IMPORT OUT=leo.ephc_2021_t01
+            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2021\usu_individual_t121.xlsx"
+            DBMS=xlsx REPLACE;
+RUN;
+ %Macro get_rid_of_NA (ds) ;
+     data &ds. (drop=_i);
+          set &ds. ;
+          array A_VarChar[*] _CHARACTER_ ; 
+          do _i=1 to dim( A_VarChar ) ;
+          	If A_VarChar (_i)="NA" then A_VarChar (_i)="";
+     	  End ;
+   run ;
+%Mend ;
+%get_rid_of_NA(leo.ephc_2021_t01); 
+
+
+
+data leo.ephc_2021_t01; 
+set leo.ephc_2021_t01; 
+CH05_num=input(ch05,DDMMYY10.);
+format ch05_num DDMMYY10.;  
+drop CH05; rename CH05_num=CH05;
+run; 
+
+/*We adapt a macro taken from the official SAS website to convert all compatible character variables to numeric*/
+
+ %macro convert_all_to_num(ds,truechar,output); 
+/* PROC CONTENTS is used to create an output data set called VARS to list all */
+/* variable names and their type from the &ds. data set.                      */                                                          
+
+proc contents data=&ds. out=vars(keep=name type) noprint;
+run; 
+ 
+/* A DATA step is used to subset the VARS data set to keep only the character  */
+/* variables and exclude the one ID character variable.  A new list of numeric */ 
+/* variable names is created from the character variable name with a "_n"      */
+/* appended to the end of each name.                                           */                                                        
+
+data vars;                                                
+   set vars;                                                 
+   if type=2 &truechar.;                               
+   newname=trim(left(name))||"_n"; 
+run;                                                                              
+
+/* The macro system option SYMBOLGEN is set to be able to see what the macro */
+/* variables resolved to in the SAS log.                                     */                                                       
+
+options symbolgen;                                        
+
+/* PROC SQL is used to create three macro variables with the INTO clause.  One   */
+/* macro variable named C_list will contain a list of each character variable    */
+/* separated by a blank space.  The next macro variable named N_list will        */
+/* contain a list of each new numeric variable separated by a blank space.  The  */
+/* last macro variable named Renam_list will contain a list of each new numeric  */
+/* variable and each character variable separated by an equal sign to be used in */ 
+/* the RENAME statement.                                                         */                                                        
+
+proc sql noprint;                                         
+   select trim(left(name)), trim(left(newname)),             
+          trim(left(newname))||'='||trim(left(name))         
+          into :c_list separated by ' ', :n_list separated by ' ',  
+          :renam_list separated by ' '                         
+          from vars;                                                
+quit;                                                                                                               
+ 
+/* The DATA step is used to convert the numeric values to character.  An ARRAY  */
+/* statement is used for the list of character variables and another ARRAY for  */
+/* the list of numeric variables.  A DO loop is used to process each variable   */
+/* to convert the value from character to numeric with the INPUT function.  The */
+/* DROP statement is used to prevent the character variables from being written */
+/* to the output data set, and the RENAME statement is used to rename the new   */
+/* numeric variable names back to the original character variable names.        */                                                        
+
+data &output.;                                               
+   set &ds.;                                                 
+   array ch(*) $ &c_list;                                    
+   array nu(*) &n_list;                                      
+   do i = 1 to dim(ch);                                      
+      nu(i)=input(ch(i),8.);                                  
+   end;                                                      
+   drop i &c_list;                                           
+   rename &renam_list;                                                                                      
+run;            
+
+%mend; 
+dm 'clear log'; 
+
+dm 'odsresults; clear'; 
+
+%convert_all_to_num(leo.ephc_2021_t01, and name ne'CODUSU' and name ne 'PP09A_ESP' and name ne 'PP09B_ESP' and name ne 'PP09C_ESP' and name ne 'CH15_COD' and name ne 'CH16_COD' and name ne 'MAS_500',leo.ephc_2021_t01); 
 data leo.ephc_2020_t03; 
 set leo.ephc_2020_t03; 
 CH05_num=ch05*1; drop CH05; rename CH05_num=CH05;
@@ -449,28 +566,9 @@ run;
 proc print data=leo.ephc_2019_t04 (obs=10); run; 
 format ch05 DDMMYYN10.; 
 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,2,xls);
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,3,xls);
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,4,xls);
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,1,xls);
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,2,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,3,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,4,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,1,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,2,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,3,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,4,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,1,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,2,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,3,xls); 
- /*Beware: due to a formatting error in the original CSV, you must change the format of the CH05 value, in Excel, to DD/MM/YYYY before 
- 		importing this fourth quarter of 2019 data file. For an unknown reason, if you fail to do so, you end up with wrong date 
- 		variables. */
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,4,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,1,xlsx); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,2,xlsx); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,3,xlsx); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,4,xlsx); 
+
+
+
  /*The second quarter of 2018 has format problems with the date of birth variable ch05. We correct them here. Before that, we 
  		corrected the csv file, putting as missing all the entries where the date of birth was 01/01/1900 (roughly 4800).*/
 data leo.ephc_2018_t02; 
@@ -518,17 +616,22 @@ DATA leo.new_eph_2018;
  set leo.ephc_2020_t01-leo.ephc_2020_t04; 
  person=cats(codusu,nro_hogar,componente); 
  run; 
-data leo.new_eph_2016_2020; 
-set leo.new_eph_2016-leo.new_eph_2020; 
+ 
+ data leo.new_eph_2021; 
+ set leo.ephc_2021_t01; 
+ person=cats(codusu,nro_hogar,componente); 
+ run; 
+data leo.new_eph_2016_2021; 
+set leo.new_eph_2016-leo.new_eph_2021; 
 drop apparition; 
 run; 
 
  /*Here we quickly count how many times an individual appears in the base, as a descriptive statistic.*/
- proc sort data=leo.new_eph_2016_2020; 
+ proc sort data=leo.new_eph_2016_2021; 
  by person; 
  run;
- data leo.new_eph_2016_2020; 
-set leo.new_eph_2016_2020; 
+ data leo.new_eph_2016_2021; 
+set leo.new_eph_2016_2021; 
 by person ;  
 if first.person  then apparition=1; 
 else apparition+1;
@@ -540,11 +643,11 @@ proc freq data=leo.new_eph_2016_2020;
 table apparition*trimestre;
 where ano4=2020; 
 run; */
-data leo.new_eph_2016_2020;
+data leo.new_eph_2016_2021;
 length contributes_vol $20.; 
 length contributes_comp $20.;
 length contributes $20.;
- set leo.new_eph_2016_2020;
+ set leo.new_eph_2016_2021;
  if ano4=2016 & trimestre=2 then period=52; 
  if ano4=2016 & trimestre=3 then period=53; 
 if ano4=2016 & trimestre=4 then period=54; 
@@ -563,7 +666,8 @@ if ano4=2019 & trimestre=4 then period=66;
 if ano4=2020 & trimestre=1 then period=67; 
 if ano4=2020 & trimestre=2 then period=68; 
 if ano4=2020 & trimestre=3 then period=69;
-if ano4=2020 & trimestre=4 then period=70;  
+if ano4=2020 & trimestre=4 then period=70;
+if ano4=2021 & trimestre=1 then period=71;  
 
 if nivel_ed=6 then formation="3"; 
 if nivel_ed=4 | nivel_ed=5 then formation="2"; 
