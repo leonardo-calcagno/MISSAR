@@ -772,7 +772,7 @@ run;
 %indep_endo_2016(leo.new_eph_2019,leo.eph_formatted_2019);
 %indep_endo_2016(leo.new_eph_2020,leo.eph_formatted_2020);
 %indep_endo_2016(leo.new_eph_2021,leo.eph_formatted_2021);
-%indep_endo_2016(leo.new_eph_2016_2020,leo.eph_formatted_2016_2021);
+%indep_endo_2016(leo.new_eph_2016_2021,leo.eph_formatted_2016_2021);
 /*Next, we format other variables, trying to be consistent with what we did for the 2003-2015 period.*/
 data leo.eph_formatted_2016; 
 set leo.eph_formatted_2016; 
