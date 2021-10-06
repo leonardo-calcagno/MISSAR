@@ -34,9 +34,7 @@ globals:
             - MAX_PENSION_CENTRAL_2014_T4: float
             - MAX_CONTRIBUTIVE_BASE_CENTRAL: float
             #We add a global depicting the real increase of pensions each quarter based on the adopted pension mobility law. 
-            #From the third quarter of 2018 onward, we assume it is equal to 30% of the real wage evolution. This is true as long as real wage increases at a fixed rate and 
-            # that inflation stays the same, which we assume in our scenarios for the sake of simplicity. This is because the increase this quarter is 70% of the inflation and 30% of the RIPTE evolution 
-            #two quarters ago, as per the 2017 pension reform.
+            #Real pension mobility is computed in a separate excel file, following Law 27.609 pension mobility 
             - REAL_MOBILITY_CENTRAL: float
             #The PBU is the Universal Basic Benefit. It enters in the computation of the retirement pension.
             - PBU_CENTRAL_2014_T4: float
@@ -3240,9 +3238,7 @@ entities:
                 #leaked by ANSES: between $1500 and $2500 pesos of fixed sum increase, and maybe a simultaneous proportional increase of between 2% and 6%. 
         #In this ex ante scenario, we take the high adjustment hypothesis: 6% increase and $2500 pesos for all, in both March and June. 
         #As usual, we take into account the March (June) increase in the second (third) quarter, since we work with mid-quarter pensions. This also means we take the
-                #real value of the fixed increase in the middle of the next quarter, so taking the inflation index of May and August 2020. Also beware: we 
-                #use inflation indexes as anticipated by BCRA's November 2019 REM: this should be re-coded when we have actual inflation figures for May and 
-                #August 2020. 
+                #real value of the fixed increase in the middle of the next quarter, so taking the inflation index of May and August 2020.
                 - gross_retirement: if(tag_pension_uni or moratorium_date>0, gross_retirement, 
                                         if(new_contributory_pension, gross_retirement, 
                                             if(period==70, 
@@ -3490,15 +3486,23 @@ entities:
                 - decree_73_2019_auh_bonus: if(period==69, 
                                                 425.21/3, 
                                                     0)
-                - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus + decree_73_2019_auh_bonus
+            #Shortly after, the Decree 309/2020 doubled the AUH on March 2020, at the onset of the COVID-19 pandemic. That meant paying an additional $3103 bonus. 
+                    #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
+                    #the AUH paid on average the whole quarter (or at least on the middle month). Also, since it was given after February 2020, we add it 
+                    #to the second quarter of 2020 family benefit.
+                - decree_309_2020_auh_bonus: if(period==70,
+                                                611.87/3,
+                                                    0)
+            #Decree 261/2021 included a $15000 payment for beneficiaries of the AUH or of contributive child benefits for categories A and B of the monotributo, 
+                    # but only for people living in the urban area of Buenos Aires, or in provinces that adopted a lockdown. We thus do not simulate it here.    
+                - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus + decree_73_2019_auh_bonus + decree_309_2020_auh_bonus
     #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. Thus, for three periods (May 2019, August 2019 and November 2019) in
             #our model, the AUH is higher than the contributive child benefit earned by the children of monotributistas or lowest earning wage-earners. We hard-code it 
-            #here. Beware, CPI indexes for October and November 2019 are taken from market expectations published by the Central Bank (REM): once official CPI 
-            #indexes are published, we have to change the period 68 value for the auh. 
+            #here.  
                 - auh: if(auh<=0, auh,
                             if(period==66, 727.85, 
                                 if(period==67, 666.98,
-                                    if(period==68, 583.17, 
+                                    if(period==68, 584.93, 
                                          auh)))) 
                 
                 - auh: if(auh==0, auh, 
