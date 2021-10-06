@@ -3303,7 +3303,7 @@ entities:
                 - auh: if(auh<=0, auh,
                             if(period==66, 727.85, 
                                 if(period==67, 666.98,
-                                    if(period==68, 583.17, 
+                                    if(period==68, 584.93, 
                                          auh)))) 
                 - auh: if(auh==0, auh, 
                             auh+temporary_auh_bonus)

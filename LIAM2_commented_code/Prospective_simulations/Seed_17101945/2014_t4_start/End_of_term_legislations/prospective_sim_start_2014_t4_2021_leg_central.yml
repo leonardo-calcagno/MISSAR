@@ -3887,8 +3887,7 @@ entities:
                                                        )     
                                                   ), 0 
                                               ), 0
-                                           )		
-
+                                           )
                 - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 

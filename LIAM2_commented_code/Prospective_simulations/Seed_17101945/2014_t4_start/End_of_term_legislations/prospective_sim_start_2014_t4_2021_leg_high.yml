@@ -13,9 +13,9 @@ globals:
     #All our real income variables are expressed in November 2014 pesos. 
             - GROSS_WAGE_HIGH_2014_T4: float
             - REAL_WAGE_HIGH: float
-            - NET_WAGE_HIGH_2014_T4: float
+            #- NET_WAGE_HIGH_2014_T4: float
             - ANSES_GROSS_WAGE_HIGH_2014_T4: float
-            - ANSES_NET_WAGE_HIGH_2014_T4: float
+            #- ANSES_NET_WAGE_HIGH_2014_T4: float
             - MINIMUM_WAGE_HIGH_2014_T4: float
         #The CPI_ANSES_INDEX_HIGH is equal to the CPI divided by the ANSES actualisation index. 
             #It links real wage variables together (ANSES_GROSS_WAGE_HIGH_2014_T4*CPI_ANSES_INDEX_HIGH=GROSS_WAGE_HIGH_2014_T4). 
@@ -34,10 +34,7 @@ globals:
             - MAX_PENSION_HIGH_2014_T4: float
             - MAX_CONTRIBUTIVE_BASE_HIGH: float
             #We add a global depicting the real increase of pensions each quarter based on the adopted pension mobility law. 
-
-            #From the third quarter of 2018 onward, we assume it is equal to 30% of the real wage evolution. This is true as long as real wage increases at a fixed rate and 
-            # that inflation stays the same, which we assume in our scenarios for the sake of simplicity. This is because the increase this quarter is 70% of the inflation and 30% of the RIPTE evolution 
-            #two quarters ago, as per the 2017 pension reform.
+            #Real pension mobility is computed in a separate excel file, following Law 27.609 pension mobility 
             - REAL_MOBILITY_HIGH: float
             #The PBU is the Universal Basic Benefit. It enters in the computation of the retirement pension.
             - PBU_HIGH_2014_T4: float
@@ -324,6 +321,7 @@ entities:
                 - decile_ratio_all_income: percentile(per_capita_income,90,
                                                 filter=per_capita_income!=0)
                                                     /percentile(per_capita_income,10,
+
                                                         filter=per_capita_income!=0)
                 - decile_ratio_labour_income: percentile(per_capita_labour_income,90,
                                                 filter=per_capita_labour_income!=0,weights=pondera)
@@ -347,8 +345,10 @@ entities:
                                                         filter=per_capita_labour_income!=0,weights=pondera)
         #Second, we apply INSEE's and OCDE's method of estimating household disposable income. 
                 - decile_ratio_insee_all_income: percentile(insee_income,90,
+
                                                 filter=insee_income!=0)
                                                     /percentile(insee_income,10,
+
                                                         filter=insee_income!=0)
                 - decile_ratio_insee_labour_income: percentile(insee_labour_income,90,
                                                 filter=insee_labour_income!=0,weights=pondera)
@@ -372,8 +372,10 @@ entities:
                                                         filter=insee_labour_IFE_income!=0,weights=pondera)
         #Third, we apply the benchmark equivalised household income used by University of La Plata's SEDLAC laboratory. 
                 - decile_ratio_sedlac_all_income: percentile(sedlac_income,90,
+
                                                 filter=sedlac_income!=0)
                                                     /percentile(sedlac_income,10,
+
                                                         filter=sedlac_income!=0)
                 - decile_ratio_sedlac_labour_income: percentile(sedlac_labour_income,90,
                                                 filter=sedlac_labour_income!=0,weights=pondera)
@@ -437,7 +439,6 @@ entities:
                                             filter=per_capita_income<=percentile(per_capita_income,10,
                                                 filter=per_capita_income!=0),weights=pondera)
                                                     /sum(all_labour_income+all_IFE_benefits,weights=pondera)    
-
         #Second, we classify households by their equivalised income following INSEE and OCDE's consumptions units. 
                 - share_top_10_insee: sum(all_income,
                                             filter=insee_income>=percentile(insee_income,90,
@@ -1095,7 +1096,6 @@ entities:
             #Finally, we record total contributed years after 2003, important for determining access to Law 26970 pension moratorium for women
             - car_post_2003: {type: int, initialdata: false}
             
-
            
         links:
             mother: {type: many2one, target: person, field: mother_id}
@@ -1243,7 +1243,6 @@ entities:
                                         net_pension_2/0.97)
                 - gross_pension_p: if(age>=18, gross_pension, 0)
                 - gross_pension_2_p: if(age>=18, gross_pension_2, 0)
-
                 # We know from administrative data that there were in 2014 16.86% more social security benefits paid than social security beneficiaries. This means 
                         #20% of SIPA beneficiaries receive both a survivors benefit and a retirement pension. This is irrelevant for computing total ANSES expenditure, 
                         #but the 2020 pension mobility formula, as well as the 26.417 pension mobility formula in force between 2009 and 2017, makes pension mobility
@@ -1363,7 +1362,6 @@ entities:
                             fname='IFE_cost_high.csv',mode='a')        
         ################################################################################################################
         
-
                 - csv('Period', '0','[1;5[', '[5;10[', '[10;15[', '15', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
                                 '[70;75[','[75;80[','[80;85[','[85;90[','[90;95[','100+',
                                                 fname='active_age_men.csv',mode='a')
@@ -1371,7 +1369,6 @@ entities:
                                 '[70;75[','[75;80[','[80;85[','[85;90[','[90;95[','100+',
                                                 fname='active_age_women.csv',mode='a')
                 - csv('Period','Mean_real_labour_income','Total_workers',
-
                                     fname='workers_and_wage_high.csv',mode='a')
         ################################################################################################################
                 - csv('Period', 'Total_SIPA_income',
@@ -1561,7 +1558,6 @@ entities:
         #We store separately child's survivor pension derived from the father's death (suffix _f) from that derived from mother's death (suffix _m)                     
                 - pension_ref_child_f: if(dead_father==UNSET, 0,
                                             if(age>=18, 0, 
-
                                                 if(father.dead, father.total_survivor_pensions,
                                                     if(period==70, 
                                                         if(pension_ref_child_f==0, 0, 
@@ -1575,7 +1571,6 @@ entities:
                         
                 - pension_ref_child_m: if(dead_mother==UNSET, 0,
                                             if(age>=18, 0, 
-
                                                 if(mother.dead, mother.total_survivor_pensions,
                                                     if(period==70,
                                                         if(pension_ref_child_m==0, 0, 
@@ -1588,7 +1583,6 @@ entities:
                                         )
                 - pension_ref_child_f_2: if(dead_father==UNSET, 0,
                                             if(age>=18, 0, 
-
                                                 if(father.dead, father.total_survivor_pensions_2,
                                                     if(period==70, 
                                                         if(pension_ref_child_f_2==0, 0, 
@@ -1601,7 +1595,6 @@ entities:
                                             )
                 - pension_ref_child_m_2: if(dead_mother==UNSET, 0,
                                             if(age>=18, 0, 
-
                                                 if(mother.dead, mother.total_survivor_pensions_2,
                                                     if(period==70, 
                                                         if(pension_ref_child_m_2==0, 0, 
@@ -1732,7 +1725,6 @@ entities:
                 - net_pension_2: if(gross_pension_2>MAX_PENSION_HIGH_2014_T4,
                                     MIN_PENSION_HIGH_2014_T4*0.97+ (MAX_PENSION_HIGH_2014_T4-MIN_PENSION_HIGH_2014_T4)*0.94,
                                         net_pension_2)
-
         #We finally tag survivors benefits that are derived from a moratorium retirement pension. 
                 - check_partner: if(pension_partner==0, False, 
                                         True)
@@ -1821,9 +1813,6 @@ entities:
                                             sum(age>=55 and age<60 and male,weights=pondera),sum(age>=60 and age<65 and male,weights=pondera),sum(age>=65 and age<70 and male,weights=pondera),sum(age>=70 and age<75 and male,weights=pondera),
                                                 sum(age>=75 and age<80 and male,weights=pondera),sum(age>=80 and age<85 and male,weights=pondera),sum(age>=85 and age<90 and male,weights=pondera),sum(age>=90 and age<95 and male,weights=pondera),sum(age>=95 and male,weights=pondera),
                                                     fname='active_age_men.csv',mode='a')
-
-
-
                 - csv(period,sum(age<=0 and not male,weights=pondera),sum(age>=1 and age<5 and not male,weights=pondera),sum(age>=5 and age<10 and not male,weights=pondera),sum(age>=10 and age<15 and not male,weights=pondera),sum(age==15 and not male,weights=pondera),
                                     sum(age>=16 and age<20 and not male,weights=pondera),sum(age>=20 and age<25 and not male,weights=pondera), sum(age>=25 and age<30 and not male,weights=pondera),sum(age>=30 and age<35 and not male,weights=pondera),
                                         sum(age>=35 and age<40 and not male,weights=pondera),sum(age>=40 and age<45 and not male,weights=pondera),sum(age>=45 and age<50 and not male,weights=pondera),sum(age>=50 and age<55 and not male,weights=pondera),
@@ -2917,7 +2906,6 @@ entities:
                                                 if(contribution==1, taxable_income*(0.06)+(taxable_income_employee)*0.03,
                                                     if(contribution==2, taxable_income*(0.06)+(taxable_income_employee)*0.03, 
                                                         taxable_income*(0.06)+(taxable_income_employee)*0.03))) 
-
                 - contribution_sal_tot: contribution_sal_SIPA+contribution_sal_PAMI+contribution_sal_obra_social
                 
                 
@@ -3166,7 +3154,6 @@ entities:
                                         if(age<60 or (age<65 and male), False, 
                                             if((male and period>=56) or period<48, False,
                                                 if(((car_sal + car_ind + car_mono_norref)>=(120-extra_trim/2)),False, 
-
                                                    if((age_quarters-18*4-(period-4))>=(120-extra_trim/2), True,
                                                         if((age_quarters-18*4-(period-4)+car_post_2003)>=(120-extra_trim/2), True,
                                     False))))))) 
@@ -3216,11 +3203,9 @@ entities:
                 - tag_pension_uni: if(new_pension_uni, True,
                                       if(new_contributory_pension, False,
                                          if(liqui_retirement,False,
-
                                             if(gross_pension>0, False, 
                                                 tag_pension_uni
                                      ))))
-
         #The 2019 budget Law 27467 forbids formal workers from earning the universal pension, except those in the social monotributo program. 
                 - forbid_pension_uni: if(period<65, False, 
                                           if(labour_market_state==1 or labour_market_state==2, True, 
@@ -3253,10 +3238,7 @@ entities:
                 #leaked by ANSES: between $1500 and $2500 pesos of fixed sum increase, and maybe a simultaneous proportional increase of between 2% and 6%. 
         #In this ex ante scenario, we take the high adjustment hypothesis: 6% increase and $2500 pesos for all, in both March and June. 
         #As usual, we take into account the March (June) increase in the second (third) quarter, since we work with mid-quarter pensions. This also means we take the
-                #real value of the fixed increase in the middle of the next quarter, so taking the inflation index of May and August 2020. Also beware: we 
-                #use inflation indexes as anticipated by BCRA's November 2019 REM: this should be re-coded when we have actual inflation figures for May and 
-                #August 2020. 
-
+                #real value of the fixed increase in the middle of the next quarter, so taking the inflation index of May and August 2020.
                 - gross_retirement: if(tag_pension_uni or moratorium_date>0, gross_retirement, 
                                         if(new_contributory_pension, gross_retirement, 
                                             if(period==70, 
@@ -3278,7 +3260,6 @@ entities:
                                                 )
                                             )
                                         )            
-
     #7- We implement minimum and maximum pensions. 
         #We exclude moratorium pensions, universal pensions and survivors' pensions from this correction. The former two are often lower than the minimum pension. 
                 
@@ -3505,16 +3486,23 @@ entities:
                 - decree_73_2019_auh_bonus: if(period==69, 
                                                 425.21/3, 
                                                     0)
-
-                - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus + decree_73_2019_auh_bonus
+            #Shortly after, the Decree 309/2020 doubled the AUH on March 2020, at the onset of the COVID-19 pandemic. That meant paying an additional $3103 bonus. 
+                    #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
+                    #the AUH paid on average the whole quarter (or at least on the middle month). Also, since it was given after February 2020, we add it 
+                    #to the second quarter of 2020 family benefit.
+                - decree_309_2020_auh_bonus: if(period==70,
+                                                611.87/3,
+                                                    0)
+            #Decree 261/2021 included a $15000 payment for beneficiaries of the AUH or of contributive child benefits for categories A and B of the monotributo, 
+                    # but only for people living in the urban area of Buenos Aires, or in provinces that adopted a lockdown. We thus do not simulate it here.    
+                - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus + decree_73_2019_auh_bonus + decree_309_2020_auh_bonus
     #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. Thus, for three periods (May 2019, August 2019 and November 2019) in
             #our model, the AUH is higher than the contributive child benefit earned by the children of monotributistas or lowest earning wage-earners. We hard-code it 
-            #here. Beware, CPI indexes for October and November 2019 are taken from market expectations published by the Central Bank (REM): once official CPI 
-            #indexes are published, we have to change the period 68 value for the auh. 
+            #here.  
                 - auh: if(auh<=0, auh,
                             if(period==66, 727.85, 
                                 if(period==67, 666.98,
-                                    if(period==68, 583.17, 
+                                    if(period==68, 584.93, 
                                          auh)))) 
                 
                 - auh: if(auh==0, auh, 
@@ -3603,13 +3591,10 @@ entities:
         # Individuals that have a contributory benefit either have a retirement or a survivor's pension.   
                 - has_contributory_retirement: if(retirement_pension<=0, False, 
                                                     if(moratorium_date>0, False, 
-
-
                                                         if(universal_net_pension>0, False,
                                                             if(tag_initial_moratorium, False,
                                                                 True))))
                 - has_survivors_benefit: if(survivors_benefit>0, True,
-
                                             if(tag_second_pension, True, 
                                                 False
                                             ))
@@ -3625,10 +3610,8 @@ entities:
             #normal pension equal at least to the minimum pension. This boolean therefore mainly identifies beneficiaries of the 2014 pension moratorium.  
                 - has_moratorium_pension: if(discounted_v2_m==0, False, 
                                                 if(moratorium_date>0, True,
-
                                                     if(tag_initial_moratorium, True, 
                                             False)))
-
                 - has_universal_pension: if(universal_net_pension==0, False, 
                                         True)
                 - has_retirement_pension: if(has_contributory_retirement, True, 
@@ -3784,7 +3767,7 @@ entities:
                                                         total_sipa_beneficiaries,total_sipa_benefits,total_sipa_non_moratorium_beneficiaries,total_sipa_non_moratorium_benefits,total_PUAM_benefits,
                                             fname='adequacy_high.csv',mode='a')
             temporary_measures_pensions: 
-            #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri government. 
+            #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri and Fernández governments. 
 #First, a bonus was paid on March 2018 to compensate retirement and survivors' pensioners for the change in pension mobility 
                     #($375 pesos for moratorium pensioners or PUAM beneficiaries, $750 pesos for the rest). This is only paid to pensioners that earned less than $10,000 in March 2018.
                
@@ -3806,7 +3789,6 @@ entities:
 
                 - has_contributory_retirement: if(retirement_pension<=0, False, 
                                                     if(moratorium_date>0, False, 
-
                                                         if(universal_net_pension>0, False, 
                                                                 True)))
                 - has_survivors_benefit: if(survivors_benefit>0, True, 
@@ -3825,7 +3807,6 @@ entities:
                                         True)
                 - has_retirement_pension: if(has_contributory_retirement, True, 
                                                 if(has_moratorium_pension, True,  
-
                                                     if(has_universal_pension, True, 
                                                         False)))
                 - has_any_benefit: if(has_retirement_pension, True, 
@@ -3853,23 +3834,61 @@ entities:
                         #the pension paid on average the whole quarter (or at least on the middle month). Also, since these bonuses were given after 
                         #November 2019, we add them to the first quarter of 2020 family benefit.   
                 #Finally, the bonus is only paid to those earning at most the minimum pension + 5000 pesos. Since we work with February 2020 pensions, discounted
-                        #with expected inflation by February 2020 (we use actual CPI up to December 2019, then BCRA's REM for January and February 2020), 
-                        #these 5000 pesos are equal to 990.43 November 2014 pesos, using the official CPI indexes with which the model is calibrated. Beware, 
-                        # this is hard-coded but these values will need to be revised once official CPI indexes are released for January and February 2020. 
+                        #with inflation by February 2020, these 5000 pesos are equal to 1019.08 November 2014 pesos, using the official CPI indexes with which the model is calibrated. 
                 #Also, we use the february 2020 real value of $5000 pesos for determining who gets the benefit, but since the bonus was actually paid on December 2019 
                         # and January 2020, we input the real value for these months when taking into account the bonus that was actually paid. 
                 - decree_79_2019_bonus: if(period==69, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > MIN_PENSION_HIGH_2014_T4 + 990.43, 0,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_HIGH_2014_T4 + 1019.08, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_HIGH_2014_T4, 
-                                                        1036.02/3 + 1024.1/3, 
-                                                        (MIN_PENSION_HIGH_2014_T4 + 1036.02 - disc_cost_v2_m_2)/3 + (MIN_PENSION_HIGH_2014_T4 + 1024.1 - disc_cost_v2_m_2)/3
+                                                        1063.02/3 + 1039.60/3, 
+                                                        (MIN_PENSION_HIGH_2014_T4 + 1063.02 - disc_cost_v2_m_2)/3 + (MIN_PENSION_HIGH_2014_T4 + 1039.60 - disc_cost_v2_m_2)/3
                                                        )     
                                                   ), 0 
                                               ), 0
                                            )
-                
-                - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus
+                #Shortly after, the Decree 309/2020 gave a $3000 bonus on April 2020. It meant the minimum pension was temporarily increased up to $18891.49, at the onset of the COVID-19 pandemic. 
+                    #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
+                    #the AUH paid on average the whole quarter (or at least on the middle month). 
+                #Finally, the bonus is only paid to those earning at most the minimum pension + 3000 pesos. Since we work with May 2020 pensions, discounted
+                        #with inflation by May 2020, these 3000 pesos are equal to 574.08 November 2014 pesos, using the official CPI indexes with which the model is calibrated. We use this value
+                        # to determine which person gets this benefit, but since the bonus was actually paid on April 2020, we input the real value for this month when taking into account the bonus
+                        # that was actually paid ($582,94). 
+                - decree_309_2020_bonus: if(period==70, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_HIGH_2014_T4 + 574.08, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_HIGH_2014_T4, 
+                                                        582.94/3, 
+                                                        (MIN_PENSION_HIGH_2014_T4 + 582.94 - disc_cost_v2_m_2)/3 
+                                                       )     
+                                                  ), 0 
+                                              ), 0
+                                           )
+                #Next, pension bonuses were given again on April and May 2021 ($1500) (Decree 218/2021) and on August 2021 ($5000) (Decree 481/2021) 
+                #The $1500 bonuses go to the second quarter of 2021 (period 74), while the $5000 goes to the third quarter of 2021 (period 75). 
+                        #As usual, we take the middle of quarter value to determine whether a beneficiary is elligible to the bonus, but take the real value of the month the bonus was 
+                        #actually given to determine the real pension increase. 
+                - decree_218_2021_bonus: if(period==74, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_HIGH_2014_T4 + 192.85, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_HIGH_2014_T4, 
+                                                        199.25/3 + 192.85/3, 
+                                                        (MIN_PENSION_HIGH_2014_T4 + 192.85 - disc_cost_v2_m_2)/3 +(MIN_PENSION_HIGH_2014_T4 + 199.25 - disc_cost_v2_m_2)/3 
+                                                       )     
+                                                  ), 0 
+                                              ), 0
+                                           )
+                - decree_481_2021_bonus: if(period==75, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_HIGH_2014_T4 + 590.34, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_HIGH_2014_T4, 
+                                                        590.34/3, 
+                                                        (MIN_PENSION_HIGH_2014_T4 + 590.34 - disc_cost_v2_m_2)/3 
+                                                       )     
+                                                  ), 0 
+                                              ), 0
+                                           )
+                - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
             #hypotetical bonuses in the future. As such, we simply export in a separate csv file the cost of temporary pension bonuses. 
@@ -3972,7 +3991,6 @@ entities:
                                 avg(total_100_decile),avg(total_90_decile),avg(total_80_decile),avg(total_70_decile),avg(total_60_decile),avg(total_50_decile),
                                     avg(total_40_decile),avg(total_30_decile),avg(total_20_decile),avg(total_10_decile),avg(total_0_decile),avg(total_cont_pensioners),
                                         fname='high_cont_ret_deciles.csv',mode='a') 
-
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
@@ -4042,7 +4060,6 @@ simulation:
     random_seed: 17101945
     #It is important to store in the comments the number of periods we should instruct this model to run before reaching the fourth quarter of 2014.
         #104 44
-
     default_entity: person
     
     
