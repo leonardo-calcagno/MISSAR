@@ -3409,16 +3409,19 @@ entities:
                 - no_mono_benefit: if(mother.labour_market_state==1 or father.labour_market_state==1, True, 
                                             if(father.lag_count_ind_1==1 or mother.lag_count_ind_1==1, True, 
                                                 False))
+            #There is not, however, a clear and constant criterium to determine which monotributo category gets what family benefit, and there is even a significant intra-year
+                # volatility (for instance, on June 2021 Category D got the highest family benefit, but on September 2021 it went down a category). For the sake of simplicity, 
+                # and given how on average these benefits were given, we consider categories A to D get the highest benefit; Category E, the second best; F, the second lowest; and G and H, the lowest.
                 - child_benefit: if(father_id==UNSET or mother_id==UNSET, 0, 
                                     if(no_mono_benefit, child_benefit, 
                                         if(age>=18 or labour_market_state==1 or labour_market_state==2  or lag_count_ind_1==1 or lag_mono_1==1, 0,
                                             if(period<54 or child_benefit>0, child_benefit,
                                                 if(household.wage_earners_hh>0 or household.autonomous_hh>0 or household.monotributistas_hh==0, child_benefit, 
                                                     if(household.max_monotributo_cat_hh==9 or mother.monotributo_cat==9 or father.monotributo_cat==9, child_benefit, 
-                                                        if(household.max_monotributo_cat_hh==8 or mother.monotributo_cat==8 or father.monotributo_cat==8, CHILD_BEN_LOW_4, 
-                                                            if(household.max_monotributo_cat_hh==7 or mother.monotributo_cat==7 or father.monotributo_cat==7, CHILD_BEN_LOW_3, 
-                                                                if(household.max_monotributo_cat_hh==6 or mother.monotributo_cat==6 or father.monotributo_cat==6, CHILD_BEN_LOW_2, 
-                                                                    if(household.max_monotributo_cat_hh<=5 and household.max_monotributo_cat_hh>=1, CHILD_BEN_LOW_1,
+                                                        if(household.max_monotributo_cat_hh>=7 or mother.monotributo_cat>=7 or father.monotributo_cat>=7, CHILD_BEN_LOW_4, 
+                                                            if(household.max_monotributo_cat_hh==6 or mother.monotributo_cat==6 or father.monotributo_cat==6, CHILD_BEN_LOW_3, 
+                                                                if(household.max_monotributo_cat_hh==5 or mother.monotributo_cat==5 or father.monotributo_cat==5, CHILD_BEN_LOW_2, 
+                                                                    if(household.max_monotributo_cat_hh<=4 and household.max_monotributo_cat_hh>=1, CHILD_BEN_LOW_1,
                                                                         child_benefit))))))))))
                                                 
         #We then compute child benefits for children for whom we don't know who at least one of their parents is. We use only the family-group income to perform 
@@ -3437,10 +3440,10 @@ entities:
                                             if(period<54, child_benefit,
                                                 if(household.wage_earners_hh>0 or household.autonomous_hh>0 or household.monotributistas_hh==0, child_benefit, 
                                                     if(household.max_monotributo_cat_hh==9 or mother.monotributo_cat==9 or father.monotributo_cat==9, child_benefit, 
-                                                        if(household.max_monotributo_cat_hh==8 or mother.monotributo_cat==8 or father.monotributo_cat==8, CHILD_BEN_LOW_4, 
-                                                            if(household.max_monotributo_cat_hh==7 or mother.monotributo_cat==7 or father.monotributo_cat==7, CHILD_BEN_LOW_3, 
-                                                                if(household.max_monotributo_cat_hh==6 or mother.monotributo_cat==6 or father.monotributo_cat==6, CHILD_BEN_LOW_2, 
-                                                                    if(household.max_monotributo_cat_hh<=5 and household.max_monotributo_cat_hh>=1, CHILD_BEN_LOW_1,
+                                                        if(household.max_monotributo_cat_hh>=7 or mother.monotributo_cat>=7 or father.monotributo_cat>=7, CHILD_BEN_LOW_4, 
+                                                            if(household.max_monotributo_cat_hh==6 or mother.monotributo_cat==6 or father.monotributo_cat==6, CHILD_BEN_LOW_3, 
+                                                                if(household.max_monotributo_cat_hh==5 or mother.monotributo_cat==5 or father.monotributo_cat==5, CHILD_BEN_LOW_2, 
+                                                                    if(household.max_monotributo_cat_hh<=4 and household.max_monotributo_cat_hh>=1, CHILD_BEN_LOW_1,
                                                                         child_benefit)))))))))                                               
     #5- We compute the Universal Child Benefit or AUH. It is open to the children of parents that are both either unregistered workers or unemployed. 
             #Children that do not attend school, are married or formal workers are excluded from the AUH. 
