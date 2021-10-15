@@ -5,7 +5,7 @@
 
 globals:
     periodic:
-        path: C:\Users\Leonardo\Documents\MISSAR_private\LIAM2_commented_code\globals\globals_prosp_feb_2021_leg.csv  
+        path: C:\Users\Leonardo\Documents\MISSAR_private\LIAM2_commented_code\globals\globals_prosp_oct_2021_leg.csv  
         transposed: true
         fields: 
     #A large part of our economic scenarios revolve around fixed values of global variables. These change following historically observed values and our economic scenarios.
@@ -21,6 +21,7 @@ globals:
             #It links real wage variables together (ANSES_GROSS_WAGE_LOW_2014_T4*CPI_ANSES_INDEX_LOW=GROSS_WAGE_LOW_2014_T4). 
             # This variable is useful for computing the family-group income.  
             - CPI_ANSES_INDEX_LOW: float
+            - CPI_LOW: float
             #The coefficient variables (h for men, f for women) are computed following Duc et. al. 2013
             - COEFFICIENT_H: float
             - COEFFICIENT_F: float
@@ -1400,7 +1401,7 @@ entities:
         ###############################################################################################################
                 - csv('Period','All_pensions','Contributory_pensions','Moratorium_and_PUAM',
                                                 fname='temporary_pension_bonus_low.csv',mode='a')
-                - csv('Period','AUH', fname='temporary_fam_ben_bonus_low.csv',mode='a')
+                - csv('Period','AUH','Contributory_fam_ben', fname='temporary_fam_ben_bonus_low.csv',mode='a')
         ###############################################################################################################        
                 - csv('Period', '90_100_dec','80_90_dec','70_80_dec','60_70_dec','50_60_dec',
                                     '40_50_dec','30_40_dec','20_30_dec','10_20_dec','0_100_dec',
@@ -3444,7 +3445,22 @@ entities:
                                                             if(household.max_monotributo_cat_hh==6 or mother.monotributo_cat==6 or father.monotributo_cat==6, CHILD_BEN_LOW_3, 
                                                                 if(household.max_monotributo_cat_hh==5 or mother.monotributo_cat==5 or father.monotributo_cat==5, CHILD_BEN_LOW_2, 
                                                                     if(household.max_monotributo_cat_hh<=4 and household.max_monotributo_cat_hh>=1, CHILD_BEN_LOW_1,
-                                                                        child_benefit)))))))))                                               
+                                                                        child_benefit)))))))))
+        #Although we are still waiting for the Decree, on October 2021 (period 76, fourth quarter of 2021) the government announced it would double the family benefit for contributive workers of the two lowest categories, 
+                # and keep it at that level until pension mobility keeps up with this level. We thus first store in a variable the value of the two highest contributive child benefits in the fourth quarter of 2021 (which are
+                #global variables, and starting from that period 76, check that the family benefit is at least equal to twice the fourth quarter of 2021 value, and go from there. 
+        # To do so, we need to add an inflation global variable to transform reported child benefits to current pesos, evaluate whether CHILD_BEN_LOW_1 and CHILD_BEN_LOW_2 are lower in current pesos than the level that is
+                # guaranteed for formal workers, and only them, and then adjust child benefits accordingly. It could be a good idea to also include the Tarjeta Alimentar benefit, which is sort of a food coupon for beneficiaries of the
+                # AUH, although this is left for future work.
+                - child_benefit_2: if(period<76, child_benefit,
+                                    if(child_benefit<=CHILD_BEN_LOW_3, child_benefit, 
+                                       if(child_benefit==CHILD_BEN_LOW_2,
+                                          if(child_benefit*CPI_LOW/100<6830, 6830*100/CPI_LOW, child_benefit),
+                                           if(child_benefit==CHILD_BEN_LOW_1,
+                                              if(child_benefit*CPI_LOW/100<10126, 10126*100/CPI_LOW, child_benefit), child_benefit)
+                                      )))
+                - decree_oct_2021_cost: child_benefit_2-child_benefit
+                - child_benefit: child_benefit_2
     #5- We compute the Universal Child Benefit or AUH. It is open to the children of parents that are both either unregistered workers or unemployed. 
             #Children that do not attend school, are married or formal workers are excluded from the AUH. 
                 - auh: if(age>=18, 0, 
@@ -3565,7 +3581,7 @@ entities:
                        sum(child_benefit*pondera)/1000,sum(auh*pondera)/1000,sum(spouse_benefit*pondera)/1000,
                             sum(school_aid/3*pondera)/1000,sum(wedding_benefit/3*pondera)/1000,sum(prenatal/3*pondera)/1000,sum(pregnancy_sp/3*pondera)/1000,sum(birth_benefit/3*pondera)/1000,
                                 fname='low_v5_m.csv',mode='a')
-                - csv(period,sum(temporary_auh_bonus*pondera)/1000,
+                - csv(period,sum(temporary_auh_bonus*pondera)/1000,sum(decree_oct_2021_cost*pondera)/1000,
                                 fname='temporary_fam_ben_bonus_low.csv',mode='a')
             adequacy: 
 #We put in this module all descriptive statistics on pension and family benefits income adequacy.
