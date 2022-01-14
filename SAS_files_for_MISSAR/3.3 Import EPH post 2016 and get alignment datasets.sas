@@ -221,9 +221,8 @@ gdeccfr_num=input (gdeccfr, best.); drop gdeccfr; rename gdeccfr_num=gdeccfr;
 pdeccfr_num=input (pdeccfr, best.); drop pdeccfr; rename pdeccfr_num=pdeccfr;
 
 /*The CH05 date of birth variable is clearly broken  for the third quarter 2020, both in csv and txt files, so we drop it*/
-if ano4=2020 & trimestre=3 then do; 
-		drop ch05; 
-	end;
+if ano4=2020 & trimestre=3 
+	then drop ch05; 
 run; 
 
 %mend; 
@@ -250,6 +249,14 @@ run;
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,2,xlsx); 
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,3,xlsx); 
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,4,xlsx); 
+ 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2021\,21,2,xlsx); 
+ /*CH05 is, again, working horribly. For now, we drop the variable for the second quarter of 2021. Issue pending.*/
+ PROC IMPORT OUT=leo.ephc_2021_t02
+            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2021\usu_individual_t221.xlsx"
+            DBMS=xlsx REPLACE;
+RUN;
+
  /*For the first quarter of 2021, they decided to put all missing values as "NA", which messes with variable formats. You thus have to first 
  		replace NA in the starting dataset with a missing value. We then export the dataset and reimport it.  */
 dm 'odsresults; clear'; 
@@ -618,7 +625,7 @@ DATA leo.new_eph_2018;
  run; 
  
  data leo.new_eph_2021; 
- set leo.ephc_2021_t01; 
+ set leo.ephc_2021_t01-leo.ephc_2021_t02; 
  person=cats(codusu,nro_hogar,componente); 
  run; 
 data leo.new_eph_2016_2021; 
@@ -668,6 +675,7 @@ if ano4=2020 & trimestre=2 then period=68;
 if ano4=2020 & trimestre=3 then period=69;
 if ano4=2020 & trimestre=4 then period=70;
 if ano4=2021 & trimestre=1 then period=71;  
+if ano4=2021 & trimestre=2 then period=72;  
 
 if nivel_ed=6 then formation="3"; 
 if nivel_ed=4 | nivel_ed=5 then formation="2"; 
@@ -1181,6 +1189,7 @@ if (ageconti>59 and ageconti<65) then agegroup=60;
 if (ageconti>64 and ageconti<70) then agegroup=65;
 if ageconti>69 then agegroup=300;
 run; 
+/*Still need to update ailgnment tables for second quarter 2021*/
 
 dm 'odsresults; clear'; 
 dm 'clear log'; 
