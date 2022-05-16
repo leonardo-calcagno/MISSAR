@@ -250,12 +250,26 @@ run;
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,3,xlsx); 
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,4,xlsx); 
  
+ /*%import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2021\,21,1,xlsx); 
  %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2021\,21,2,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2021\,21,3,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2021\,21,4,xlsx); */
+ /*CH05 is, again, working horribly. For now, we drop the variable for the second quarter of 2021. Issue pending.*/
+ PROC IMPORT OUT=leo.ephc_2021_t03
+            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2021\usu_individual_t321.xls"
+            DBMS=xls REPLACE;
+RUN;
+ PROC IMPORT OUT=leo.ephc_2021_t04
+            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2021\usu_individual_t421.xlsx"
+            DBMS=xlsx REPLACE;
+RUN;
+
  /*CH05 is, again, working horribly. For now, we drop the variable for the second quarter of 2021. Issue pending.*/
  PROC IMPORT OUT=leo.ephc_2021_t02
             DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2021\usu_individual_t221.xlsx"
             DBMS=xlsx REPLACE;
 RUN;
+
 
  /*For the first quarter of 2021, they decided to put all missing values as "NA", which messes with variable formats. You thus have to first 
  		replace NA in the starting dataset with a missing value. We then export the dataset and reimport it.  */
@@ -351,6 +365,11 @@ dm 'clear log';
 dm 'odsresults; clear'; 
 
 %convert_all_to_num(leo.ephc_2021_t01, and name ne'CODUSU' and name ne 'PP09A_ESP' and name ne 'PP09B_ESP' and name ne 'PP09C_ESP' and name ne 'CH15_COD' and name ne 'CH16_COD' and name ne 'MAS_500',leo.ephc_2021_t01); 
+
+%convert_all_to_num(leo.ephc_2021_t03, and name ne'CODUSU' and name ne 'PP09A_ESP' and name ne 'PP09B_ESP' and name ne 'PP09C_ESP' and name ne 'CH15_COD' and name ne 'CH16_COD' and name ne 'MAS_500',leo.ephc_2021_t03); 
+
+%convert_all_to_num(leo.ephc_2021_t04, and name ne'CODUSU' and name ne 'PP09A_ESP' and name ne 'PP09B_ESP' and name ne 'PP09C_ESP' and name ne 'CH15_COD' and name ne 'CH16_COD' and name ne 'MAS_500',leo.ephc_2021_t04); 
+
 data leo.ephc_2020_t03; 
 set leo.ephc_2020_t03; 
 CH05_num=ch05*1; drop CH05; rename CH05_num=CH05;
@@ -623,9 +642,18 @@ DATA leo.new_eph_2018;
  set leo.ephc_2020_t01-leo.ephc_2020_t04; 
  person=cats(codusu,nro_hogar,componente); 
  run; 
- 
+ %macro drop_incompatible(indata); 
+data &indata.; 
+set %indata.; 
+drop CH15_COD CH16_COD; 
+run; 
+ %mend; 
+%drop_incompatible(leo.ephc_2021_t01); 
+%drop_incompatible(leo.ephc_2021_t02); 
+%drop_incompatible(leo.ephc_2021_t03); 
+%drop_incompatible(leo.ephc_2021_t04); 
  data leo.new_eph_2021; 
- set leo.ephc_2021_t01-leo.ephc_2021_t02; 
+ set leo.ephc_2021_t01-leo.ephc_2021_t04; 
  person=cats(codusu,nro_hogar,componente); 
  run; 
 data leo.new_eph_2016_2021; 
