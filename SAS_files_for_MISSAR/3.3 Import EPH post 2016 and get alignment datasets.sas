@@ -1680,7 +1680,7 @@ data lms_70; set lms_70; period=72; percent_col=pct_col/100; run;
 data lms_71; set lms_71; period=73; percent_col=pct_col/100; run;
 data lms_72; set lms_72; period=74; percent_col=pct_col/100; run;
 data lms_73; set lms_73; period=75; percent_col=pct_col/100; run;
-data lms_73; set lms_74; period=76; percent_col=pct_col/100; run;
+data lms_74; set lms_74; period=76; percent_col=pct_col/100; run;
 
 data lms_52; set lms_52; keep percent_col labour_market_state agegroup period; run; 
 data lms_53; set lms_53; keep percent_col labour_market_state agegroup period; run; 
@@ -4406,15 +4406,15 @@ keep period period2 _1_all _2_all _3_all _4_all _5_all;
 run; 
 
 proc export data=leo.post_2016_lms_men
-outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_men.csv' 
-dbms=csv replace; 
+outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_men.xlsx' 
+dbms=xlsx replace; 
 run; 
 proc export data=leo.post_2016_lms_wom
-outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_wom.csv' 
-dbms=csv replace; 
+outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_wom.xlsx' 
+dbms=xlsx replace; 
 run; 
 
 proc export data=leo.post_2016_lms_men_wom
-outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_men_wom.csv' 
-dbms=csv replace; 
+outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_men_wom.xlsx' 
+dbms=xlsx replace; 
 run; 
