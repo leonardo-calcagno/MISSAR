@@ -138,23 +138,23 @@ data women_2003_2015;
 set women_2003_2015; 
 run; 
 proc export data=men_2016_2021
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_men_post_2016.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_men_post_2016.xlsx' 
+	dbms=xlsx replace; 
 run; 
 
 proc export data=women_2016_2021
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_women_post_2016.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_women_post_2016.xlsx' 
+	dbms=xlsx replace; 
 run; 
 
 proc export data=men_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_men_2003_2015.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_men_2003_2015.xlsx' 
+	dbms=xlsx replace; 
 run; 
 
 proc export data=women_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_women_2003_2015.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_women_2003_2015.xlsx' 
+	dbms=xlsx replace; 
 run; 
 %macro independent_proportion(indata,period,agegroup_var,gender_var); 
 data &indata.; 
@@ -315,24 +315,24 @@ run;
 
 
 proc export data=indep_men_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_demographic_men_2003_2015.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_demographic_men_2003_2015.xlsx' 
+	dbms=xlsx replace; 
 run; 
 
 proc export data=indep_women_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_demographic_women_2003_2015.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_demographic_women_2003_2015.xlsx' 
+	dbms=xlsx replace; 
 run; 
 
 
 proc export data=indep_men_2016_2021
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_men_post_2016.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_men_post_2016.xlsx' 
+	dbms=xlsx replace; 
 run; 
 
 proc export data=indep_women_2016_2021
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_women_post_2016.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_women_post_2016.xlsx' 
+	dbms=xlsx replace; 
 run; 
 
 proc freq data=leo.eph_formatted_2016_2021; 
@@ -411,13 +411,13 @@ run;
 
 
 proc export data=leo.indep_population_post_2016
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_population_post_2016.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_population_post_2016.xlsx' 
+	dbms=xlsx replace; 
 run; 
 
 proc export data=leo.demographic_post_2016
-	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_post_2016.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_post_2016.xlsx' 
+	dbms=xlsx replace; 
 run;  
 proc freq data=leo.eph_data_formatted_2003_2015; 
 	weight pondera; 
@@ -506,11 +506,11 @@ run;
 proc print data=leo.indep_population_2003_2015; run; 
 proc print data=leo.demographic_2003_2015; run; 
 proc export data=leo.indep_population_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_population_2003_2015.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_population_2003_2015.xlsx' 
+	dbms=xlsx replace; 
 run; 
 
 proc export data=leo.demographic_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_2003_2015.csv' 
-	dbms=csv replace; 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_2003_2015.xlsx' 
+	dbms=xlsx replace; 
 run; 
