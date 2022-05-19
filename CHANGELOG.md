@@ -66,3 +66,8 @@ Version 1.4. (ongoing)
 - 2021 temporary benefits taken into account: doubling of family benefits, pension bonuses...
 - Take into account 2022 temporary benefits:
 - Updated economic data: 
+	* Autonomous and monotributista information up to February 2022
+	* Gender of autonomous and monotributistas workers measured for December 2021 (BESS)
+	* EPH survey up to fourth quarter of 2021
+	* CPI up to April 2022
+	* Wages up to March 2022
