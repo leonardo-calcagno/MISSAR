@@ -31,28 +31,36 @@ data women_&period.;
 set women_&period.; 
 	drop &gender_var.; 
 run; 
-%mend; 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,66,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,65,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,64,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,63,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,62,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,61,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,60,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,59,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,58,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,57,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,56,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,55,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,54,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,53,agegroup,ch04); 
-%age_group_and_gender_for_indep(leo.eph_formatted_2016_2019,52,agegroup,ch04); 
-data men_2016_2019; 
-merge men_66-men_52; 
+%mend;
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,74,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,73,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,72,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,71,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,70,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,69,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,68,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,67,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,66,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,65,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,64,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,63,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,62,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,61,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,60,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,59,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,58,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,57,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,56,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,55,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,54,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,53,agegroup,ch04); 
+%age_group_and_gender_for_indep(leo.eph_formatted_2016_2021,52,agegroup,ch04); 
+data men_2016_2021; 
+merge men_74-men_52; 
 	by agegroup; 
 run; 
-data women_2016_2019; 
-merge women_66-women_52; 
+data women_2016_2021; 
+merge women_74-women_52; 
 	by agegroup; 
 run; 
 %age_group_and_gender_for_indep(leo.eph_data_formatted_2003_2015,48,agegroup,ch04); 
@@ -129,23 +137,23 @@ data women_2003_2015;
 	retain agegroup women_48-women_10 women_9 women_8 women_7 women_6 women_5 women_4 women_3 women_2 women_1; 
 set women_2003_2015; 
 run; 
-proc export data=men_2016_2019
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_men_post_2016.csv' 
+proc export data=men_2016_2021
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_men_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
-proc export data=women_2016_2019
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_women_post_2016.csv' 
+proc export data=women_2016_2021
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_women_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=men_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_men_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_men_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=women_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_women_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_women_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 %macro independent_proportion(indata,period,agegroup_var,gender_var); 
@@ -194,29 +202,38 @@ run;
 %mend; 
 
 
-%independent_proportion(leo.eph_formatted_2016_2019,66,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,65,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,64,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,63,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,62,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,61,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,60,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,59,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,58,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,57,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,56,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,55,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,54,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,53,agegroup,ch04); 
-%independent_proportion(leo.eph_formatted_2016_2019,52,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,74,agegroup,ch04);
+%independent_proportion(leo.eph_formatted_2016_2021,73,agegroup,ch04);
+%independent_proportion(leo.eph_formatted_2016_2021,72,agegroup,ch04);
+%independent_proportion(leo.eph_formatted_2016_2021,71,agegroup,ch04);
+%independent_proportion(leo.eph_formatted_2016_2021,70,agegroup,ch04);
+%independent_proportion(leo.eph_formatted_2016_2021,69,agegroup,ch04);
+%independent_proportion(leo.eph_formatted_2016_2021,68,agegroup,ch04);
+%independent_proportion(leo.eph_formatted_2016_2021,67,agegroup,ch04);
+%independent_proportion(leo.eph_formatted_2016_2021,66,agegroup,ch04);
+%independent_proportion(leo.eph_formatted_2016_2021,66,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,65,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,64,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,63,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,62,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,61,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,60,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,59,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,58,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,57,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,56,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,55,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,54,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,53,agegroup,ch04); 
+%independent_proportion(leo.eph_formatted_2016_2021,52,agegroup,ch04); 
 
-data indep_women_2016_2019; 
-merge indep_women_66-indep_women_52; 
+data indep_women_2016_2021; 
+merge indep_women_74-indep_women_52; 
 	by agegroup; 
 run; 
 
-data indep_men_2016_2019; 
-merge indep_men_66-indep_men_52; 
+data indep_men_2016_2021; 
+merge indep_men_74-indep_men_52; 
 	by agegroup; 
 run; 
 
@@ -298,27 +315,27 @@ run;
 
 
 proc export data=indep_men_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_demographic_men_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_demographic_men_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=indep_women_2003_2015
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_demographic_women_2003_2015.csv' 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_demographic_women_2003_2015.csv' 
 	dbms=csv replace; 
 run; 
 
 
-proc export data=indep_men_2016_2019
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_men_post_2016.csv' 
+proc export data=indep_men_2016_2021
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_men_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
-proc export data=indep_women_2016_2019
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_women_post_2016.csv' 
+proc export data=indep_women_2016_2021
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_women_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
-proc freq data=leo.eph_formatted_2016_2019; 
+proc freq data=leo.eph_formatted_2016_2021; 
 	weight pondera; 
 	where ageconti>=16 & ageconti<70; 
 		table period*agegroup /outpct out=demographic; 
@@ -356,28 +373,36 @@ set indep_&period.;
 run; 
 
 %mend; 
-%age_group_for_indep (leo.eph_formatted_2016_2019,52,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,53,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,54,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,55,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,56,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,57,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,58,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,59,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,60,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,61,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,62,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,63,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,64,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,65,agegroup); 
-%age_group_for_indep (leo.eph_formatted_2016_2019,66,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,52,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,53,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,54,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,55,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,56,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,57,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,58,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,59,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,60,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,61,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,62,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,63,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,64,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,65,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,66,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,67,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,68,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,69,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,70,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,71,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,72,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,73,agegroup); 
+%age_group_for_indep (leo.eph_formatted_2016_2021,74,agegroup); 
 
 data leo.indep_population_post_2016; 
-merge indep_66-indep_52; 
+merge indep_74-indep_52; 
 	by agegroup; 
 run; 
 data leo.demographic_post_2016; 
-merge demographic_66-demographic_52; 
+merge demographic_74-demographic_52; 
 	by agegroup; 
 run; 
 
@@ -386,12 +411,12 @@ run;
 
 
 proc export data=leo.indep_population_post_2016
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\indep_population_post_2016.csv' 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\indep_population_post_2016.csv' 
 	dbms=csv replace; 
 run; 
 
 proc export data=leo.demographic_post_2016
-	outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Social_security_data\Demographic_data\demographic_post_2016.csv' 
+	outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Social_security_data\Demographic_data\demographic_post_2016.csv' 
 	dbms=csv replace; 
 run;  
 proc freq data=leo.eph_data_formatted_2003_2015; 
