@@ -65,6 +65,8 @@ Version 1.4. (ongoing)
 - Macro for family links determination for post 2016 EPH dataset
 - 2021 temporary benefits taken into account: doubling of family benefits, pension bonuses...
 - Take into account 2022 temporary benefits:
+- Correct birth module, making child-bearing probability conditional on current number of children
+- Add Decree 475/2021 quarter validation for women depending on total children, and number of children with AUH
 - Updated economic data: 
 	* Autonomous and monotributista information up to February 2022
 	* Gender of autonomous and monotributistas workers measured for December 2021 (BESS)
