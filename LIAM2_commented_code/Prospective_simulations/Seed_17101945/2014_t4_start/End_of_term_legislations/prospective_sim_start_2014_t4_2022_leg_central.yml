@@ -1094,8 +1094,12 @@ entities:
             - disc_cost_v2_m_2: {type: float, initialdata: false}
             #We group in this variable all the bonuses paid temporarily to ANSES pension beneficiaries.
             - temporary_pension_bonus: {type: float, initialdata: false} 
-            #Finally, we record total contributed years after 2003, important for determining access to Law 26970 pension moratorium for women
+            #We record total contributed years after 2003, important for determining access to Law 26970 pension moratorium for women
             - car_post_2003: {type: int, initialdata: false}
+            #Finally, we count for each woman the maximum number of children she had, and how many of these had the AUH. This is used for Decree 475/2021 recognisition
+                 #of contributed years for household care work.
+            - total_child_mother: {type: int, initialdata: false}
+            - total_auh_mother: {type: int, initialdata: false}
             
            
         links:
@@ -1159,7 +1163,7 @@ entities:
             #We in particular make sure the father id of all individuals is taht of their mother's partner.
                 - father_id: mother.partner_id
             #We then count children and underage children. 
-            #We need to count them separately for the mother (nb_children) and the father (nb_children_bis) sinc ethey use respectively mother_id and father_id as their link variable.
+            #We need to count them separately for the mother (nb_children) and the father (nb_children_bis) since they use respectively mother_id and father_id as their link variable.
                 - nb_children: if(ISFEMALE,children.count(),0)
                 - nb_children_bis: if(ISMALE,children_bis.count(),0)
                 - underage_children: children.count(age<18)
@@ -1765,8 +1769,17 @@ entities:
                 - score_birth: if(ISCOUPLE or ISMARRIED, 1000 + uniform(), uniform())
             #2- Only women with up to 7 children can give birth (this sets a maximum number of 8 children).
             #3- Only women with a known partner aged 16 to 59 can give birth. 
+            #4- The probability of having children depends on current number of total children. 
+                - score_birth: if(nb_children==0, score_birth*0.3993, 
+                                  if(nb_children==1, score_birth*0.3222, 
+                                     if(nb_children==2, score_birth*0.1663, 
+                                        if(nb_children==3, score_birth*0.0667, 
+                                           if(nb_children==4, score_birth*0.0275,
+                                              if(nb_children==5, score_birth*0.0102, 
+                                                 if(nb_children==6, score_birth*0.0043,0)
+                                  ))))))
                 - to_give_birth: logit_regr(score_birth,
-                                            filter=ISFEMALE and (age >= 10)and (age <= 49) and (partner.age>=16 and partner.age<=59) and nb_children<8,
+                                            filter=ISFEMALE and (age >= 10)and (age <= 49) and (partner.age>=16 and partner.age<=59) and nb_children<7,
                                             align='p_birth_f3.csv')
             #It is perfectly possible to estimate logistic equations on the probability of giving birth, and study fertility decisions depending on the parent's and
             #the household's characteristics. This estimated equation would then replace the arbitrary priority to women married or in a common-law union (temporary 
@@ -3079,14 +3092,24 @@ entities:
                 - lag_count_sal_3: lag_count_sal_2
                 - lag_count_sal_2: lag_count_sal_1
                 - lag_count_sal_1: if(labour_market_state==1,1,0)
+    #1.2.- By Decree 475/2021, women can validate contribution years depending on the children they had: 1 year per child, 3 years per child with AUH. In the 
+        #family benefits module we kept track of maximum amount of children, and maximum amount of children with an AUH benefit, for each woman. 
+        #This benefit started on July 2021 (implemented 29/07/2021), but women pensioner numbers went down between june and september 2021, and started going up 
+        #noticeably only starting December 2021, so we assume the benefit started actually being used the fourth quarter of 2021. 
+                - care_trim: if(male, 0,
+                                   if(period <76,0,
+                                        (total_child_mother-total_auh_mother)*4+total_auh_mother*12)
+                                )
     #2- We compute contributory retirement pensions.  
         #First, we compute the replacement ratio an individual would get if he retired now. By definition, this ratio is null before the legal retirement age. 
         #Being older than the minimum retirement age reduces the required number of 30 years to retire. For every two months above the legal minimum retirement age, 
                 #one fewer month of contribution is needed for accessing to the PBU and retiring. This does not however affect the computation of the PAP or the PC: 
                 # the replacement ratio is left unchanged. For instance, if a woman aged 61 retires with 29 years of contributions, her replacement ratio will be 
                 # equal to 1.5*29=43.5%. If she contributes one more year before retiring, the replacement ratio will go up to 1.5*30=45%. 
+        #Decree 475/2021 that validates quarters for having had children works similarly. Since we divide the whole extra_trim by 2, we multiply the care quarters by 2.
                 - extra_trim: if(male, (age_quarters-65*4), (age_quarters-60*4))
                 - extra_trim: if(extra_trim<=0, 0, extra_trim)
+                - extra_trim: extra_trim + care_trim*2
         #Contributions made under the monotributo regime do not count towards the replacement ratio, except between 1998 and 2000. They however help give access to the 
                 #PBU, and thus to the legal minimum
                 - replacement_ratio: (1.5*trunc((car_sal+car_ind)/4))/100
@@ -3526,6 +3549,19 @@ entities:
                 
                 - auh: if(auh==0, auh, 
                             auh+temporary_auh_bonus)
+    #5.4.- By Decree 475/2021, it became possible for mothers to validate missing contribution years depending on the number of children they had: 
+           #One year per child, but three years total for each child that had the AUH for at least 12 months. This only gives access to the PBU, much like 
+           #monotributo contributions. As such, we need to track how many quarters a given mother received AUH benefits for her children, and for how many children.
+           #Also, how many children she had. We start the simulation in 2014, so it does not cover the whole AUH period, but it is a good enough approximation of 
+           #the effectiveness of the measure. 
+                - total_child_mother: if(ISMALE, 0,
+                                         if(lag(children.count())>children.count(), lag(children.count()), 
+                                            children.count())
+                                        )
+                - total_auh_mother: if(ISMALE, 0,
+                                            if(lag(children.count(auh>0))>children.count(auh>0), lag(children.count(auh>0)), 
+                                              children.count(auh>0))
+                                       )
     #6- We compute the yearly school aid (paid on March). This benefit is meant for minors that attend school. 
         #It is accessible to children that receive a contributive child benefit (as explicited de jure by Res. 606/2011 Art. 2).
                 #"Wage-earners, those receiving a labour hazards (...), unemployment or SIPA [retirement] benefit (...) will get the family benefit for yearly school aid as long as they are entitled to the child benefit". 
@@ -4010,6 +4046,7 @@ entities:
                                 avg(total_100_decile),avg(total_90_decile),avg(total_80_decile),avg(total_70_decile),avg(total_60_decile),avg(total_50_decile),
                                     avg(total_40_decile),avg(total_30_decile),avg(total_20_decile),avg(total_10_decile),avg(total_0_decile),avg(total_cont_pensioners),
                                         fname='central_cont_ret_deciles.csv',mode='a') 
+         
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
