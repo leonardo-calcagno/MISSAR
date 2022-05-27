@@ -201,7 +201,6 @@ entities:
                                                 if(period==72, 869.27/3, 
                                                     0
                                         ))))  
-                                      
             redistribution:
 #This module computes the redistributive impact of social security benefits among households. This is to take advantage of one of the added values of microsimulation, 
         #studying the adequacy of social security benefits as well as their redistributive impact at the individual level
@@ -3967,7 +3966,33 @@ entities:
                                                   ), 0 
                                               ), 0
                                            )
-                - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus
+                #Two bonuses with slightly different conditions were given on April ($6000) and May ($12000) 2022, by Decrees 180 and 215. The first one gave $6000 to pensioners 
+                        #that earned at most the minimum pension. It worked as a temporary increase of the minimum pension by $6000.  The sum of all benefits received was taken into 
+                        #account, if you had more than one benefit you were excluded from the bonus. 
+                - decree_180_2022_bonus: if(period==78, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 504.32, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
+                                                        504.32/3, 
+                                                        (MIN_PENSION_CENTRAL_2014_T4 + 504.32 - disc_cost_v2_m_2)/3 
+                                                       )     
+                                                  ), 0 
+                                              ), 0
+                                           )
+                #Next, the Decree 215 bonus added a $12000 payment on May, to match the $18000 given over May and June 2022 to unregistered workers. It is given to those that earned 
+                        #up to two minimum pensions, considering all their benefits, and increased their pension revenue to up to two minimum pensions plus $12000. 
+                        #We assume here 5% inflation on May 2022, consistent with our pessimistic scenario. When official CPI figures are released, this will be corrected.			
+                - decree_215_2022_bonus: if(period==78, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 960.61, 0,
+                                                    if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
+                                                         960.61/3, 
+                                                        (2*MIN_PENSION_CENTRAL_2014_T4 + 960.61 - disc_cost_v2_m_2)/3 
+                                                       )     
+                                                  ), 0 
+                                              ), 0
+                                           )
+                - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus + decree_180_2022_bonus + decree_215_2022_bonus
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
             #hypotetical bonuses in the future. As such, we simply export in a separate csv file the cost of temporary pension bonuses. 
@@ -4070,7 +4095,14 @@ entities:
                                 avg(total_100_decile),avg(total_90_decile),avg(total_80_decile),avg(total_70_decile),avg(total_60_decile),avg(total_50_decile),
                                     avg(total_40_decile),avg(total_30_decile),avg(total_20_decile),avg(total_10_decile),avg(total_0_decile),avg(total_cont_pensioners),
                                         fname='central_cont_ret_deciles.csv',mode='a') 
-         
+#A fourth IFE-like benefit was given on May and June 2022: $9.000 for (almost) the same population, in each of these months (Decree 216/2022). It goes to unregistered workers, monotributistas up to category B, the unemployed, all ages 
+        #18 to 65. It is uncompatible with pension benefits. Also, for those ages 18 to 24, their parents must not earn more than 3 minimum wages. It is incompatible with private health coverage. This de facto excludes beneficiaries
+        #whose spouse is a formal wage-earner, since typically they have their spouse's health coverage. Finally, there are also monthly consumption limits. 
+#The biggest difference with the IFE is this is an individual benefit, not by household: two or more people in the same household can earn it at the same time.
+#We thus assume people with a formal wage-earner spouse, or whose parents earn more than three times the minimum wage (which we multiply by 1.31, following Calabria and Gaiada's 2019 adjustment factor), 
+        #are excluded from the benefit.
+         #   refuerzo_ingresos: 
+
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
@@ -4134,7 +4166,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49
-    periods: 104
+    periods: 30
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
