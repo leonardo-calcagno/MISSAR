@@ -1100,6 +1100,7 @@ entities:
                  #of contributed years for household care work.
             - total_child_mother: {type: int, initialdata: false}
             - total_auh_mother: {type: int, initialdata: false}
+            - track_auh: {type: int, initialdata: false}
             
            
         links:
@@ -1338,6 +1339,9 @@ entities:
                 - temp_11: lag_mono_21+lag_mono_22+lag_mono_23+lag_mono_24+lag_mono_25+lag_mono_26+lag_mono_27+lag_mono_28+lag_mono_29+lag_mono_30
                 - temp_12: lag_mono_31+lag_mono_32+lag_mono_33+lag_mono_34+lag_mono_35+lag_mono_36+lag_mono_37+lag_mono_38+lag_mono_39+lag_mono_40
                 - car_post_2003: temp_1+temp_2+temp_3+temp_4+temp_5+temp_6+temp_7+temp_8+temp_9+temp_10+temp_11+temp_12
+        #Seventh, we keep track of the total number of quarters a given child received the AUH child benefit. This is relevant for recognisition of contribution on account
+                #of unpaid household labour. 
+                - track_auh: 0
         #Seventh, we are going to export aggregate files to determine the sustainability, adequacy and redistributive impact of social security. We create here the headers of such csv 
                 #files, so it is not repeated at each loop of the simulation in the output files. 
                 - csv('Period', 'Gini per capita, all income', 'Gini per capita, labour income','Gini per capita, labour and pension income', 'Gini per capita, labour and family benefits income',
@@ -1778,9 +1782,16 @@ entities:
                                               if(nb_children==5, score_birth*0.0102, 
                                                  if(nb_children==6, score_birth*0.0043,0)
                                   ))))))
+#Try to see why the uptick on women with 4 children, SEGUIR AQUI
+            #5- Strongly decrease likelihood of child bearing if there is already a child less than 5 quarters old             
+                - score_birth: if(children.count(age_quarters<5)>=1, 0, 
+                                  score_birth)
                 - to_give_birth: logit_regr(score_birth,
                                             filter=ISFEMALE and (age >= 10)and (age <= 49) and (partner.age>=16 and partner.age<=59) and nb_children<7,
                                             align='p_birth_f3.csv')
+                - csv(period,groupby(age,nb_children,marital_status,filter=ISFEMALE and age>=10 and age<=49 and to_give_birth and (partner.age>=16 and partner.age<=59) and nb_children<7 and (ISCOUPLE or ISMARRIED)),
+                      groupby(age,nb_children,marital_status,filter=ISFEMALE and not to_give_birth and age>=10 and age<=49  and (partner.age>=16 and partner.age<=59) and nb_children<7 and (ISCOUPLE or ISMARRIED)),
+                            fname='debug_birth.csv',mode='a')
             #It is perfectly possible to estimate logistic equations on the probability of giving birth, and study fertility decisions depending on the parent's and
             #the household's characteristics. This estimated equation would then replace the arbitrary priority to women married or in a common-law union (temporary 
             #variable score_birth). This is nevertheless not a priority of this model and is thus left for future work. 
@@ -3503,8 +3514,16 @@ entities:
                          if(mother_id!=UNSET or father_id!=UNSET, auh,
                             if(household.autonomous_hh + household.wage_earners_hh + household.monotributistas_hh!=0, 0, 
                                 if(household.nb_persons==household.inactive_hh, 0, auh))))
-            #Finally, just to double check, we ensure a child that earns a family benefit cannot earn the AUH.     
+            #Just to double check, we ensure a child that earns a family benefit cannot earn the AUH.     
                 - auh: if(child_benefit>0, 0, auh) 
+            #Finally, we track the number of quarters this child received the AUH. It is important for Decree 475/2021 recognisition of contributions for domestic care labour, 
+                #since you get 3 years instead of 1 if for this child you received the AUH for at least 12 months. 
+                - track_auh: if(age!=0,
+                                if(auh>0, track_auh+1, 
+                                   track_auh),
+                                            if(auh>0, 0+1, 
+                                  0)
+                                )
     #5.2- We add temporary AUH bonuses, for one period only, given since 2018. 
             #First, the Decree 1058/2017 gave $400 pesos to AUH recipients on March 2018. Thus, we use the CPI index for March, but assume it is given the second quarter
                     #of 2018 (together with the increase of the AUH in the model). 
@@ -3559,8 +3578,8 @@ entities:
                                             children.count())
                                         )
                 - total_auh_mother: if(ISMALE, 0,
-                                            if(lag(children.count(auh>0))>children.count(auh>0), lag(children.count(auh>0)), 
-                                              children.count(auh>0))
+                                            if(lag(children.count(track_auh>=4))>children.count(track_auh>=4), lag(children.count(track_auh>=4)), 
+                                              children.count(track_auh>=4))
                                        )
     #6- We compute the yearly school aid (paid on March). This benefit is meant for minors that attend school. 
         #It is accessible to children that receive a contributive child benefit (as explicited de jure by Res. 606/2011 Art. 2).
@@ -4110,7 +4129,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49
-    periods: 104
+    periods: 40
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
