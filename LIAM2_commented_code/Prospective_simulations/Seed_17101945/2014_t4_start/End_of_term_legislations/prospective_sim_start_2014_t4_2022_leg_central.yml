@@ -200,7 +200,9 @@ entities:
                                             if(period==71, (935.81 + 918.05 + 893.92)/3, 
                                                 if(period==72, 869.27/3, 
                                                     0
-                                        ))))  
+                                        ))))
+                - historical_IFE_hh: if(period>72, persons.sum(individual_IFE), 
+                                        historical_IFE_hh)
             redistribution:
 #This module computes the redistributive impact of social security benefits among households. This is to take advantage of one of the added values of microsimulation, 
         #studying the adequacy of social security benefits as well as their redistributive impact at the individual level
@@ -1095,11 +1097,13 @@ entities:
             - temporary_pension_bonus: {type: float, initialdata: false} 
             #We record total contributed years after 2003, important for determining access to Law 26970 pension moratorium for women
             - car_post_2003: {type: int, initialdata: false}
-            #Finally, we count for each woman the maximum number of children she had, and how many of these had the AUH. This is used for Decree 475/2021 recognisition
+            #We count for each woman the maximum number of children she had, and how many of these had the AUH. This is used for Decree 475/2021 recognisition
                  #of contributed years for household care work.
             - total_child_mother: {type: int, initialdata: false}
             - total_auh_mother: {type: int, initialdata: false}
             - track_auh: {type: int, initialdata: false}
+            #Finally, we add an individual IFE variable, consistent with the Decree 216/2022 income reinforcement bonus, but also with the proposed Universal Base Wage
+            - individual_IFE: {type: float, initialdata: false}
             
            
         links:
@@ -4099,10 +4103,49 @@ entities:
         #18 to 65. It is uncompatible with pension benefits. Also, for those ages 18 to 24, their parents must not earn more than 3 minimum wages. It is incompatible with private health coverage. This de facto excludes beneficiaries
         #whose spouse is a formal wage-earner, since typically they have their spouse's health coverage. Finally, there are also monthly consumption limits. 
 #The biggest difference with the IFE is this is an individual benefit, not by household: two or more people in the same household can earn it at the same time.
-#We thus assume people with a formal wage-earner spouse, or whose parents earn more than three times the minimum wage (which we multiply by 1.31, following Calabria and Gaiada's 2019 adjustment factor), 
-        #are excluded from the benefit.
-         #   refuerzo_ingresos: 
-
+            IFE_person:
+                #We assume 5% inflation on May and 4% on June, in line with our pessimistic economic scenario. These values will need to be recomputed when official CPI
+                       #values are available.
+                #We also assume people with a partner in the autonomous worker category are excluded from the benefit.
+                - decree_216_2022_bonus: if(period!=78, 0,
+                                            if(age<18 or age>65, 0,
+                                                if(IS_WAGE_EARNER, 0, 
+                                                    if(disc_cost_v2_m>0, 0,
+                                                       if(partner.labour_market_state==1, 0, 
+                                                          if(monotributo_cat>=3,0,
+                                                             if(rent_aut>0 or partner.rent_aut>0, 0,
+                                                                 (720.46+692.75)/3)
+                                                            )
+                                                          )
+                                                       )
+                                                    )
+                                               )
+                                            )
+                #Following Annex I of Joint Res. 1/2022 of Secretaría de Política Económica and Secretaría de Seguridad Social, you check the labour income of people aged 18 to 24
+                        #that have no children, no spouse, and are not living together with his or her partner in a common-law union
+                #The income limit is three times the minimum wage, which between 01/04/2022 and 01/06/2022 reached $38.940 in gross terms. Since inscription was made on early May, 
+                        #we use April official infaltion figures to get the real value. This can be re-evalued when May 2022 CPI figures are available. 
+                #We thus assume people with a formal wage-earner spouse, or whose parents earn more than three times the minimum wage (which we multiply by 1.31, following Calabria and Gaiada's 2019 adjustment factor), 
+                     #are excluded from the benefit.
+                - indep_father: if(father.monotributo_cat>0, 1,
+                                                       if(father.rent_aut>0, 1,
+                                                          0)
+                                                       )
+                - indep_mother: if(mother.monotributo_cat>0, 1,
+                                                       if(mother.rent_aut>0, 1,
+                                                          0)
+                                                       )
+                - limite_joven: if(age<18 or age>24, False, 
+                                            if(minor_children>0 or ISMARRIED or ISCOUPLE, False, 
+                                               if(((father.discounted_itl_sal_gross + mother.discounted_itl_sal_gross)*1.31 + (indep_father*father.discounted_itl + indep_mother*mother.discounted_itl)* (1.54+1.64)/2) <=9819.14,
+                                                    False,
+                                                    True)
+                                               )
+                                            )
+                - decree_216_2022_bonus: if(limite_joven, 0,
+                                            decree_216_2022_bonus)
+                - individual_IFE: decree_216_2022_bonus*1
+                
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
@@ -4140,7 +4183,7 @@ simulation:
         - household: [household_composition, igf_household]
     #We simulate retirement pensions before family benefits because the former enter in the computation of the Family-Group Income (IGF). Family benefits
             #are means-tested on the IGF. 
-        - person: [retirement,temporary_measures_pensions]
+        - person: [retirement,temporary_measures_pensions,IFE_person]
         - household: [household_composition,clean_empty, igf_household]
         - person: [family_benefits,adequacy] 
     #You can add the percentiles module after adequacy above if you want to measure contributory retirement income distribution.
@@ -4166,7 +4209,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49
-    periods: 30
+    periods: 104
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
