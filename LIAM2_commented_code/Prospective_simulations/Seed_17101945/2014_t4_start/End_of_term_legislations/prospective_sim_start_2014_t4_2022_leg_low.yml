@@ -200,8 +200,9 @@ entities:
                                             if(period==71, (935.81 + 918.05 + 893.92)/3, 
                                                 if(period==72, 869.27/3, 
                                                     0
-                                        ))))  
-                                      
+                                        ))))
+                - historical_IFE_hh: if(period>72, persons.sum(individual_IFE), 
+                                        historical_IFE_hh)
             redistribution:
 #This module computes the redistributive impact of social security benefits among households. This is to take advantage of one of the added values of microsimulation, 
         #studying the adequacy of social security benefits as well as their redistributive impact at the individual level
@@ -1094,8 +1095,15 @@ entities:
             - disc_cost_v2_m_2: {type: float, initialdata: false}
             #We group in this variable all the bonuses paid temporarily to ANSES pension beneficiaries.
             - temporary_pension_bonus: {type: float, initialdata: false} 
-            #Finally, we record total contributed years after 2003, important for determining access to Law 26970 pension moratorium for women
+            #We record total contributed years after 2003, important for determining access to Law 26970 pension moratorium for women
             - car_post_2003: {type: int, initialdata: false}
+            #We count for each woman the maximum number of children she had, and how many of these had the AUH. This is used for Decree 475/2021 recognisition
+                 #of contributed years for household care work.
+            - total_child_mother: {type: int, initialdata: false}
+            - total_auh_mother: {type: int, initialdata: false}
+            - track_auh: {type: int, initialdata: false}
+            #Finally, we add an individual IFE variable, consistent with the Decree 216/2022 income reinforcement bonus, but also with the proposed Universal Base Wage
+            - individual_IFE: {type: float, initialdata: false}
             
            
         links:
@@ -1159,7 +1167,7 @@ entities:
             #We in particular make sure the father id of all individuals is taht of their mother's partner.
                 - father_id: mother.partner_id
             #We then count children and underage children. 
-            #We need to count them separately for the mother (nb_children) and the father (nb_children_bis) sinc ethey use respectively mother_id and father_id as their link variable.
+            #We need to count them separately for the mother (nb_children) and the father (nb_children_bis) since they use respectively mother_id and father_id as their link variable.
                 - nb_children: if(ISFEMALE,children.count(),0)
                 - nb_children_bis: if(ISMALE,children_bis.count(),0)
                 - underage_children: children.count(age<18)
@@ -1334,6 +1342,9 @@ entities:
                 - temp_11: lag_mono_21+lag_mono_22+lag_mono_23+lag_mono_24+lag_mono_25+lag_mono_26+lag_mono_27+lag_mono_28+lag_mono_29+lag_mono_30
                 - temp_12: lag_mono_31+lag_mono_32+lag_mono_33+lag_mono_34+lag_mono_35+lag_mono_36+lag_mono_37+lag_mono_38+lag_mono_39+lag_mono_40
                 - car_post_2003: temp_1+temp_2+temp_3+temp_4+temp_5+temp_6+temp_7+temp_8+temp_9+temp_10+temp_11+temp_12
+        #Seventh, we keep track of the total number of quarters a given child received the AUH child benefit. This is relevant for recognisition of contribution on account
+                #of unpaid household labour. 
+                - track_auh: 0
         #Seventh, we are going to export aggregate files to determine the sustainability, adequacy and redistributive impact of social security. We create here the headers of such csv 
                 #files, so it is not repeated at each loop of the simulation in the output files. 
                 - csv('Period', 'Gini per capita, all income', 'Gini per capita, labour income','Gini per capita, labour and pension income', 'Gini per capita, labour and family benefits income',
@@ -1765,9 +1776,30 @@ entities:
                 - score_birth: if(ISCOUPLE or ISMARRIED, 1000 + uniform(), uniform())
             #2- Only women with up to 7 children can give birth (this sets a maximum number of 8 children).
             #3- Only women with a known partner aged 16 to 59 can give birth. 
+            #4- Probability of having children conditional to current number of children 
+                #We run for period 49, in the console, groupby(agegroup,nb_children,filter=not male). Then for women age 40 to 49, we count total women with a given number of 
+                    #children. We find women those ages with one child represent 99% of those with no children; with two children, 154% of those with one child (these are
+                    #conditional probabilities of having one more child given the current number of children); with three children, 96% of those with two children, etc. 
+                #This helps us reproduce plausible cohorts of mothers by number of children. 	
+                #For debugging purposes, uncomment the following to track new births. 
+               # - csv(period,groupby(age,nb_children,marital_status,filter=ISFEMALE and age>=10 and age<=49 and to_give_birth and (partner.age>=16 and partner.age<=59) and nb_children<7 and (ISCOUPLE or ISMARRIED)),
+                #      groupby(age,nb_children,marital_status,filter=ISFEMALE and not to_give_birth and age>=10 and age<=49  and (partner.age>=16 and partner.age<=59) and nb_children<7 and (ISCOUPLE or ISMARRIED)),
+                 #           fname='debug_birth.csv',mode='a')	
+                - score_birth: if(nb_children==0, score_birth*0.99, 
+                                  if(nb_children==1, score_birth*1.54, 
+                                     if(nb_children==2, score_birth*0.96, 
+                                        if(nb_children==3, score_birth*0.41, 
+                                           if(nb_children==4, score_birth*0.19,
+                                              if(nb_children==5, score_birth*0.09, 
+                                                 if(nb_children==6, score_birth*0.036,0)
+                                  ))))))
+            #5- Strongly decrease likelihood of child bearing if there is already a child less than 5 quarters old             
+                - score_birth: if(children.count(age_quarters<5)>=1, 0, 
+                                  score_birth)
                 - to_give_birth: logit_regr(score_birth,
-                                            filter=ISFEMALE and (age >= 10)and (age <= 49) and (partner.age>=16 and partner.age<=59) and nb_children<8,
+                                            filter=ISFEMALE and (age >= 10)and (age <= 49) and (partner.age>=16 and partner.age<=59) and nb_children<7,
                                             align='p_birth_f3.csv')
+                
             #It is perfectly possible to estimate logistic equations on the probability of giving birth, and study fertility decisions depending on the parent's and
             #the household's characteristics. This estimated equation would then replace the arbitrary priority to women married or in a common-law union (temporary 
             #variable score_birth). This is nevertheless not a priority of this model and is thus left for future work. 
@@ -3079,14 +3111,24 @@ entities:
                 - lag_count_sal_3: lag_count_sal_2
                 - lag_count_sal_2: lag_count_sal_1
                 - lag_count_sal_1: if(labour_market_state==1,1,0)
+    #1.2.- By Decree 475/2021, women can validate contribution years depending on the children they had: 1 year per child, 3 years per child with AUH. In the 
+        #family benefits module we kept track of maximum amount of children, and maximum amount of children with an AUH benefit, for each woman. 
+        #This benefit started on July 2021 (implemented 29/07/2021), but women pensioner numbers went down between june and september 2021, and started going up 
+        #noticeably only starting December 2021, so we assume the benefit started actually being used the fourth quarter of 2021. 
+                - care_trim: if(male, 0,
+                                   if(period <76,0,
+                                        (total_child_mother-total_auh_mother)*4+total_auh_mother*12)
+                                )
     #2- We compute contributory retirement pensions.  
         #First, we compute the replacement ratio an individual would get if he retired now. By definition, this ratio is null before the legal retirement age. 
         #Being older than the minimum retirement age reduces the required number of 30 years to retire. For every two months above the legal minimum retirement age, 
                 #one fewer month of contribution is needed for accessing to the PBU and retiring. This does not however affect the computation of the PAP or the PC: 
                 # the replacement ratio is left unchanged. For instance, if a woman aged 61 retires with 29 years of contributions, her replacement ratio will be 
                 # equal to 1.5*29=43.5%. If she contributes one more year before retiring, the replacement ratio will go up to 1.5*30=45%. 
+        #Decree 475/2021 that validates quarters for having had children works similarly. Since we divide the whole extra_trim by 2, we multiply the care quarters by 2.
                 - extra_trim: if(male, (age_quarters-65*4), (age_quarters-60*4))
                 - extra_trim: if(extra_trim<=0, 0, extra_trim)
+                - extra_trim: extra_trim + care_trim*2
         #Contributions made under the monotributo regime do not count towards the replacement ratio, except between 1998 and 2000. They however help give access to the 
                 #PBU, and thus to the legal minimum
                 - replacement_ratio: (1.5*trunc((car_sal+car_ind)/4))/100
@@ -3480,8 +3522,16 @@ entities:
                          if(mother_id!=UNSET or father_id!=UNSET, auh,
                             if(household.autonomous_hh + household.wage_earners_hh + household.monotributistas_hh!=0, 0, 
                                 if(household.nb_persons==household.inactive_hh, 0, auh))))
-            #Finally, just to double check, we ensure a child that earns a family benefit cannot earn the AUH.     
+            #Just to double check, we ensure a child that earns a family benefit cannot earn the AUH.     
                 - auh: if(child_benefit>0, 0, auh) 
+            #Finally, we track the number of quarters this child received the AUH. It is important for Decree 475/2021 recognisition of contributions for domestic care labour, 
+                #since you get 3 years instead of 1 if for this child you received the AUH for at least 12 months. 
+                - track_auh: if(age!=0,
+                                if(auh>0, track_auh+1, 
+                                   track_auh),
+                                            if(auh>0, 0+1, 
+                                  0)
+                                )
     #5.2- We add temporary AUH bonuses, for one period only, given since 2018. 
             #First, the Decree 1058/2017 gave $400 pesos to AUH recipients on March 2018. Thus, we use the CPI index for March, but assume it is given the second quarter
                     #of 2018 (together with the increase of the AUH in the model). 
@@ -3526,6 +3576,19 @@ entities:
                 
                 - auh: if(auh==0, auh, 
                             auh+temporary_auh_bonus)
+    #5.4.- By Decree 475/2021, it became possible for mothers to validate missing contribution years depending on the number of children they had: 
+           #One year per child, but three years total for each child that had the AUH for at least 12 months. This only gives access to the PBU, much like 
+           #monotributo contributions. As such, we need to track how many quarters a given mother received AUH benefits for her children, and for how many children.
+           #Also, how many children she had. We start the simulation in 2014, so it does not cover the whole AUH period, but it is a good enough approximation of 
+           #the effectiveness of the measure. 
+                - total_child_mother: if(ISMALE, 0,
+                                         if(lag(children.count())>children.count(), lag(children.count()), 
+                                            children.count())
+                                        )
+                - total_auh_mother: if(ISMALE, 0,
+                                            if(lag(children.count(track_auh>=4))>children.count(track_auh>=4), lag(children.count(track_auh>=4)), 
+                                              children.count(track_auh>=4))
+                                       )
     #6- We compute the yearly school aid (paid on March). This benefit is meant for minors that attend school. 
         #It is accessible to children that receive a contributive child benefit (as explicited de jure by Res. 606/2011 Art. 2).
                 #"Wage-earners, those receiving a labour hazards (...), unemployment or SIPA [retirement] benefit (...) will get the family benefit for yearly school aid as long as they are entitled to the child benefit". 
@@ -3907,7 +3970,33 @@ entities:
                                                   ), 0 
                                               ), 0
                                            )
-                - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus
+                #Two bonuses with slightly different conditions were given on April ($6000) and May ($12000) 2022, by Decrees 180 and 215. The first one gave $6000 to pensioners 
+                        #that earned at most the minimum pension. It worked as a temporary increase of the minimum pension by $6000.  The sum of all benefits received was taken into 
+                        #account, if you had more than one benefit you were excluded from the bonus. 
+                - decree_180_2022_bonus: if(period==78, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_LOW_2014_T4 + 504.32, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_LOW_2014_T4, 
+                                                        504.32/3, 
+                                                        (MIN_PENSION_LOW_2014_T4 + 504.32 - disc_cost_v2_m_2)/3 
+                                                       )     
+                                                  ), 0 
+                                              ), 0
+                                           )
+                #Next, the Decree 215 bonus added a $12000 payment on May, to match the $18000 given over May and June 2022 to unregistered workers. It is given to those that earned 
+                        #up to two minimum pensions, considering all their benefits, and increased their pension revenue to up to two minimum pensions plus $12000. 
+                        #We assume here 5% inflation on May 2022, consistent with our pessimistic scenario. When official CPI figures are released, this will be corrected.			
+                - decree_215_2022_bonus: if(period==78, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_LOW_2014_T4 + 960.61, 0,
+                                                    if(disc_cost_v2_m_2<=2*MIN_PENSION_LOW_2014_T4, 
+                                                         960.61/3, 
+                                                        (2*MIN_PENSION_LOW_2014_T4 + 960.61 - disc_cost_v2_m_2)/3 
+                                                       )     
+                                                  ), 0 
+                                              ), 0
+                                           )
+                - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus + decree_180_2022_bonus + decree_215_2022_bonus
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
             #hypotetical bonuses in the future. As such, we simply export in a separate csv file the cost of temporary pension bonuses. 
@@ -4010,6 +4099,53 @@ entities:
                                 avg(total_100_decile),avg(total_90_decile),avg(total_80_decile),avg(total_70_decile),avg(total_60_decile),avg(total_50_decile),
                                     avg(total_40_decile),avg(total_30_decile),avg(total_20_decile),avg(total_10_decile),avg(total_0_decile),avg(total_cont_pensioners),
                                         fname='low_cont_ret_deciles.csv',mode='a') 
+#A fourth IFE-like benefit was given on May and June 2022: $9.000 for (almost) the same population, in each of these months (Decree 216/2022). It goes to unregistered workers, monotributistas up to category B, the unemployed, all ages 
+        #18 to 65. It is uncompatible with pension benefits. Also, for those ages 18 to 24, their parents must not earn more than 3 minimum wages. It is incompatible with private health coverage. This de facto excludes beneficiaries
+        #whose spouse is a formal wage-earner, since typically they have their spouse's health coverage. Finally, there are also monthly consumption limits. 
+#The biggest difference with the IFE is this is an individual benefit, not by household: two or more people in the same household can earn it at the same time.
+            IFE_person:
+                #We assume 5% inflation on May and 4% on June, in line with our pessimistic economic scenario. These values will need to be recomputed when official CPI
+                       #values are available.
+                #We also assume people with a partner in the autonomous worker category are excluded from the benefit.
+                - decree_216_2022_bonus: if(period!=78, 0,
+                                            if(age<18 or age>65, 0,
+                                                if(IS_WAGE_EARNER, 0, 
+                                                    if(disc_cost_v2_m>0, 0,
+                                                       if(partner.labour_market_state==1, 0, 
+                                                          if(monotributo_cat>=3,0,
+                                                             if(rent_aut>0 or partner.rent_aut>0, 0,
+                                                                 (720.46+692.75)/3)
+                                                            )
+                                                          )
+                                                       )
+                                                    )
+                                               )
+                                            )
+                #Following Annex I of Joint Res. 1/2022 of Secretaría de Política Económica and Secretaría de Seguridad Social, you check the labour income of people aged 18 to 24
+                        #that have no children, no spouse, and are not living together with his or her partner in a common-law union
+                #The income limit is three times the minimum wage, which between 01/04/2022 and 01/06/2022 reached $38.940 in gross terms. Since inscription was made on early May, 
+                        #we use April official infaltion figures to get the real value. This can be re-evalued when May 2022 CPI figures are available. 
+                #We thus assume people with a formal wage-earner spouse, or whose parents earn more than three times the minimum wage (which we multiply by 1.31, following Calabria and Gaiada's 2019 adjustment factor), 
+                     #are excluded from the benefit.
+                - indep_father: if(father.monotributo_cat>0, 1,
+                                                       if(father.rent_aut>0, 1,
+                                                          0)
+                                                       )
+                - indep_mother: if(mother.monotributo_cat>0, 1,
+                                                       if(mother.rent_aut>0, 1,
+                                                          0)
+                                                       )
+                - limite_joven: if(age<18 or age>24, False, 
+                                            if(minor_children>0 or ISMARRIED or ISCOUPLE, False, 
+                                               if(((father.discounted_itl_sal_gross + mother.discounted_itl_sal_gross)*1.31 + (indep_father*father.discounted_itl + indep_mother*mother.discounted_itl)* (1.54+1.64)/2) <=9819.14,
+                                                    False,
+                                                    True)
+                                               )
+                                            )
+                - decree_216_2022_bonus: if(limite_joven, 0,
+                                            decree_216_2022_bonus)
+                - individual_IFE: decree_216_2022_bonus*1
+                
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
@@ -4047,7 +4183,7 @@ simulation:
         - household: [household_composition, igf_household]
     #We simulate retirement pensions before family benefits because the former enter in the computation of the Family-Group Income (IGF). Family benefits
             #are means-tested on the IGF. 
-        - person: [retirement,temporary_measures_pensions]
+        - person: [retirement,temporary_measures_pensions,IFE_person]
         - household: [household_composition,clean_empty, igf_household]
         - person: [family_benefits,adequacy] 
     #You can add the percentiles module after adequacy above if you want to measure contributory retirement income distribution.
