@@ -1414,12 +1414,12 @@ entities:
                                                 fname='temporary_pension_bonus_low.csv',mode='a')
                 - csv('Period','AUH','Contributory_fam_ben', fname='temporary_fam_ben_bonus_low.csv',mode='a')
         ###############################################################################################################        
-                - csv('Period', '90_100_dec','80_90_dec','70_80_dec','60_70_dec','50_60_dec',
-                                    '40_50_dec','30_40_dec','20_30_dec','10_20_dec','0_100_dec',
-                                        'count_100_dec','count_90_dec','count_80_dec','count_70_dec','count_60_dec',
-                                            'count_50_dec','count_40_dec','count_30_dec','count_20_dec','count_10_dec',
-                                                'count_0_dec','count_all_cont_pen',
-                                                    fname='low_cont_ret_deciles.csv',mode='a') 
+           #     - csv('Period', '90_100_dec','80_90_dec','70_80_dec','60_70_dec','50_60_dec',
+            #                        '40_50_dec','30_40_dec','20_30_dec','10_20_dec','0_100_dec',
+             #                           'count_100_dec','count_90_dec','count_80_dec','count_70_dec','count_60_dec',
+              #                              'count_50_dec','count_40_dec','count_30_dec','count_20_dec','count_10_dec',
+               #                                 'count_0_dec','count_all_cont_pen',
+                #                                    fname='low_cont_ret_deciles.csv',mode='a') 
             ageing: 
                 - age_quarters: age_quarters + 1
                 - age: trunc(age_quarters/4) 
@@ -4186,7 +4186,8 @@ simulation:
         - person: [retirement,temporary_measures_pensions,IFE_person]
         - household: [household_composition,clean_empty, igf_household]
         - person: [family_benefits,adequacy] 
-    #You can add the percentiles module after adequacy above if you want to measure contributory retirement income distribution.
+    #You can add the percentiles module after adequacy above if you want to measure contributory retirement income distribution. Remember to uncomment, at the end of 
+        #prelim module, the code for generating the first cont_ret.csv file. 
         - household: [redistribution]
       #  - person: [dump_all] 
     #For debugging with the console, it is better to remove the dump_all instruction above, as it makes the code run twice as fast. 
