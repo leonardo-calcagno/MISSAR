@@ -168,44 +168,44 @@ rm(wb_adequacy)
 
 #Import Excel redistribution results files
 
-#id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita.xlsx"))
+id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita.xlsx"))
 id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC.xlsx"))
-#id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE.xlsx"))
+id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE.xlsx"))
 
-#drive_download(id_redistribution)
-#drive_download(id_redistribution_INSEE)
+drive_download(id_redistribution)
+drive_download(id_redistribution_INSEE)
 drive_download(id_redistribution_SEDLAC)
 
 rm(id_redistribution,id_redistribution_INSEE,id_redistribution_SEDLAC)
 
-#wb_redistribution<-loadWorkbook("Graphics_redistribution_per_capita.xlsx")
+wb_redistribution<-loadWorkbook("Graphics_redistribution_per_capita.xlsx")
 wb_redistribution_SEDLAC<-loadWorkbook("Graphics_redistribution_SEDLAC.xlsx")
-#wb_redistribution_INSEE<-loadWorkbook("Graphics_redistribution_INSEE.xlsx")
+wb_redistribution_INSEE<-loadWorkbook("Graphics_redistribution_INSEE.xlsx")
 
 ###Need to modify the redistribution excel files for per capita and INSEE
 
 #Modify the corresponding sheet
-#writeData(wb_redistribution,sheet="Redistribution_central",csv_redistribution_central)
-#writeData(wb_redistribution,sheet="redistribution_low",csv_redistribution_low)
-#writeData(wb_redistribution,sheet="Redistribution_high",csv_redistribution_high)
+writeData(wb_redistribution,sheet="Redistribution_central",csv_redistribution_central)
+writeData(wb_redistribution,sheet="redistribution_low",csv_redistribution_low)
+writeData(wb_redistribution,sheet="Redistribution_high",csv_redistribution_high)
 
 writeData(wb_redistribution_SEDLAC,sheet="Redistribution_central",csv_redistribution_central_sedlac)
 writeData(wb_redistribution_SEDLAC,sheet="redistribution_low",csv_redistribution_low_sedlac)
 writeData(wb_redistribution_SEDLAC,sheet="Redistribution_high",csv_redistribution_high_sedlac)
 
-#writeData(wb_redistribution_INSEE,sheet="Redistribution_central",csv_redistribution_central_insee)
-#writeData(wb_redistribution_INSEE,sheet="redistribution_low",csv_redistribution_low_insee)
-#writeData(wb_redistribution_INSEE,sheet="Redistribution_high",csv_redistribution_high_insee)
+writeData(wb_redistribution_INSEE,sheet="Redistribution_central",csv_redistribution_central_insee)
+writeData(wb_redistribution_INSEE,sheet="redistribution_low",csv_redistribution_low_insee)
+writeData(wb_redistribution_INSEE,sheet="Redistribution_high",csv_redistribution_high_insee)
 
 
 #Save the modified excel file, changing only the required sheet
-#saveWorkbook(wb_redistribution,"Redistribution_output.xlsx", overwrite=T)
-#saveWorkbook(wb_redistribution_INSEE,"Redistribution_INSEE_output.xlsx", overwrite=T)
+saveWorkbook(wb_redistribution,"Redistribution_output.xlsx", overwrite=T)
+saveWorkbook(wb_redistribution_INSEE,"Redistribution_INSEE_output.xlsx", overwrite=T)
 saveWorkbook(wb_redistribution_SEDLAC,"Redistribution_SEDLAC_output.xlsx", overwrite=T)
 
 #Modify the excel file in google drive
-#drive_upload("Redistribution_output.xlsx",paste0(leg),"Graphics_redistribution_per_capita.xlsx",overwrite=TRUE)
-#drive_upload("Redistribution_INSEE_output.xlsx",paste0(leg),"Graphics_redistribution_INSEE.xlsx",overwrite=TRUE)
+drive_upload("Redistribution_output.xlsx",paste0(leg),"Graphics_redistribution_per_capita.xlsx",overwrite=TRUE)
+drive_upload("Redistribution_INSEE_output.xlsx",paste0(leg),"Graphics_redistribution_INSEE.xlsx",overwrite=TRUE)
 drive_upload("Redistribution_SEDLAC_output.xlsx",paste0(leg),"Graphics_redistribution_SEDLAC.xlsx",overwrite=TRUE)
 
 rm(wb_redistribution,wb_redistribution_INSEE,wb_redistribution_SEDLAC)
