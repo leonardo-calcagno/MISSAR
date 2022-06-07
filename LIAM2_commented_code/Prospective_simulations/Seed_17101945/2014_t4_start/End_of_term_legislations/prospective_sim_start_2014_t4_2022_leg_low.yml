@@ -3398,7 +3398,7 @@ entities:
                                     ,sum(universal_gross_pension*pondera)/1000,sum(universal_net_pension*pondera)/1000,
                                         sum(sac_jp_gross*pondera)/1000,sum(sac_jp_net*pondera)/1000,sum(sac_jp_gross_2*pondera)/1000,sum(sac_jp_net_2*pondera)/1000,
                                             sum(sac_up_gross*pondera)/1000,sum(sac_up_net*pondera)/1000,
-                                                total_care_retirees,total_care_moratoria,sum(new_contributory_pension,weights=pondera),sum(new_moratoria,weights=pondera),sum(new_pension_uni,weights=pondera),new_retiree_by_care,new_moratoria_by_care,
+                                                total_care_retirees,total_care_moratoria,sum(new_contributory_pension and discounted_v2_m>0,weights=pondera),sum(new_moratoria,weights=pondera),sum(new_pension_uni,weights=pondera),new_retiree_by_care,new_moratoria_by_care,
                                                    fname='low_v2_m.csv',mode='a')
                 
             family_benefits: 
