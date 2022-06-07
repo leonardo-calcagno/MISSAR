@@ -1101,6 +1101,8 @@ entities:
                  #of contributed years for household care work.
             - total_child_mother: {type: int, initialdata: false}
             - total_auh_mother: {type: int, initialdata: false}
+            - retiree_care: {type: bool, initialdata: false}
+            - moratoria_care: {type: bool, initialdata: false}
             - track_auh: {type: int, initialdata: false}
             #Finally, we add an individual IFE variable, consistent with the Decree 216/2022 income reinforcement bonus, but also with the proposed Universal Base Wage
             - individual_IFE: {type: float, initialdata: false}
@@ -1394,7 +1396,8 @@ entities:
                                         'Total_universal_pensions_cost','Total_net_universal_pensions',
                                             'Total_thirteenth_month_of_pension_pre-2016_cost','Total_net_thirteenth_month_of_pension_pre-2016','Total_thirteenth_month_of_pension_post-2016_cost','Total_net_thirteenth_month_of_pension_post-2016',
                                                 'Total_thirteenth_month_of_universal_pension_cost','Total_net_thirteenth_month_of_universal_pension',
-                                                    fname='central_v2_m.csv',mode='a')
+                                                     'Contributory_retirement_care','Moratorium_retirement_care','New_contributory_pensioners','New_moratorium_pensioners','New_PUAM','Percent_care_pensioners','Percent_care_moratorium',
+                                                        fname='central_v2_m.csv',mode='a')
                 - csv('period','Total_family_benefits','Total_contributive_child_benefits','Total_auh','Total_spouse_benefit',
                                 'Total_school_aid','Total_wedding_benefit','Total_prenatal_benefit','Total_pregnancy_benefit','Total_birth_benefit',
                                     fname='central_v5_m.csv',mode='a')
@@ -1408,6 +1411,8 @@ entities:
                                                     'Gini_retirement_age','Gini_retirement_age_non_labour_income','Gini_65+','Gini_65+_non_labour_income',
                                                         'Gini_retirement_age_has_income', 'Gini_retirement_age_(has)_non_labour_income','Gini_65+_has_income','Gini_65+_(has)_non_labour_income',
                                                             'Total_SIPA_beneficiaries','Total_SIPA_benefits', 'Total_non_moratorium_beneficiaries', 'Total_non_moratorium_benefits','Total_PUAM_benefits',
+                                                                'Total_women_SIPA_beneficaries', 'Total_women_non_moratorium_beneficiaries', 'Total_women_PUAM_benefits',
+                                                                    'Cont_retiree_by_care','Moratorium_by_care',
                                                     fname='adequacy_central.csv',mode='a')
         ###############################################################################################################
                 - csv('Period','All_pensions','Contributory_pensions','Moratorium_and_PUAM',
@@ -3146,10 +3151,8 @@ entities:
                 #do give access to a contributory pension (to the PBU more specifically), although they do not count for either the PC or the PAP. They must however 
                 #be taken into account when determining who retires.
                 - new_contributory_pension: if(liqui_retirement or age<60 or (age<65 and male), False, 
-                                    if((age>=65 or(age>=60 and not male)) and((car_sal + car_ind + car_mono_norref)>=(120-extra_trim/2)), True,False))
-                                    
+                                    if((age>=65 or(age>=60 and not male)) and((car_sal + car_ind + car_mono_norref)>=(120-extra_trim/2)), True,False))                    
                 - liqui_retirement: if(new_contributory_pension,True,liqui_retirement)
-                
         #We then compute individual rights to a pension. The reference income of formal dependent labour spells is the discounted average of the last 10 years of 
                 #dependent formal work. Periods where the individual was not a formal wage-earner are not taken into consideration. Thus the computation of variable 
                 #sum_count_40_sal. 
@@ -3197,13 +3200,12 @@ entities:
                                         if(age<60 or (age<65 and male), False, 
                                             if((male and period>=56) or period<48, False,
                                                 if(((car_sal + car_ind + car_mono_norref)>=(120-extra_trim/2)),False, 
-                                                   if((age_quarters-18*4-(period-4))>=(120-extra_trim/2), True,
-                                                        if((age_quarters-18*4-(period-4)+car_post_2003)>=(120-extra_trim/2), True,
-                                    False))))))) 
+                                                   if((age_quarters-18*4-(period-4)+car_post_2003)>=(120-extra_trim/2), True,
+                                    False))))))
             # IGF stands for family-group income. The means-test we apply here is that if someone in the household earns more than the maximum individual income cap 
                     #or if the IGF exceeds the maximum household income cap for earning a family benefit, then that person cannot have a moratorium pension. 
                 - igf: household.igf_hh                                
-                - new_moratoria: if(household.max_itl_sal_hh>IND_FAM_CAP_CENTRAL or igf>FAM_CAP_CENTRAL_4, False, new_moratoria)  
+                - new_moratoria: if(household.max_itl_sal_hh>IND_FAM_CAP_CENTRAL or igf>FAM_CAP_CENTRAL_4, False, new_moratoria) 
         # Then, we compute the moratorium pension's amount. We assume all moratorium pensioners get the minimum benefit for the sake of simplicity. 
             #The first five years, the moratorium pensioner earns 80% of the minimum pension (as per our hypothesis). We thus need to define the date where they started
             #earning a moratorium pension.      
@@ -3231,7 +3233,18 @@ entities:
                 - moratorium_date: if(new_contributory_pension, -1, moratorium_date)                
                 - new_moratoria: if(moratorium_date==0 or moratorium_date==-1, False, new_moratoria)
                 - liqui_retirement: if(new_moratoria or new_contributory_pension,True,liqui_retirement)
-               #Now we compute the moratorium pension earned by the beneficiaries. These are, following our hypothesis, either 80% of the minimum pension or the minimum
+        #3.2. We identify who retires with moratorium thanks to the recognised quarters for care labour.
+                - moratoria_care: if(period<76, False,
+                                        if(retiree_care, False,
+                                     moratoria_care))
+                - new_moratoria_care: if(not new_moratoria, False,
+                                       if((age_quarters-18*4-(period-4)+car_post_2003) < (120-extra_trim/2 + care_trim), True,
+                                          False))
+                - moratoria_care: if(new_moratoria_care, True, 
+                                     moratoria_care)
+                - total_care_moratoria: sum(moratoria_care,weights=pondera)
+                - new_moratoria_by_care: sum(new_moratoria_care,weights=pondera) / sum(new_moratoria and not male,weights=pondera)
+        #3.3. Now we compute the moratorium pension earned by the beneficiaries. These are, following our hypothesis, either 80% of the minimum pension or the minimum
                         #pension. As such, we do not need to increase them every period following the pension mobility index, as this is already done in our globals file. 
                 - moratorium_value: if(moratorium_date==0 or moratorium_date==-1, 0,
                                         if(new_moratoria, MIN_PENSION_CENTRAL_2014_T4*0.8,
@@ -3364,14 +3377,29 @@ entities:
 
     #11- We've had some cases where individuals who do not get any pension still appear as having liquidated their retirement rights. 
             #We thus add this instruction to correct this error at every simulated period.
-                - liqui_retirement: if(discounted_v2_m==0 or discounted_v2_m_2==0, False, liqui_retirement)                
+                - liqui_retirement: if(discounted_v2_m==0 or discounted_v2_m_2==0, False, liqui_retirement)
+        #We identify who retires normally thanks to the recognised quarters for care labour.
+                - retiree_care: if(period<76, False, 
+                                   retiree_care)
+                - new_retiree_care: if(not new_contributory_pension, False,
+                                       if(discounted_v2_m==0 or discounted_v2_m_2==0, False,
+                                          if((car_sal + car_ind + car_mono_norref)< (120-extra_trim/2 + care_trim), True, 
+                                             False)))
+                - retiree_care: if(new_retiree_care, True, 
+                                   retiree_care)
+                - total_care_retirees: sum(retiree_care,weights=pondera)
+                - new_retiree_by_care: sum(new_retiree_care,weights=pondera) / sum(new_contributory_pension and not male,weights=pondera)
+                - new_pension_uni: if(tag_pension_uni and not lag(tag_pension_uni), True, 
+                                      False)
+
     #12- We export total paid retirement benefits by type and computation method. This allows for a faster computation of ANSES deficit.  
                 - csv(period,sum(disc_cost_v2_m*pondera)/1000,sum(discounted_v2_m*pondera)/1000,sum(disc_cost_v2_m_2*pondera)/1000,sum(discounted_v2_m_2*pondera)/1000
                                 ,sum(net_retirement*pondera)/1000,sum(net_pension*pondera)/1000,sum(net_retirement_2*pondera)/1000,sum(net_pension_2*pondera)/1000
                                     ,sum(universal_gross_pension*pondera)/1000,sum(universal_net_pension*pondera)/1000,
                                         sum(sac_jp_gross*pondera)/1000,sum(sac_jp_net*pondera)/1000,sum(sac_jp_gross_2*pondera)/1000,sum(sac_jp_net_2*pondera)/1000,
                                             sum(sac_up_gross*pondera)/1000,sum(sac_up_net*pondera)/1000,
-                                                fname='central_v2_m.csv',mode='a')
+                                                total_care_retirees,total_care_moratoria,sum(new_contributory_pension,weights=pondera),sum(new_moratoria,weights=pondera),sum(new_pension_uni,weights=pondera),new_retiree_by_care,new_moratoria_by_care,
+                                                   fname='central_v2_m.csv',mode='a')
                 
             family_benefits: 
 #Lastly, we compute family benefits. All of these are de jure means-tested on the family-group level (variable IGF, or family-group income). 
@@ -3833,11 +3861,19 @@ entities:
                         #pensions and no PUAM); or we take all benefits (including the PUAM and moratorium pensions). We thus export total SIPA beneficiaries and 
                         #benefits, non-moratorium SIPA benefits; as well as PUAM benefits, for the sake of descriptive statistics. 
                 - total_sipa_beneficiaries: sum(has_any_benefit, weights=pondera)
+                - total_women_sipa_beneficiaries: sum(has_any_benefit and not male, weights=pondera)
                 - total_sipa_benefits: sum(has_retirement_pension,weights=pondera) + sum(has_survivors_benefit and not tag_second_pension,weights=pondera) + sum(tag_second_pension,weights=pondera)
                 - total_sipa_non_moratorium_beneficiaries: sum(has_contributory_retirement or has_contributory_survivors_benefit, weights=pondera)
+                - total_women_sipa_non_moratorium_beneficiaries: sum(not male and (has_contributory_retirement or has_contributory_survivors_benefit), weights=pondera)
+                #- total_sipa_moratorium_beneficiaries: sum(has_moratorium_pension, weights=pondera)
                 - total_sipa_non_moratorium_benefits: sum(has_contributory_retirement,weights=pondera) + sum(has_contributory_survivors_benefit and not tag_second_pension, weights=pondera) 
                                                            + sum(tag_second_pension and not tag_second_pension_moratorium,weights=pondera)
                 - total_PUAM_benefits: sum(has_universal_pension,weights=pondera)
+                - total_women_PUAM_benefits: sum(has_universal_pension and not male, weights=pondera)
+                #By Decree 475/2021, women can validate contribution years depending on the children they had. We want to track the stock of women that will retire thanks to this 
+                        #measure. 
+                - stock_by_care: sum(retiree_care,weights=pondera)/sum(has_contributory_retirement and not male, weights=pondera)
+                - stock_moratorium_by_care: sum(moratoria_care, weights=pondera)/sum(has_moratorium_pension and not male, weights=pondera)
                 - csv(period, contributory_pensioners_share, moratorium_pensioners_share, universal_pensioners_share,
                             retirement_coverage_legal_age,retirement_coverage_65,all_coverage_legal_age,all_coverage_65,contributory_coverage_legal_age,contributory_coverage_65,survivors_coverage_legal_age,survivors_coverage_65,moratorium_coverage_legal_age,moratorium_coverage_65,PUAM_coverage_legal_age,PUAM_coverage_65,
                                 mean_contributory_retirement,mean_survivors_pension, mean_moratorium_pension, mean_universal_pension, mean_retirement_pension, mean_pension_benefit,
@@ -3847,6 +3883,8 @@ entities:
                                                 gini_ret_age_all, gini_ret_age_non_labour, gini_65_all, gini_65_non_labour,
                                                     gini_ret_age_has_income_all, gini_ret_age_has_income_non_labour, gini_65_has_income_all, gini_65_has_income_non_labour,
                                                         total_sipa_beneficiaries,total_sipa_benefits,total_sipa_non_moratorium_beneficiaries,total_sipa_non_moratorium_benefits,total_PUAM_benefits,
+                                                             total_women_sipa_beneficiaries, total_women_sipa_non_moratorium_beneficiaries, total_women_PUAM_benefits,
+                                                                 stock_by_care,stock_moratorium_by_care,
                                             fname='adequacy_central.csv',mode='a')
             temporary_measures_pensions: 
             #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri and Fernández governments. 
@@ -3878,14 +3916,13 @@ entities:
                 - has_contributory_benefit: if(has_contributory_retirement, True, 
                                                 if(has_survivors_benefit, True, 
                                                     False))
-        # For the moratorium benefits, our model has trouble identifying beneficiaries of 2006 moratorium pensions since by 2014 they all received a 
+         # For the moratorium benefits, our model has trouble identifying beneficiaries of 2006 moratorium pensions since by 2014 they all received a 
             #normal pension equal at least to the minimum pension. This boolean therefore mainly identifies beneficiaries of the 2014 pension moratorium.  
                 - has_moratorium_pension: if(discounted_v2_m==0, False, 
-                                        if(moratorium_date>0, True,
-                                            False))
-
+                                                if(moratorium_date>0, True,
+                                                    if(tag_initial_moratorium, True, 
+                                            False)))
                 - has_universal_pension: if(universal_net_pension==0, False, 
-
                                         True)
                 - has_retirement_pension: if(has_contributory_retirement, True, 
                                                 if(has_moratorium_pension, True,  
