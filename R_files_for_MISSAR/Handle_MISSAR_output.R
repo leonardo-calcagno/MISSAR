@@ -33,7 +33,10 @@ setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
 if(!file.exists("MISSAR_output")) {
   dir.create("MISSAR_output")
 }
+
+
 setwd("MISSAR_output/")
+
 leg<-"June_2022_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
@@ -54,227 +57,264 @@ rm(adeq_folder,csv_files)
 
 
 
-
 #Import csv simulation result
-csv_workers_and_wage_central <- read_csv("workers_and_wage_central.csv")
-csv_workers_and_wage_low <- read_csv("workers_and_wage_low.csv")
-csv_workers_and_wage_high <- read_csv("workers_and_wage_high.csv")
+#Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
+     #decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
+correct_csv<-function(input){
+  input<-input%>%
+    mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
+                                           .x))
 
-csv_central_v2_m <- read_csv("central_v2_m.csv")
-csv_low_v2_m <- read_csv("low_v2_m.csv")
-csv_high_v2_m <- read_csv("high_v2_m.csv")
+           )
+  
+}
 
-csv_central_v5_m <- read_csv("central_v5_m.csv")
-csv_low_v5_m <- read_csv("low_v5_m.csv")
-csv_high_v5_m <- read_csv("high_v5_m.csv")
+csv_workers_and_wage_central <- read_csv("workers_and_wage_central.csv")%>%
+  correct_csv()
+csv_workers_and_wage_low <- read_csv("workers_and_wage_low.csv")%>%
+  correct_csv()
+csv_workers_and_wage_high <- read_csv("workers_and_wage_high.csv")%>%
+  correct_csv()
 
-csv_central_SIPA_income <- read_csv("central_SIPA_income.csv")
-csv_low_SIPA_income <- read_csv("low_SIPA_income.csv")
-csv_high_SIPA_income <- read_csv("high_SIPA_income.csv")
+csv_central_v2_m <- read_csv("central_v2_m.csv")%>%
+  correct_csv()
+csv_low_v2_m <- read_csv("low_v2_m.csv")%>%
+  correct_csv()
+csv_high_v2_m <- read_csv("high_v2_m.csv")%>%
+  correct_csv()
 
-csv_temporary_pension_bonus_low <- read_csv("temporary_pension_bonus_low.csv")
-csv_temporary_pension_bonus_central <- read_csv("temporary_pension_bonus_central.csv")
-csv_temporary_pension_bonus_high <- read_csv("temporary_pension_bonus_high.csv")
+csv_central_v5_m <- read_csv("central_v5_m.csv")%>%
+  correct_csv()
+csv_low_v5_m <- read_csv("low_v5_m.csv")%>%
+  correct_csv()
+csv_high_v5_m <- read_csv("high_v5_m.csv")%>%
+  correct_csv()
 
-csv_IFE_cost_low <- read_csv("IFE_cost_low.csv")
-csv_IFE_cost_central <- read_csv("IFE_cost_central.csv")
-csv_IFE_cost_high <- read_csv("IFE_cost_high.csv")
-
-
-
-csv_adequacy_low <- read_csv("adequacy_low.csv")
-csv_adequacy_central <- read_csv("adequacy_central.csv")
-csv_adequacy_high <- read_csv("adequacy_high.csv")
-
-
-csv_redistribution_low <- read_csv("redistribution_low.csv")
-csv_redistribution_central <- read_csv("redistribution_central.csv")
-csv_redistribution_high <- read_csv("redistribution_high.csv")
-
-csv_redistribution_low_sedlac <- read_csv("redistribution_low_sedlac.csv")
-csv_redistribution_central_sedlac <- read_csv("redistribution_central_sedlac.csv")
-csv_redistribution_high_sedlac <- read_csv("redistribution_high_sedlac.csv")
-
-csv_redistribution_low_insee <- read_csv("redistribution_low_insee.csv")
-csv_redistribution_central_insee <- read_csv("redistribution_central_insee.csv")
-csv_redistribution_high_insee <- read_csv("redistribution_high_insee.csv")
+csv_central_SIPA_income <- read_csv("central_SIPA_income.csv")%>%
+  correct_csv()
+csv_low_SIPA_income <- read_csv("low_SIPA_income.csv")%>%
+  correct_csv()
+csv_high_SIPA_income <- read_csv("high_SIPA_income.csv")%>%
+  correct_csv()
 
 
-#Import Excel results file
+csv_temporary_pension_bonus_low <- read_csv("temporary_pension_bonus_low.csv")%>%
+  correct_csv()
+csv_temporary_pension_bonus_central <- read_csv("temporary_pension_bonus_central.csv")%>%
+  correct_csv()
+csv_temporary_pension_bonus_high <- read_csv("temporary_pension_bonus_high.csv")%>%
+  correct_csv()
 
-id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim.xlsx"))
-drive_download(id_deficit,overwrite=T)
-rm(id_deficit)
-wb_deficit<-loadWorkbook("Deficit_computation_50_1.03_trim.xlsx")
+csv_IFE_cost_low <- read_csv("IFE_cost_low.csv")%>%
+  correct_csv()
+csv_IFE_cost_central <- read_csv("IFE_cost_central.csv")%>%
+  correct_csv()
+csv_IFE_cost_high <- read_csv("IFE_cost_high.csv")%>%
+  correct_csv()
 
 
 
-#Modify the corresponding sheet
-writeData(wb_deficit,sheet="workers_and_wage_central",csv_workers_and_wage_central)
-writeData(wb_deficit,sheet="workers_and_wage_low",csv_workers_and_wage_low)
-writeData(wb_deficit,sheet="workers_and_wage_high",csv_workers_and_wage_high)
+#Modify results sheets
 
-writeData(wb_deficit,sheet="temporary_pension_bonus_central",csv_temporary_pension_bonus_central)
-writeData(wb_deficit,sheet="temporary_pension_bonus_low",csv_temporary_pension_bonus_low)
-writeData(wb_deficit,sheet="temporary_pension_bonus_high",csv_temporary_pension_bonus_high)
+id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim"))
 
-writeData(wb_deficit,sheet="IFE_cost_central",csv_IFE_cost_central)
-writeData(wb_deficit,sheet="IFE_cost_low",csv_IFE_cost_low)
-writeData(wb_deficit,sheet="IFE_cost_high",csv_IFE_cost_high)
+write_sheet(csv_workers_and_wage_low,ss=id_deficit,sheet="workers_and_wage_low")
+write_sheet(csv_workers_and_wage_central,ss=id_deficit,sheet="workers_and_wage_central")
+write_sheet(csv_workers_and_wage_high,ss=id_deficit,sheet="workers_and_wage_high")
 
-writeData(wb_deficit,sheet="central_v2_m",csv_central_v2_m)
-writeData(wb_deficit,sheet="low_v2_m",csv_low_v2_m)
-writeData(wb_deficit,sheet="high_v2_m",csv_high_v2_m)
+write_sheet(csv_temporary_pension_bonus_low,ss=id_deficit,sheet="temporary_pension_bonus_low")
+write_sheet(csv_temporary_pension_bonus_central,ss=id_deficit,sheet="temporary_pension_bonus_central")
+write_sheet(csv_temporary_pension_bonus_high,ss=id_deficit,sheet="temporary_pension_bonus_high")
 
-writeData(wb_deficit,sheet="central_v5_m",csv_central_v5_m)
-writeData(wb_deficit,sheet="low_v5_m",csv_low_v5_m)
-writeData(wb_deficit,sheet="high_v5_m",csv_high_v5_m)
+write_sheet(csv_IFE_cost_low,ss=id_deficit,sheet="IFE_cost_low")
+write_sheet(csv_IFE_cost_central,ss=id_deficit,sheet="IFE_cost_central")
+write_sheet(csv_IFE_cost_high,ss=id_deficit,sheet="IFE_cost_high")
 
-writeData(wb_deficit,sheet="central_SIPA_income",csv_central_SIPA_income)
-writeData(wb_deficit,sheet="low_SIPA_income",csv_low_SIPA_income)
-writeData(wb_deficit,sheet="high_SIPA_income",csv_high_SIPA_income)
 
-#Save the modified excel file, changing only the required sheet
-saveWorkbook(wb_deficit,"Deficit_output.xlsx", overwrite=T)
+write_sheet(csv_low_v2_m,ss=id_deficit,sheet="low_v2_m")
+write_sheet(csv_central_v2_m,ss=id_deficit,sheet="central_v2_m")
+write_sheet(csv_high_v2_m,ss=id_deficit,sheet="high_v2_m")
 
-#Modify the excel file in google drive
-drive_upload("Deficit_output.xlsx",paste0(leg),"Deficit_computation_50_1.03_trim.xlsx",overwrite=TRUE)
+write_sheet(csv_low_v5_m,ss=id_deficit,sheet="low_v5_m")
+write_sheet(csv_central_v5_m,ss=id_deficit,sheet="central_v5_m")
+write_sheet(csv_high_v5_m,ss=id_deficit,sheet="high_v5_m")
 
-#rm(wb_deficit)
+write_sheet(csv_low_SIPA_income,ss=id_deficit,sheet="low_SIPA_income")
+write_sheet(csv_central_SIPA_income,ss=id_deficit,sheet="central_SIPA_income")
+write_sheet(csv_high_SIPA_income,ss=id_deficit,sheet="high_SIPA_income")
+
+
+rm(list=ls(pattern="^csv_"),id_deficit)
+
+#Export projected GDP and ANSES income to the globals making sheet file
+
+sim_GDP_central<-read_sheet(id_deficit,sheet="GDP evolution by scenario",range="E11:E114",col_names = FALSE)%>% #We import simulated GDP, since 2015
+  rename(Central=c(1))%>%
+  mutate(mergeid=row_number())
+sim_GDP_high<-read_sheet(id_deficit,sheet="GDP evolution by scenario",range="K11:K114",col_names = FALSE)%>%
+  rename(High=c(1))%>%
+  mutate(mergeid=row_number())
+sim_GDP_low<-read_sheet(id_deficit,sheet="GDP evolution by scenario",range="P11:P114",col_names = FALSE)%>%
+  rename(Low=c(1))%>%
+  mutate(mergeid=row_number())
+
+sim_GDP<-sim_GDP_central%>%
+  left_join(sim_GDP_low)%>%
+  left_join(sim_GDP_high)%>%
+  select(-c(mergeid))
+rm(sim_GDP_central,sim_GDP_low,sim_GDP_high)
+head(sim_GDP)
+
+
+
+sim_income_central<-read_sheet(id_deficit,sheet="Central SIPA income",range="E9:E112",col_names = FALSE)%>% #We import simulated contributions
+  rename(Central=c(1))%>%
+  mutate(mergeid=row_number())
+sim_income_low<-read_sheet(id_deficit,sheet="Low SIPA income",range="E9:E112",col_names = FALSE)%>%
+  rename(Low=c(1))%>%
+  mutate(mergeid=row_number())
+sim_income_high<-read_sheet(id_deficit,sheet="High SIPA income",range="E9:E112",col_names = FALSE)%>%
+  rename(High=c(1))%>%
+  mutate(mergeid=row_number())
+
+
+
+sim_income<-sim_income_central%>%
+  left_join(sim_income_low)%>%
+  left_join(sim_income_high)%>%
+  select(-c(mergeid))
+rm(sim_income_central,sim_income_low,sim_income_high)
+head(sim_income)
+
+
+sim_workers_central<-read_sheet(id_deficit,sheet="workers_and_wage_central",range="C2:C105",col_names = FALSE)%>% #We import simulated contributions
+  rename(Central=c(1))%>%
+  mutate(mergeid=row_number())
+sim_workers_low<-read_sheet(id_deficit,sheet="workers_and_wage_low",range="C2:C105",col_names = FALSE)%>%
+  rename(Low=c(1))%>%
+  mutate(mergeid=row_number())
+sim_workers_high<-read_sheet(id_deficit,sheet="workers_and_wage_high",range="C2:C105",col_names = FALSE)%>%
+  rename(High=c(1))%>%
+  mutate(mergeid=row_number())
+
+sim_wage_central<-read_sheet(id_deficit,sheet="workers_and_wage_central",range="B2:B105",col_names = FALSE)%>% #We import simulated contributions
+  rename(Central=c(1))%>%
+  mutate(mergeid=row_number())
+sim_wage_low<-read_sheet(id_deficit,sheet="workers_and_wage_low",range="B2:B105",col_names = FALSE)%>%
+  rename(Low=c(1))%>%
+  mutate(mergeid=row_number())
+sim_wage_high<-read_sheet(id_deficit,sheet="workers_and_wage_high",range="B2:B105",col_names = FALSE)%>%
+  rename(High=c(1))%>%
+  mutate(mergeid=row_number())
+
+sim_workers<-sim_workers_low%>%
+  left_join(sim_workers_central)%>%
+  left_join(sim_workers_high)%>%
+  select(-c(mergeid))
+rm(sim_workers_low,sim_workers_central,sim_workers_high)
+head(sim_workers)
+
+
+sim_wage<-sim_wage_low%>%
+  left_join(sim_wage_central)%>%
+  left_join(sim_wage_high)%>%
+  select(-c(mergeid))
+rm(sim_wage_central,sim_wage_low,sim_wage_high)
+head(sim_wage)
+
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
+range_write(sim_income,ss=id_globals,sheet="Simulated_ANSES_contributions",range="B3:D107",reformat=FALSE)
+range_write(sim_GDP,ss=id_globals,sheet="Simulated_ANSES_contributions",range="H3:J107",reformat=FALSE)
+range_write(sim_workers,ss=id_globals,sheet="Labour GDP participation",range="N3:P107",reformat=FALSE)
+range_write(sim_wage,ss=id_globals,sheet="Labour GDP participation",range="Q3:S107",reformat=FALSE)
+
+rm(list=ls(pattern="^sim_"))
 
 
 #Import Excel adequacy results file
 
-id_adequacy<- drive_get(paste0(leg,"Graphics_adequacy.xlsx"))
-drive_download(id_adequacy)
-rm(id_adequacy)
-wb_adequacy<-loadWorkbook("Graphics_adequacy.xlsx")
+csv_adequacy_low <- read_csv("adequacy_low.csv")%>%
+  correct_csv()
+csv_adequacy_central <- read_csv("adequacy_central.csv")%>%
+  correct_csv()
+csv_adequacy_high <- read_csv("adequacy_high.csv")%>%
+  correct_csv()
+
+csv_redistribution_low <- read_csv("redistribution_low.csv")%>%
+  correct_csv()
+csv_redistribution_central <- read_csv("redistribution_central.csv")%>%
+  correct_csv()
+csv_redistribution_high <- read_csv("redistribution_high.csv")%>%
+  correct_csv()
+
+csv_redistribution_low_sedlac <- read_csv("redistribution_low_sedlac.csv")%>%
+  correct_csv()
+csv_redistribution_central_sedlac <- read_csv("redistribution_central_sedlac.csv")%>%
+  correct_csv()
+csv_redistribution_high_sedlac <- read_csv("redistribution_high_sedlac.csv")%>%
+  correct_csv()
+
+csv_redistribution_low_insee <- read_csv("redistribution_low_insee.csv")%>%
+  correct_csv()
+csv_redistribution_central_insee <- read_csv("redistribution_central_insee.csv")%>%
+  correct_csv()
+csv_redistribution_high_insee <- read_csv("redistribution_high_insee.csv")%>%
+  correct_csv()
 
 
-#Modify the corresponding sheet
-writeData(wb_adequacy,sheet="Adequacy_central",csv_adequacy_central)
-writeData(wb_adequacy,sheet="Adequacy_low",csv_adequacy_low)
-writeData(wb_adequacy,sheet="Adequacy_high",csv_adequacy_high)
+#Modify the corresponding sheets
+id_adequacy<- drive_get(paste0(leg,"Graphics_adequacy"))
+
+write_sheet(csv_adequacy_central,ss=id_adequacy,sheet="Adequacy_central")
+write_sheet(csv_adequacy_low,ss=id_adequacy,sheet="Adequacy_low")
+write_sheet(csv_adequacy_high,ss=id_adequacy,sheet="Adequacy_high")
+
+id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita"))
+id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC"))
+id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE"))
 
 
-#Save the modified excel file, changing only the required sheet
-saveWorkbook(wb_adequacy,"Adequacy_output.xlsx", overwrite=T)
+write_sheet(csv_redistribution_central,ss=id_redistribution,sheet="Redistribution_central")
+write_sheet(csv_redistribution_low,ss=id_redistribution,sheet="Redistribution_low")
+write_sheet(csv_redistribution_high,ss=id_redistribution,sheet="Redistribution_high")
 
-#Modify the excel file in google drive
-drive_upload("Adequacy_output.xlsx",paste0(leg),"Graphics_adequacy.xlsx",overwrite=TRUE)
+write_sheet(csv_redistribution_central_sedlac,ss=id_redistribution_SEDLAC,sheet="Redistribution_central")
+write_sheet(csv_redistribution_low_sedlac,ss=id_redistribution_SEDLAC,sheet="Redistribution_low")
+write_sheet(csv_redistribution_high_sedlac,ss=id_redistribution_SEDLAC,sheet="Redistribution_high")
 
-rm(wb_adequacy)
+write_sheet(csv_redistribution_central_insee,ss=id_redistribution_INSEE,sheet="Redistribution_central")
+write_sheet(csv_redistribution_low_insee,ss=id_redistribution_INSEE,sheet="Redistribution_low")
+write_sheet(csv_redistribution_high_insee,ss=id_redistribution_INSEE,sheet="Redistribution_high")
 
+#Update simulated number of pensions in globals file
 
+sim_benefits_central<-csv_adequacy_central%>%
+  select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
+  rename(Central_total=Total_SIPA_benefits, 
+         Central_cont=Total_non_moratorium_benefits)
 
-#Import Excel redistribution results files
+sim_benefits_low<-csv_adequacy_low%>%
+  select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
+  rename(Pesimista_total=Total_SIPA_benefits, 
+         Pesimista_cont=Total_non_moratorium_benefits)
 
-id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita.xlsx"))
-id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC.xlsx"))
-id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE.xlsx"))
+sim_benefits_high<-csv_adequacy_high%>%
+  select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
+  rename(Optimista_total=Total_SIPA_benefits, 
+         Optimista_cont=Total_non_moratorium_benefits)
 
-drive_download(id_redistribution)
-drive_download(id_redistribution_INSEE)
-drive_download(id_redistribution_SEDLAC)
+sim_benefits<-sim_benefits_central%>%
+  left_join(sim_benefits_low)%>%
+  left_join(sim_benefits_high)%>%
+  select(-c(period))
+rm(sim_benefits_central,sim_benefits_low,sim_benefits_high)
 
-rm(id_redistribution,id_redistribution_INSEE,id_redistribution_SEDLAC)
+sim_benefits<-sim_benefits[,c(1,3,5,2,4,6)] #Re-order columns
 
-wb_redistribution<-loadWorkbook("Graphics_redistribution_per_capita.xlsx")
-wb_redistribution_SEDLAC<-loadWorkbook("Graphics_redistribution_SEDLAC.xlsx")
-wb_redistribution_INSEE<-loadWorkbook("Graphics_redistribution_INSEE.xlsx")
+range_write(sim_benefits,ss=id_globals,sheet="Simulated_ANSES_contributions",range="AV3:BA107",reformat=FALSE)
 
-###Need to modify the redistribution excel files for per capita and INSEE
-
-#Modify the corresponding sheet
-writeData(wb_redistribution,sheet="Redistribution_central",csv_redistribution_central)
-writeData(wb_redistribution,sheet="redistribution_low",csv_redistribution_low)
-writeData(wb_redistribution,sheet="Redistribution_high",csv_redistribution_high)
-
-writeData(wb_redistribution_SEDLAC,sheet="Redistribution_central",csv_redistribution_central_sedlac)
-writeData(wb_redistribution_SEDLAC,sheet="redistribution_low",csv_redistribution_low_sedlac)
-writeData(wb_redistribution_SEDLAC,sheet="Redistribution_high",csv_redistribution_high_sedlac)
-
-writeData(wb_redistribution_INSEE,sheet="Redistribution_central",csv_redistribution_central_insee)
-writeData(wb_redistribution_INSEE,sheet="redistribution_low",csv_redistribution_low_insee)
-writeData(wb_redistribution_INSEE,sheet="Redistribution_high",csv_redistribution_high_insee)
-
-
-#Save the modified excel file, changing only the required sheet
-saveWorkbook(wb_redistribution,"Redistribution_output.xlsx", overwrite=T)
-saveWorkbook(wb_redistribution_INSEE,"Redistribution_INSEE_output.xlsx", overwrite=T)
-saveWorkbook(wb_redistribution_SEDLAC,"Redistribution_SEDLAC_output.xlsx", overwrite=T)
-
-#Modify the excel file in google drive
-drive_upload("Redistribution_output.xlsx",paste0(leg),"Graphics_redistribution_per_capita.xlsx",overwrite=TRUE)
-drive_upload("Redistribution_INSEE_output.xlsx",paste0(leg),"Graphics_redistribution_INSEE.xlsx",overwrite=TRUE)
-drive_upload("Redistribution_SEDLAC_output.xlsx",paste0(leg),"Graphics_redistribution_SEDLAC.xlsx",overwrite=TRUE)
-
-
-
-
-#Import globals inflation file
-
-id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public.xlsx") #Beware, if you have a direct access link in your drive, it does not work
-drive_download(id_globals)
-rm(id_globals)<
-wb_globals<-loadWorkbook("Inflation_RIPTE_and_ANSES_discounting_public.xlsx")
-
-df_central<- csv_central_SIPA_income%>%
-  select(Period,Total_SIPA_income)%>%
-  rename(Central=Total_SIPA_income)
-  
-df_low<- csv_low_SIPA_income%>%
-  select(Period,Total_SIPA_income)%>%
-  rename(Low=Total_SIPA_income)
-
-df_high<- csv_high_SIPA_income%>%
-  select(Period,Total_SIPA_income)%>%
-  rename(High=Total_SIPA_income)
-
-head(csv_central_SIPA_income
-     )
-
-df_SIPA_income<-df_central%>%
-  left_join(df_low)%>%
-  left_join(df_high)%>%
-  select(-c(Period))
-
-#range="B3:D107"
-writeData(wb_globals,sheet="Simulated_ANSES_contributions",df_SIPA_income,startCol=2, startRow=3)
-
-
-
-rm(wb_redistribution,wb_redistribution_INSEE,wb_redistribution_SEDLAC)
-rm(df_central,df_low,df_high,df_SIPA_income)
-#range="AG14:AG117"
-
-df_PIB_central<-wb_deficit%>%
-  readWorkbook(sheet="Central scenario",rows=14:117, cols=c(33),colNames=FALSE)%>%
-  rename(Central=X1)%>%
-  mutate(mergeid=row_number())
-head(df_PIB_central)
-
-df_PIB_low<-wb_deficit%>%
-  readWorkbook(sheet="Low scenario",rows=14:117, cols=c(33),colNames=FALSE)%>%
-  rename(Low=X1)%>%
-  mutate(mergeid=row_number())
-
-
-df_PIB_high<-wb_deficit%>%
-  readWorkbook(sheet="High scenario",rows=14:117, cols=c(33),colNames=FALSE)%>%
-  rename(High=X1)%>%
-  mutate(mergeid=row_number())
-
-df_PIB<-df_PIB_central%>%
-  left_join(df_PIB_low)%>%
-  left_join(df_PIB_high)
-head(df_PIB)
-#SEGUIR AQUI
-
-saveWorkbook(wb_globals,"Test.xlsx", overwrite=T)
-
-writeData(df_SIPA_income,ss=wb_globals,sheet="Simulated_ANSES_contributions",range="B3:D107")
-
+rm(list=ls(pattern="^sim_"))
+rm(list=ls(pattern="^csv_"))
 
 #Cleanup
 setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
