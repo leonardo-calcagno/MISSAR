@@ -42,6 +42,21 @@ sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
 
 
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
+
+csv_globals <- read_sheet(id_globals, sheet="copy_to_csv_2020_leg")
+csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
+csv_globals<-csv_globals%>%
+  select(-c(152))#%>% #Remove last column with #REF!
+ # mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
+view(csv_globals)
+
+write_csv(csv_globals,"globals_prosp_jun_2022_leg.csv")
+drive_upload("globals_prosp_jun_2022_leg.csv",path=leg,overwrite = T) #Upload it corrected
+rm(csv_globals,id_globals) #Cleanup
+
+
+
 sust_folder<-drive_get(paste0(leg,sust))
 csv_files<-drive_ls(sust_folder,type="csv")
 walk(csv_files$id, 
@@ -54,7 +69,6 @@ walk(csv_files$id,
      ~ drive_download(as_id(.x)))
 
 rm(adeq_folder,csv_files)
-
 
 
 #Import csv simulation result
@@ -144,7 +158,7 @@ write_sheet(csv_central_SIPA_income,ss=id_deficit,sheet="central_SIPA_income")
 write_sheet(csv_high_SIPA_income,ss=id_deficit,sheet="high_SIPA_income")
 
 
-rm(list=ls(pattern="^csv_"),id_deficit)
+rm(list=ls(pattern="^csv_"))
 
 #Export projected GDP and ANSES income to the globals making sheet file
 
@@ -302,6 +316,7 @@ sim_benefits_high<-csv_adequacy_high%>%
   select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
   rename(Optimista_total=Total_SIPA_benefits, 
          Optimista_cont=Total_non_moratorium_benefits)
+
 
 sim_benefits<-sim_benefits_central%>%
   left_join(sim_benefits_low)%>%
