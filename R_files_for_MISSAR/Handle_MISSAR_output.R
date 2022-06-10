@@ -35,34 +35,27 @@ if(!file.exists("MISSAR_output")) {
 }
 
 
-#Import csv simulation result
-#Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
-#decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
-correct_csv<-function(input){
-  input<-input%>%
-    mutate(
-      across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
-                                           .x))
-           
-    )
-  
-  
-}
-
-csv_globals <- read_csv("Inflation_RIPTE_and_ANSES_discounting_public.csv")
-csv_globals[is.na(csv_globals)]<-"0"
-csv_globals<-csv_globals%>%
-  select(-c(152))%>% #Remove last column with #REF!
-  mutate_all(~(str_replace(.,",",".")))
-
-view(csv_globals)
 setwd("MISSAR_output/")
 
 leg<-"June_2022_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
+
+
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
+
+csv_globals <- read_sheet(id_globals, sheet="copy_to_csv_2020_leg")
+csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
+csv_globals<-csv_globals%>%
+  select(-c(152))#%>% #Remove last column with #REF!
+ # mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
+view(csv_globals)
+
 write_csv(csv_globals,"globals_prosp_jun_2022_leg.csv")
-drive_upload("globals_prosp_jun_2022_leg.csv",path=leg,overwrite = T)
+drive_upload("globals_prosp_jun_2022_leg.csv",path=leg,overwrite = T) #Upload it corrected
+rm(csv_globals,id_globals) #Cleanup
+
+
 
 sust_folder<-drive_get(paste0(leg,sust))
 csv_files<-drive_ls(sust_folder,type="csv")
@@ -76,7 +69,6 @@ walk(csv_files$id,
      ~ drive_download(as_id(.x)))
 
 rm(adeq_folder,csv_files)
-
 
 
 #Import csv simulation result
