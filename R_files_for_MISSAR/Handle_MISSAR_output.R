@@ -35,12 +35,34 @@ if(!file.exists("MISSAR_output")) {
 }
 
 
+#Import csv simulation result
+#Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
+#decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
+correct_csv<-function(input){
+  input<-input%>%
+    mutate(
+      across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
+                                           .x))
+           
+    )
+  
+  
+}
+
+csv_globals <- read_csv("Inflation_RIPTE_and_ANSES_discounting_public.csv")
+csv_globals[is.na(csv_globals)]<-"0"
+csv_globals<-csv_globals%>%
+  select(-c(152))%>% #Remove last column with #REF!
+  mutate_all(~(str_replace(.,",",".")))
+
+view(csv_globals)
 setwd("MISSAR_output/")
 
 leg<-"June_2022_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
-
+write_csv(csv_globals,"globals_prosp_jun_2022_leg.csv")
+drive_upload("globals_prosp_jun_2022_leg.csv",path=leg,overwrite = T)
 
 sust_folder<-drive_get(paste0(leg,sust))
 csv_files<-drive_ls(sust_folder,type="csv")
@@ -144,7 +166,7 @@ write_sheet(csv_central_SIPA_income,ss=id_deficit,sheet="central_SIPA_income")
 write_sheet(csv_high_SIPA_income,ss=id_deficit,sheet="high_SIPA_income")
 
 
-rm(list=ls(pattern="^csv_"),id_deficit)
+rm(list=ls(pattern="^csv_"))
 
 #Export projected GDP and ANSES income to the globals making sheet file
 
@@ -302,6 +324,7 @@ sim_benefits_high<-csv_adequacy_high%>%
   select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
   rename(Optimista_total=Total_SIPA_benefits, 
          Optimista_cont=Total_non_moratorium_benefits)
+
 
 sim_benefits<-sim_benefits_central%>%
   left_join(sim_benefits_low)%>%
