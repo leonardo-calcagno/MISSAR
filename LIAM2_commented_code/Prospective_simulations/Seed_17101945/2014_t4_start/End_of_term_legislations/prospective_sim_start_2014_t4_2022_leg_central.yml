@@ -3278,12 +3278,15 @@ entities:
         #However, the reglamentation of this Art. by Resolution E.25/2017 of the ANSES, published  the 11th of January 2018, states that this guarantee is extended to
                 #Law 24241 pension beneficiaries even if they did not contribute the required 30 years as long as they fulfilled the conditions established in this Law
                 #to retire. Therefore, the 30 years of contributions are no longer a mandatory condition. 
+        #On August 2022, the minimum pension of $37526.96 is lower than 82% of the minimum wage ($39.237), but only for a month. We thus ignore this period (lesser error).
                 - gross_retirement: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni, gross_retirement, 
-                                        if((car_sal+car_ind+car_mono_norref)<(120-extra_trim/2), gross_retirement, 
-                                            if(gross_retirement<0.82*MINIMUM_WAGE_CENTRAL_2014_T4, MINIMUM_WAGE_CENTRAL_2014_T4*0.82, gross_retirement)))
+                                        if((car_sal+car_ind+car_mono_norref)<(120-extra_trim/2), gross_retirement,
+                                            if(period==79, gross_retirement, 					
+                                               if(gross_retirement<0.82*MINIMUM_WAGE_CENTRAL_2014_T4, MINIMUM_WAGE_CENTRAL_2014_T4*0.82, gross_retirement))))
                 - gross_retirement_2: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni, gross_retirement_2, 
                                         if((car_sal+car_ind+car_mono_norref)<(120-extra_trim/2), gross_retirement_2, 
-                                            if(gross_retirement_2<0.82*MINIMUM_WAGE_CENTRAL_2014_T4, MINIMUM_WAGE_CENTRAL_2014_T4*0.82, gross_retirement_2)))
+                                            if(period==79, gross_retirement_2,
+                                               if(gross_retirement_2<0.82*MINIMUM_WAGE_CENTRAL_2014_T4, MINIMUM_WAGE_CENTRAL_2014_T4*0.82, gross_retirement_2))))
     #6- We actualise pensions given before this period following real pension mobility. We only do it for contributory pensions as both moratorium pensions and 
             #universal pensions are a function of the minimum pension, that is already subject to real pension mobility in our globals file. New contributory pensions
             #are excluded (they are not discounted following pension mobility the very same quarter they are first given). 
