@@ -3281,7 +3281,7 @@ entities:
         #On August 2022, the minimum pension of $37526.96 is lower than 82% of the minimum wage ($39.237), but only for a month. We thus ignore this period (lesser error).
                 - gross_retirement: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni, gross_retirement, 
                                         if((car_sal+car_ind+car_mono_norref)<(120-extra_trim/2), gross_retirement,
-                                            if(period==79, gross_retirement, 					
+                                            if(period==79, gross_retirement,
                                                if(gross_retirement<0.82*MINIMUM_WAGE_CENTRAL_2014_T4, MINIMUM_WAGE_CENTRAL_2014_T4*0.82, gross_retirement))))
                 - gross_retirement_2: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni, gross_retirement_2, 
                                         if((car_sal+car_ind+car_mono_norref)<(120-extra_trim/2), gross_retirement_2, 
