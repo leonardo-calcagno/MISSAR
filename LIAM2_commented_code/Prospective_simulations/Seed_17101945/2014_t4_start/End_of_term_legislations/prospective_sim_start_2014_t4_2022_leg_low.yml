@@ -3186,9 +3186,9 @@ entities:
                                             if(gross_retirement_2>MAX_PENSION_LOW_2014_T4, MAX_PENSION_LOW_2014_T4, 
                                                 gross_retirement_2)),
                                                     gross_retirement_2)
-    #3- We compute pensions obtained through the Law 26970 moratorium. It is accessible for men and women since September 2014 and until September 2016 for the former, 
-            #July 2019 originally for the latter. Access to the 26970 moratorium for women has since been extended indefinitely, so the only real constraint is 
-            #buying back years only until 31/12/2003.
+   #3- We compute pensions obtained through the Law 26970 moratorium. It is accessible for men and women since September 2014 and until September 2016 for the former, 
+            #July 2019 originally for the latter. Access to the 26970 moratorium for women has since been extended until the 23d of July 2022 (through Law 27.430). It is as of today unclear
+            # whether this cutoff date will be extended again, but strictly speaking it won't be: we assume it to be this way here. 
         #First, it is means-tested. As said in Art. 8 of Law 26970 : 
             #"The means-test (...) will be positive when the person asking for a pension does not verify the following elements: 
             #a) Gross yearly income earned, in the last twelve months before the evaluation date, whose mean is higher than the right to recieving a family pension as 
@@ -3198,7 +3198,7 @@ entities:
                 - new_moratoria: if(liqui_retirement, False, 
                                     if(new_contributory_pension, False, 
                                         if(age<60 or (age<65 and male), False, 
-                                            if((male and period>=56) or period<48, False,
+                                            if((male and period>=56) or period<48 or (not male and period>78), False,
                                                 if(((car_sal + car_ind + car_mono_norref)>=(120-extra_trim/2)),False, 
                                                    if((age_quarters-18*4-(period-4)+car_post_2003)>=(120-extra_trim/2), True,
                                     False))))))
