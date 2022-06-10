@@ -1595,8 +1595,28 @@ entities:
                 - score_birth: if(ISCOUPLE or ISMARRIED, 1000 + uniform(), uniform())
             #2- Only women with up to 7 children can give birth (this sets a maximum number of 8 children).
             #3- Only women with a known partner aged 16 to 59 can give birth. 
+            #4- Probability of having children conditional to current number of children 
+                #We run for period 49, in the console, groupby(agegroup,nb_children,filter=not male). Then for women age 40 to 49, we count total women with a given number of 
+                    #children. We find women those ages with one child represent 99% of those with no children; with two children, 154% of those with one child (these are
+                    #conditional probabilities of having one more child given the current number of children); with three children, 96% of those with two children, etc. 
+                #This helps us reproduce plausible cohorts of mothers by number of children. 	
+                #For debugging purposes, uncomment the following to track new births. 
+               # - csv(period,groupby(age,nb_children,marital_status,filter=ISFEMALE and age>=10 and age<=49 and to_give_birth and (partner.age>=16 and partner.age<=59) and nb_children<7 and (ISCOUPLE or ISMARRIED)),
+                #      groupby(age,nb_children,marital_status,filter=ISFEMALE and not to_give_birth and age>=10 and age<=49  and (partner.age>=16 and partner.age<=59) and nb_children<7 and (ISCOUPLE or ISMARRIED)),
+                 #           fname='debug_birth.csv',mode='a')	
+                - score_birth: if(nb_children==0, score_birth*0.99, 
+                                  if(nb_children==1, score_birth*1.54, 
+                                     if(nb_children==2, score_birth*0.96, 
+                                        if(nb_children==3, score_birth*0.41, 
+                                           if(nb_children==4, score_birth*0.19,
+                                              if(nb_children==5, score_birth*0.09, 
+                                                 if(nb_children==6, score_birth*0.036,0)
+                                  ))))))
+            #5- Strongly decrease likelihood of child bearing if there is already a child less than 5 quarters old             
+                - score_birth: if(children.count(age_quarters<5)>=1, 0, 
+                                  score_birth)
                 - to_give_birth: logit_regr(score_birth,
-                                            filter=ISFEMALE and (age >= 10)and (age <= 49) and (partner.age>=16 and partner.age<=59) and nb_children<8,
+                                            filter=ISFEMALE and (age >= 10)and (age <= 49) and (partner.age>=16 and partner.age<=59) and nb_children<7,
                                             align='p_birth_f3.csv')
             #It is perfectly possible to estimate logistic equations on the probability of giving birth, and study fertility decisions depending on the parent's and
             #the household's characteristics. This estimated equation would then replace the arbitrary priority to women married or in a common-law union (temporary 
