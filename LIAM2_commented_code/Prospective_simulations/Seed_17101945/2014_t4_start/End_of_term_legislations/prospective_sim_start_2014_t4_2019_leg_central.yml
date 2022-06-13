@@ -13,9 +13,9 @@ globals:
     #All our real income variables are expressed in November 2014 pesos. 
             - GROSS_WAGE_CENTRAL_2014_T4: float
             - REAL_WAGE_CENTRAL: float
-            - NET_WAGE_CENTRAL_2014_T4: float
+            #- NET_WAGE_CENTRAL_2014_T4: float
             - ANSES_GROSS_WAGE_CENTRAL_2014_T4: float
-            - ANSES_NET_WAGE_CENTRAL_2014_T4: float
+            #- ANSES_NET_WAGE_CENTRAL_2014_T4: float
             - MINIMUM_WAGE_CENTRAL_2014_T4: float
         #The CPI_ANSES_CENTRAL is equal to the CPI divided by the ANSES actualisation index. 
             #It links real wage variables together (ANSES_GROSS_WAGE_CENTRAL_2014_T4*CPI_ANSES_CENTRAL=GROSS_WAGE_CENTRAL_2014_T4). 
@@ -1051,7 +1051,7 @@ entities:
             #We in particular make sure the father id of all individuals is taht of their mother's partner.
                 - father_id: mother.partner_id
             #We then count children and underage children. 
-            #We need to count them separately for the mother (nb_children) and the father (nb_children_bis) sinc ethey use respectively mother_id and father_id as their link variable.
+            #We need to count them separately for the mother (nb_children) and the father (nb_children_bis) since they use respectively mother_id and father_id as their link variable.
                 - nb_children: if(ISFEMALE,children.count(),0)
                 - nb_children_bis: if(ISMALE,children_bis.count(),0)
                 - underage_children: children.count(age<18)
@@ -1136,7 +1136,6 @@ entities:
                                         net_pension_2/0.97)
                 - gross_pension_p: if(age>=18, gross_pension, 0)
                 - gross_pension_2_p: if(age>=18, gross_pension_2, 0)
-
                 # We know from administrative data that there were in 2014 16.86% more social security benefits paid than social security beneficiaries. This means 
                         #20% of SIPA beneficiaries receive both a survivors benefit and a retirement pension. This is irrelevant for computing total ANSES expenditure, 
                         #but the 2020 pension mobility formula, as well as the 26.417 pension mobility formula in force between 2009 and 2017, makes pension mobility
@@ -1160,7 +1159,7 @@ entities:
                                         align(score_pensioner,0.2075,leave=initial_pensioner), 
                                             False
                                         )
-              # Also, since we start our simulations before the implementation of the universal pension, none of our starting individual receive this universal pension. 
+            # Also, since we start our simulations before the implementation of the universal pension, none of our starting individual receive this universal pension. 
                 - tag_pension_uni: False
         #Fourth, we have shown the residuals of our Mincer wage equations follow a Normal distribution in all of our starting datasets. For the fourth quarter of 
                 #2014, the mean equals -0.13869 and the standard deviation 0.580294
@@ -1664,9 +1663,6 @@ entities:
                                             sum(age>=55 and age<60 and male,weights=pondera),sum(age>=60 and age<65 and male,weights=pondera),sum(age>=65 and age<70 and male,weights=pondera),sum(age>=70 and age<75 and male,weights=pondera),
                                                 sum(age>=75 and age<80 and male,weights=pondera),sum(age>=80 and age<85 and male,weights=pondera),sum(age>=85 and age<90 and male,weights=pondera),sum(age>=90 and age<95 and male,weights=pondera),sum(age>=95 and male,weights=pondera),
                                                     fname='active_age_men.csv',mode='a')
-
-
-
                 - csv(period,sum(age<=0 and not male,weights=pondera),sum(age>=1 and age<5 and not male,weights=pondera),sum(age>=5 and age<10 and not male,weights=pondera),sum(age>=10 and age<15 and not male,weights=pondera),sum(age==15 and not male,weights=pondera),
                                     sum(age>=16 and age<20 and not male,weights=pondera),sum(age>=20 and age<25 and not male,weights=pondera), sum(age>=25 and age<30 and not male,weights=pondera),sum(age>=30 and age<35 and not male,weights=pondera),
                                         sum(age>=35 and age<40 and not male,weights=pondera),sum(age>=40 and age<45 and not male,weights=pondera),sum(age>=45 and age<50 and not male,weights=pondera),sum(age>=50 and age<55 and not male,weights=pondera),
@@ -2760,7 +2756,6 @@ entities:
                                                 if(contribution==1, taxable_income*(0.06)+(taxable_income_employee)*0.03,
                                                     if(contribution==2, taxable_income*(0.06)+(taxable_income_employee)*0.03, 
                                                         taxable_income*(0.06)+(taxable_income_employee)*0.03))) 
-
                 - contribution_sal_tot: contribution_sal_SIPA+contribution_sal_PAMI+contribution_sal_obra_social
                 
                 
@@ -3044,7 +3039,7 @@ entities:
                 - moratorium_date: if(new_contributory_pension, -1, moratorium_date)                
                 - new_moratoria: if(moratorium_date==0 or moratorium_date==-1, False, new_moratoria)
                 - liqui_retirement: if(new_moratoria or new_contributory_pension,True,liqui_retirement)
-               #Now we compute the moratorium pension earned by the beneficiaries. These are, following our hypothesis, either 80% of the minimum pension or the minimum
+               #3.2. Now we compute the moratorium pension earned by the beneficiaries. These are, following our hypothesis, either 80% of the minimum pension or the minimum
                         #pension. As such, we do not need to increase them every period following the pension mobility index, as this is already done in our globals file. 
                 - moratorium_value: if(moratorium_date==0 or moratorium_date==-1, 0,
                                         if(new_moratoria, MIN_PENSION_CENTRAL_2014_T4*0.8,
@@ -3627,8 +3622,9 @@ entities:
         # For the moratorium benefits, our model has trouble identifying beneficiaries of 2006 moratorium pensions since by 2014 they all received a 
             #normal pension equal at least to the minimum pension. This boolean therefore mainly identifies beneficiaries of the 2014 pension moratorium.  
                 - has_moratorium_pension: if(discounted_v2_m==0, False, 
-                                        if(moratorium_date>0, True,
-                                            False))
+                                             if(moratorium_date>0, True,
+                                                if(tag_initial_moratorium, True, 
+                                            False)))
 
                 - has_universal_pension: if(universal_net_pension==0, False, 
 
