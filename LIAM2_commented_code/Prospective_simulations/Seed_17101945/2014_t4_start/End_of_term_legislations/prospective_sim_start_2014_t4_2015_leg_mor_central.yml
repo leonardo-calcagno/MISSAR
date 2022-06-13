@@ -2774,38 +2774,33 @@ entities:
                 #of being private sector primary or secondary workers. 
                 #National civil servants as a percentage of formal wage-earners come from AFIP data. 
                 #Activity sector information comes from EPHc variables pp04b_cod, pp04d_cod, pp04b_caes, pp04d_caes, and pp04a (public vs private sector) for the 2003-2015 period. 
-                #Errors in the pp04d_cod variable with the new version of the EPHc (2016-2017) bar us from identifying workers' economic sector.            
-                - contribution: if(labour_market_state!=1, 3, 
-                            if(lag(labour_market_state)==1, contribution, choice([1, 2, 4], [0.5, 0.315, 0.185]))) 
-        #The reglamentation of Art. 166 of Law 27430 that determines the new repartition of employers' contributions between the PAMI and the ANSES 
-                #has not been issued at the moment. We thus assume the percentage that goes to the PAMI does not change. It does equal 1.62% of the gross wage 
-                #for workers of the service sector and 1.5% for national civil servants and workers of the primary and secondary sectors. 
-        
-        #Furtermore, Art. 167 of Law 27430 gives precisions on how gross income under 12000 constant October 2017 pesos does not pay employer's contributions: 
-                #1- This deduction shall never lead to a taxable income (for the computation of employer's contributions) that would be lower than the minimum retirement 
-                # benefit (following Art. 9 of Law 24241). 
-                #2- The "medio aguinaldo" (half of the thirteenth month paid on June and on December) will not pay employer's contributions for earning below 6000 constant 
-                # October 2017 pesos. Since our variable medio_aguinaldo is divided by 3 to consider it as an average monthly income derived from the thirteenth month, 
-                # the 12000 pesos of non-taxable income, when applied to the "medio aguinaldo", is divided by 6.  
-                #3- Although unclear, limitation number 1 will be applied only after factoring in the thirteenth month.            
-                - taxable_income: if(labour_market_state!=1, 0, 
-
-                                    if((discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6)<= MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4
-                                        ,discounted_itl_gross-NON_TAXABLE_INCOME_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_2014_T4/6))
-
-            #We have a weird bug that automatically transforms global variables of the type 0.195 into 195, although it does not affect values such as 0.18. 
-                    #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.                            
-                #Art. 9 of Law 24.241 specifies there is a maximum taxable wage, above which there are no employee's contributions. Employers' contributions are
-                    #made over the whole gross wage, with no limitations. We thus add this restriction in the code. 
+                #Errors in the pp04d_cod variable with the new version of the EPHc (2016-2017) bar us from identifying workers' economic sector.         
+        #Art. 9 of Law 24.241 determines there is a minimum and maximum contributive base, both discounted following pension mobility since March 2009. The ratio between 
+                #those values has remained constant ever since established by ANSES Res. 135/2009 (16/03/2009): 268.06/8711.82. We thus apply it to taxable income for employers 	
                 - modulo_period: (period) % 4    
                 - max_medio_aguinaldo_gross: if(labour_market_state!=1, 0, 
                                       if(modulo_period==1 or modulo_period==3,0, 
                                          MAX_CONTRIBUTIVE_BASE_CENTRAL/6))
-                - taxable_income_employee: if(labour_market_state!=1, 0, 
-                                              if(discounted_itl_gross<=MAX_CONTRIBUTIVE_BASE_CENTRAL, discounted_itl_gross+medio_aguinaldo_gross,
+                - contribution: if(labour_market_state!=1, 3, 
+                            if(lag(labour_market_state)==1, contribution, choice([1, 2, 4], [0.5, 0.315, 0.185])))        
+                - taxable_income: if(labour_market_state!=1, 0,
+                                       if(discounted_itl_gross+medio_aguinaldo_gross<= (MAX_CONTRIBUTIVE_BASE_CENTRAL + max_medio_aguinaldo_gross)*268.06/8711.82, (MAX_CONTRIBUTIVE_BASE_CENTRAL + max_medio_aguinaldo_gross)*268.06/8711.82,
+                                          discounted_itl_gross+medio_aguinaldo_gross)
+                                     )
+            #We have a weird bug that automatically transforms global variables of the type 0.195 into 195, although it does not affect values such as 0.18. 
+                    #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.                            
+                #Art. 9 of Law 24.241 specifies there is a maximum taxable wage, above which there are no employee's contributions. Employers' contributions are
+                    #made over the whole gross wage, with no limitations. We thus add this restriction in the code. 
+                - taxable_income_employee: if(labour_market_state!=1, 0,
+                                              if(discounted_itl_gross + medio_aguinaldo_gross<=(MAX_CONTRIBUTIVE_BASE_CENTRAL + max_medio_aguinaldo_gross), discounted_itl_gross+medio_aguinaldo_gross,
                                                  MAX_CONTRIBUTIVE_BASE_CENTRAL + max_medio_aguinaldo_gross
                                                  )
                                              )
+                - taxable_income_employee: if(labour_market_state!=1, taxable_income_employee, 
+                                             if(discounted_itl_gross+medio_aguinaldo_gross<= (MAX_CONTRIBUTIVE_BASE_CENTRAL + max_medio_aguinaldo_gross)*268.06/8711.82, (MAX_CONTRIBUTIVE_BASE_CENTRAL + max_medio_aguinaldo_gross)*268.06/8711.82,
+                                                taxable_income_employee)
+                                              )
+                                               
                 - contribution_sal_SIPA: if(labour_market_state!=1, 0, 
                                      if(contribution==1, taxable_income*(CONT_PAT_1/1000-0.0162)+(taxable_income_employee)*0.11,
                                         if(contribution==2, taxable_income*(CONT_PAT_2/1000-0.015) +(taxable_income_employee)*0.11, 
@@ -2834,6 +2829,7 @@ entities:
                        sum(contribution_sal_SIPA*pondera)/1000,sum(taxable_income*pondera)/1000,sum(discounted_itl_sal_gross*pondera)/1000,sum(medio_aguinaldo_gross*pondera)/1000,
                         sum(contribution_aut_SIPA*pondera)/1000, sum(contribution_mono_SIPA*pondera)/1000,sum(mono_integrated_tax*pondera)/1000,
                                 fname='central_SIPA_income.csv',mode='a')
+                - breakpoint()
 
 
 
