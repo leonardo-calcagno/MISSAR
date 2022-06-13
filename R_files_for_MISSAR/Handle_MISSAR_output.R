@@ -27,7 +27,7 @@ library(googledrive)
 gs4_auth() #Connection to google account
 setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
 
-#Para chequear y configurar directorio de trabajo
+#To verify working directory
 #getwd()
 
 if(!file.exists("MISSAR_output")) {
@@ -37,26 +37,64 @@ if(!file.exists("MISSAR_output")) {
 
 setwd("MISSAR_output/")
 
+
+
+###Generate csv globals ----
+#Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
+#decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
+correct_csv<-function(input){
+  input<-input%>%
+    mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
+                                           .x))
+           
+    )
+  
+}
+
+
+#Generate global files in csv format, without formatting problems (copy-pasting often generates missing decimal point errors)
+generate_globals<-function(id,input,output,ruta){
+
+csv_globals<-read_sheet(id,sheet=input)
+
+csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
+csv_globals<-csv_globals%>%
+  select(-c(152))%>%
+  correct_csv()# #Remove last column with #REF!
+
+# mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
+
+write_csv(csv_globals,output)
+drive_upload(output,path=ruta,overwrite = T) #Upload it corrected
+  
+}
+
 leg<-"June_2022_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
-
-
+#Google authentification may trigger here again, proceed with authentification before going further
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
 
-csv_globals <- read_sheet(id_globals, sheet="copy_to_csv_2020_leg")
-csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
-csv_globals<-csv_globals%>%
-  select(-c(152))#%>% #Remove last column with #REF!
- # mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
-view(csv_globals)
-
-write_csv(csv_globals,"globals_prosp_jun_2022_leg.csv")
-drive_upload("globals_prosp_jun_2022_leg.csv",path=leg,overwrite = T) #Upload it corrected
-rm(csv_globals,id_globals) #Cleanup
+sheet_name<-"copy_to_csv_2020_leg"
+output_name<-"globals_prosp_jun_2022_leg.csv"
+generate_globals(id_globals,sheet_name,output_name,leg)
 
 
+sheet_name<-"copy_to_csv_Macri_leg"
+output_name<-"globals_prosp_scenarios_Macri_leg.csv"
+leg_Macri<-"Macri_legislation/"
+generate_globals(id_globals,sheet_name,output_name,leg_Macri)
 
+
+sheet_name<-"copy_to_csv_2017_leg"
+output_name<-"globals_transposed_prosp_scenarios_2017_leg.csv"
+leg_CFK<-"Dec_2015_legislation_with_moratorium/"
+generate_globals(id_globals,sheet_name,output_name,leg_CFK)
+
+#Cleanup 
+rm(output_name,sheet_name)
+
+#Import csv simulation results -----
 sust_folder<-drive_get(paste0(leg,sust))
 csv_files<-drive_ls(sust_folder,type="csv")
 walk(csv_files$id, 
@@ -69,19 +107,6 @@ walk(csv_files$id,
      ~ drive_download(as_id(.x)))
 
 rm(adeq_folder,csv_files)
-
-
-#Import csv simulation result
-#Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
-     #decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
-correct_csv<-function(input){
-  input<-input%>%
-    mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
-                                           .x))
-
-           )
-  
-}
 
 csv_workers_and_wage_central <- read_csv("workers_and_wage_central.csv")%>%
   correct_csv()
@@ -128,7 +153,7 @@ csv_IFE_cost_high <- read_csv("IFE_cost_high.csv")%>%
 
 
 
-#Modify results sheets
+#Modify results sheets -----
 
 id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim"))
 
@@ -160,7 +185,7 @@ write_sheet(csv_high_SIPA_income,ss=id_deficit,sheet="high_SIPA_income")
 
 rm(list=ls(pattern="^csv_"))
 
-#Export projected GDP and ANSES income to the globals making sheet file
+#Export projected GDP and ANSES income to the globals making sheet file ------
 
 sim_GDP_central<-read_sheet(id_deficit,sheet="GDP evolution by scenario",range="E11:E114",col_names = FALSE)%>% #We import simulated GDP, since 2015
   rename(Central=c(1))%>%
@@ -245,7 +270,7 @@ range_write(sim_wage,ss=id_globals,sheet="Labour GDP participation",range="Q3:S1
 rm(list=ls(pattern="^sim_"))
 
 
-#Import Excel adequacy results file
+#Update adequacy results file ----
 
 csv_adequacy_low <- read_csv("adequacy_low.csv")%>%
   correct_csv()
@@ -300,7 +325,7 @@ write_sheet(csv_redistribution_central_insee,ss=id_redistribution_INSEE,sheet="R
 write_sheet(csv_redistribution_low_insee,ss=id_redistribution_INSEE,sheet="Redistribution_low")
 write_sheet(csv_redistribution_high_insee,ss=id_redistribution_INSEE,sheet="Redistribution_high")
 
-#Update simulated number of pensions in globals file
+#Update simulated number of pensions in globals file -----
 
 sim_benefits_central<-csv_adequacy_central%>%
   select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
@@ -331,7 +356,7 @@ range_write(sim_benefits,ss=id_globals,sheet="Simulated_ANSES_contributions",ran
 rm(list=ls(pattern="^sim_"))
 rm(list=ls(pattern="^csv_"))
 
-#Cleanup
+#Cleanup -----
 setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
 unlink("MISSAR_output",recursive=TRUE)
 rm(list=ls())
