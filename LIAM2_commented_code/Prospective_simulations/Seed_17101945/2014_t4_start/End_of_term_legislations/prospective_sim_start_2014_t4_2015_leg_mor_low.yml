@@ -50,10 +50,10 @@ globals:
             - ANSES_GROSS_WAGE_LOW_2014_T4: float
             #- ANSES_NET_WAGE_LOW_2014_T4: float
             - MINIMUM_WAGE_LOW_2014_T4: float
-        #The CPI_ANSES_LOW is equal to the CPI divided by the ANSES actualisation index. 
-            #It links real wage variables together (ANSES_GROSS_WAGE_LOW_2014_T4*CPI_ANSES_LOW=GROSS_WAGE_LOW_2014_T4). 
+        #The CPI_ANSES_INDEX_LOW is equal to the CPI divided by the ANSES actualisation index. 
+            #It links real wage variables together (ANSES_GROSS_WAGE_LOW_2014_T4*CPI_ANSES_INDEX_LOW=GROSS_WAGE_LOW_2014_T4). 
             # This variable is useful for computing the family-group income.  
-            - CPI_ANSES_LOW: float
+            - CPI_ANSES_INDEX_LOW: float
             #The coefficient variables (h for men, f for women) are computed following Duc et. al. 2013
             - COEFFICIENT_H: float
             - COEFFICIENT_F: float
@@ -206,7 +206,7 @@ entities:
                 #ANSES discounting indexes. This is the discounting method necessary for computing retirement rights. We however need to discount it with the CPI
                 #to compute the IGF. We thus add a conversion key between ANSES discounting and the Consumer's Price Index in our globals file, which converts 
                 #the rent of reference into real November 2014 pesos discounted with official inflation figures. 
-                - igf_hh: persons.sum(discounted_itl_sal_gross) + persons.sum(disc_cost_v2_m) + persons.sum(rent_aut*CPI_ANSES_LOW)
+                - igf_hh: persons.sum(discounted_itl_sal_gross) + persons.sum(disc_cost_v2_m) + persons.sum(rent_aut*CPI_ANSES_INDEX_LOW)
             # We need for some benefits to know what is the maximum income reached by a formal wage-earner and monotributo category for a given household. 
                 - max_itl_sal_hh: persons.max(discounted_itl_sal_gross)
                 - max_monotributo_cat_hh: persons.max(monotributo_cat)
@@ -2829,8 +2829,6 @@ entities:
                        sum(contribution_sal_SIPA*pondera)/1000,sum(taxable_income*pondera)/1000,sum(discounted_itl_sal_gross*pondera)/1000,sum(medio_aguinaldo_gross*pondera)/1000,
                         sum(contribution_aut_SIPA*pondera)/1000, sum(contribution_mono_SIPA*pondera)/1000,sum(mono_integrated_tax*pondera)/1000,
                                 fname='low_SIPA_income.csv',mode='a')
-                - breakpoint()
-
 
 
 
