@@ -3134,6 +3134,19 @@ entities:
                                    if(period <76,0,
                                         (total_child_mother-total_auh_mother)*4+total_auh_mother*12)
                                 )
+    #1.3.- Proposed 2022 moratorium: you can rebuy missing contribution years when nearing retirement age, up to 31/3/2012. This is a permanent measure. You can only
+        #do this if you are a registered worker and you have enough income to buy the required months; and it is voluntary. We will have to make a lot of assumptions, 
+        #but we will assume that: 
+        #1- If you can retire without buying back any month, assuming you keep registered work until retirement age, then you don't buy back. 
+        #2- You buy back the required minimum of months to retire, assuming you keep your registered work until retirement age. 
+        #3- You can only buy back months for up to 25% of gross monthly income. 
+        #4- If needed, you can buy back more than a month at a time, if it rests below 25% of your gross income. 
+        #5- This measure is implemented from the fourth quarter of 2022 onward, so period==80; and can buy until period==37 (first quarter of 2012)
+               - buyback_trim: if(age>65 or (ISMALE and age<55) or (ISFEMALE and age<50), 0, 
+                                  if(period <80, 0,
+                                     if(ISMALE and car_sal + car_ind + car_mono_norref + care_trim + age_quarters-18*4-(period-37)				  
+          #SEGUIR AQUI
+				  
     #2- We compute contributory retirement pensions.  
         #First, we compute the replacement ratio an individual would get if he retired now. By definition, this ratio is null before the legal retirement age. 
         #Being older than the minimum retirement age reduces the required number of 30 years to retire. For every two months above the legal minimum retirement age, 
@@ -3265,6 +3278,7 @@ entities:
                                             if((period-moratorium_date)>=20, MIN_PENSION_CENTRAL_2014_T4,MIN_PENSION_CENTRAL_2014_T4*0.8)))  
                 - gross_retirement: if(moratorium_date==0 or moratorium_date==-1, gross_retirement, moratorium_value)
                 - gross_retirement_2: if(moratorium_date==0 or moratorium_date==-1, gross_retirement_2, moratorium_value)
+        #3.4. New proposed moratorium pension:
     #4- We compute universal pension beneficiaries. These pensions were given starting from period 56 (fourth quarter of 2016) to people aged 65 or more 
                 #that did not have any other retirement pension (survivors pensions can not be accumulated with a universal benefit).  
                 - new_pension_uni: if(period<56, False, 
