@@ -3142,9 +3142,18 @@ entities:
         #3- You can only buy back months for up to 25% of gross monthly income. 
         #4- If needed, you can buy back more than a month at a time, if it rests below 25% of your gross income. 
         #5- This measure is implemented from the fourth quarter of 2022 onward, so period==80; and can buy until period==37 (first quarter of 2012)
+               - retirement_date: if(ISMALE, period + (65-ageconti), 
+                                     period + (60-ageconti)
+                                     )
                - buyback_trim: if(age>65 or (ISMALE and age<55) or (ISFEMALE and age<50), 0, 
                                   if(period <80, 0,
-                                     if(ISMALE and car_sal + car_ind + car_mono_norref + care_trim + age_quarters-18*4-(period-37)				  
+                                     if(ISMALE and
+                                     
+                                     if((ISMALE and ((car_sal + car_ind + car_mono_norref + care_trim)>=(120-(65-ageconti)*4))))
+				     + age_quarters-18*4-(period-37)		
+
+                                                if(((car_sal + car_ind + car_mono_norref)>=(120-extra_trim/2)),False, 
+                                                   if((age_quarters-18*4-(period-4)+car_post_2003)>=(120-extra_trim/2), True,				     
           #SEGUIR AQUI
 				  
     #2- We compute contributory retirement pensions.  
