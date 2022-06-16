@@ -308,6 +308,21 @@ write_sheet(csv_adequacy_central,ss=id_adequacy,sheet="Adequacy_central")
 write_sheet(csv_adequacy_low,ss=id_adequacy,sheet="Adequacy_low")
 write_sheet(csv_adequacy_high,ss=id_adequacy,sheet="Adequacy_high")
 
+#Update wage figures in adequacy sheets
+
+sim_wage_central<-read_sheet(id_deficit,sheet="workers_and_wage_central",range="B2:B105",col_names = FALSE)%>% #We import simulated contributions
+  rename(Real_wages_central=c(1))
+sim_wage_low<-read_sheet(id_deficit,sheet="workers_and_wage_low",range="B2:B105",col_names = FALSE)%>%
+  rename(Real_wages_low=c(1))
+sim_wage_high<-read_sheet(id_deficit,sheet="workers_and_wage_high",range="B2:B105",col_names = FALSE)%>%
+  rename(Real_wages_high=c(1))
+
+range_write(sim_wage_low,ss=id_adequacy,sheet="Retirement benefit values", range="B5:B108",reformat=FALSE,col_names = FALSE)
+range_write(sim_wage_central,ss=id_adequacy,sheet="Retirement benefit values", range="R5:R108",reformat=FALSE,col_names = FALSE)
+range_write(sim_wage_high,ss=id_adequacy,sheet="Retirement benefit values", range="AO5:AO108",reformat=FALSE,col_names = FALSE)
+
+#Update values on redistribution sheets
+
 id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita"))
 id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC"))
 id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE"))
