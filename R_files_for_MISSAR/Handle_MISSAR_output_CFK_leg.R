@@ -295,8 +295,8 @@ minima_high<-csv_minima%>%
 
 view(minima_low)
 range_write(minima_low,ss=id_adequacy,sheet="Retirement benefit values", range="i5:j108",reformat=FALSE,col_names = FALSE)
-range_write(sim_wage_central,ss=id_adequacy,sheet="Retirement benefit values", range="Y5:Z108",reformat=FALSE,col_names = FALSE)
-range_write(sim_wage_high,ss=id_adequacy,sheet="Retirement benefit values", range="BB5:BC108",reformat=FALSE,col_names = FALSE)
+range_write(minima_central,ss=id_adequacy,sheet="Retirement benefit values", range="AE5:AF108",reformat=FALSE,col_names = FALSE)
+range_write(minima_high,ss=id_adequacy,sheet="Retirement benefit values", range="BB5:BC108",reformat=FALSE,col_names = FALSE)
 
 rm(list=ls(pattern="^minima_"))
 rm(test,csv_minima)
