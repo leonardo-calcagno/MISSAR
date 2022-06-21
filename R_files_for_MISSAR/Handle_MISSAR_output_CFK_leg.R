@@ -299,7 +299,7 @@ range_write(minima_central,ss=id_adequacy,sheet="Retirement benefit values", ran
 range_write(minima_high,ss=id_adequacy,sheet="Retirement benefit values", range="BB5:BC108",reformat=FALSE,col_names = FALSE)
 
 rm(list=ls(pattern="^minima_"))
-rm(test,csv_minima)
+rm(csv_minima)
 
 
 #Update values on redistribution sheets
