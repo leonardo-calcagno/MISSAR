@@ -321,6 +321,45 @@ range_write(sim_wage_low,ss=id_adequacy,sheet="Retirement benefit values", range
 range_write(sim_wage_central,ss=id_adequacy,sheet="Retirement benefit values", range="R5:R108",reformat=FALSE,col_names = FALSE)
 range_write(sim_wage_high,ss=id_adequacy,sheet="Retirement benefit values", range="AO5:AO108",reformat=FALSE,col_names = FALSE)
 
+#Update minimum wage and minimum pension figures in adequacy sheets
+
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
+csv_minima<-read_sheet(id_globals,sheet="copy_to_csv_2020_leg",col_names = FALSE)
+csv_minima<-csv_minima%>%
+  subset(...1 %in% c("PERIOD","MIN_PENSION_CENTRAL_2014_T4","MINIMUM_WAGE_CENTRAL_2014_T4",
+                     "MIN_PENSION_HIGH_2014_T4","MINIMUM_WAGE_HIGH_2014_T4","MIN_PENSION_LOW_2014_T4","MINIMUM_WAGE_LOW_2014_T4"))%>%
+  t()%>%
+  as.data.frame()#Transposing gives a character string object, put it back to df
+names(csv_minima)<-csv_minima[1,] #Put first row as column names
+csv_minima<-csv_minima[-1,]%>%
+  mutate(PERIOD=as.numeric(PERIOD))%>%
+  subset(PERIOD>=49 & PERIOD<153)#We keep only projected periods
+view(csv_minima)
+minima_low<-csv_minima%>%
+  select(c("MINIMUM_WAGE_LOW_2014_T4","MIN_PENSION_LOW_2014_T4"))%>%
+  mutate(across(where(is.character),~as.numeric(.x))#Convert to numeric all character variables
+  )
+
+minima_central<-csv_minima%>%
+  select(c("MINIMUM_WAGE_CENTRAL_2014_T4","MIN_PENSION_CENTRAL_2014_T4"))%>%
+  mutate(across(where(is.character),~as.numeric(.x))#Convert to numeric all character variables
+  )
+minima_high<-csv_minima%>%
+  select(c("MINIMUM_WAGE_HIGH_2014_T4","MIN_PENSION_HIGH_2014_T4"))%>%
+  mutate(across(where(is.character),~as.numeric(.x))#Convert to numeric all character variables
+  )
+
+view(minima_low)
+range_write(minima_low,ss=id_adequacy,sheet="Retirement benefit values", range="i5:j108",reformat=FALSE,col_names = FALSE)
+range_write(minima_central,ss=id_adequacy,sheet="Retirement benefit values", range="AE5:AF108",reformat=FALSE,col_names = FALSE)
+range_write(minima_high,ss=id_adequacy,sheet="Retirement benefit values", range="BB5:BC108",reformat=FALSE,col_names = FALSE)
+
+rm(list=ls(pattern="^minima_"))
+rm(csv_minima)
+
+
+
+
 #Update values on redistribution sheets
 
 id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita"))
