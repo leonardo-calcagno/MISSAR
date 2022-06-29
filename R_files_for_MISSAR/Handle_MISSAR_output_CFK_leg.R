@@ -52,47 +52,10 @@ correct_csv<-function(input){
 }
 
 
-#Generate global files in csv format, without formatting problems (copy-pasting often generates missing decimal point errors)
-generate_globals<-function(id,input,output,ruta){
-
-csv_globals<-read_sheet(id,sheet=input)
-
-csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
-csv_globals<-csv_globals%>%
-  select(-c(152))%>%
-  correct_csv()# #Remove last column with #REF!
-
-# mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
-
-write_csv(csv_globals,output)
-drive_upload(output,path=ruta,overwrite = T) #Upload it corrected
-  
-}
-
-leg<-"June_2022_legislation/"
+leg<-"Dec_2015_legislation_with_moratorium/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
 #Google authentification may trigger here again, proceed with authentification before going further
-id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
-
-sheet_name<-"copy_to_csv_2020_leg"
-output_name<-"globals_prosp_jun_2022_leg.csv"
-generate_globals(id_globals,sheet_name,output_name,leg)
-
-
-sheet_name<-"copy_to_csv_Macri_leg"
-output_name<-"globals_prosp_scenarios_Macri_leg.csv"
-leg_Macri<-"Macri_legislation/"
-generate_globals(id_globals,sheet_name,output_name,leg_Macri)
-
-
-sheet_name<-"copy_to_csv_2017_leg"
-output_name<-"globals_transposed_prosp_scenarios_2017_leg.csv"
-leg_CFK<-"Dec_2015_legislation_with_moratorium/"
-generate_globals(id_globals,sheet_name,output_name,leg_CFK)
-
-#Cleanup 
-rm(output_name,sheet_name)
 
 #Import csv simulation results -----
 sust_folder<-drive_get(paste0(leg,sust))
@@ -137,25 +100,10 @@ csv_high_SIPA_income <- read_csv("high_SIPA_income.csv")%>%
   correct_csv()
 
 
-csv_temporary_pension_bonus_low <- read_csv("temporary_pension_bonus_low.csv")%>%
-  correct_csv()
-csv_temporary_pension_bonus_central <- read_csv("temporary_pension_bonus_central.csv")%>%
-  correct_csv()
-csv_temporary_pension_bonus_high <- read_csv("temporary_pension_bonus_high.csv")%>%
-  correct_csv()
-
-csv_IFE_cost_low <- read_csv("IFE_cost_low.csv")%>%
-  correct_csv()
-csv_IFE_cost_central <- read_csv("IFE_cost_central.csv")%>%
-  correct_csv()
-csv_IFE_cost_high <- read_csv("IFE_cost_high.csv")%>%
-  correct_csv()
-
-
 
 #Modify results sheets -----
 
-id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim"))
+id_deficit<- drive_get(paste0(leg,"Deficit_computation_CFK_leg"))
 
 write_sheet(csv_workers_and_wage_low,ss=id_deficit,sheet="workers_and_wage_low")
 write_sheet(csv_workers_and_wage_central,ss=id_deficit,sheet="workers_and_wage_central")
@@ -164,10 +112,6 @@ write_sheet(csv_workers_and_wage_high,ss=id_deficit,sheet="workers_and_wage_high
 write_sheet(csv_temporary_pension_bonus_low,ss=id_deficit,sheet="temporary_pension_bonus_low")
 write_sheet(csv_temporary_pension_bonus_central,ss=id_deficit,sheet="temporary_pension_bonus_central")
 write_sheet(csv_temporary_pension_bonus_high,ss=id_deficit,sheet="temporary_pension_bonus_high")
-
-write_sheet(csv_IFE_cost_low,ss=id_deficit,sheet="IFE_cost_low")
-write_sheet(csv_IFE_cost_central,ss=id_deficit,sheet="IFE_cost_central")
-write_sheet(csv_IFE_cost_high,ss=id_deficit,sheet="IFE_cost_high")
 
 
 write_sheet(csv_low_v2_m,ss=id_deficit,sheet="low_v2_m")
@@ -262,10 +206,10 @@ rm(sim_wage_central,sim_wage_low,sim_wage_high)
 head(sim_wage)
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
-range_write(sim_income,ss=id_globals,sheet="Simulated_ANSES_contributions",range="B3:D107",reformat=FALSE)
-range_write(sim_GDP,ss=id_globals,sheet="Simulated_ANSES_contributions",range="H3:J107",reformat=FALSE)
-range_write(sim_workers,ss=id_globals,sheet="Labour GDP participation",range="N3:P107",reformat=FALSE)
-range_write(sim_wage,ss=id_globals,sheet="Labour GDP participation",range="Q3:S107",reformat=FALSE)
+range_write(sim_income,ss=id_globals,sheet="Simulated_ANSES_contributions_2015",range="B3:D107",reformat=FALSE)
+range_write(sim_GDP,ss=id_globals,sheet="Simulated_ANSES_contributions_2015",range="H3:J107",reformat=FALSE)
+#range_write(sim_workers,ss=id_globals,sheet="Labour GDP participation",range="N3:P107",reformat=FALSE) We assume identical wages and GDP across legislative scenarios
+#range_write(sim_wage,ss=id_globals,sheet="Labour GDP participation",range="Q3:S107",reformat=FALSE)
 
 rm(list=ls(pattern="^sim_"))
 
@@ -302,11 +246,12 @@ csv_redistribution_high_insee <- read_csv("redistribution_high_insee.csv")%>%
 
 
 #Modify the corresponding sheets
-id_adequacy<- drive_get(paste0(leg,"Graphics_adequacy"))
+id_adequacy<- drive_get(paste0(leg,"Graphics_adequacy_CFK_leg"))
 
 write_sheet(csv_adequacy_central,ss=id_adequacy,sheet="Adequacy_central")
 write_sheet(csv_adequacy_low,ss=id_adequacy,sheet="Adequacy_low")
 write_sheet(csv_adequacy_high,ss=id_adequacy,sheet="Adequacy_high")
+
 
 #Update wage figures in adequacy sheets
 
@@ -324,21 +269,20 @@ range_write(sim_wage_high,ss=id_adequacy,sheet="Retirement benefit values", rang
 #Update minimum wage and minimum pension figures in adequacy sheets
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
-csv_minima<-read_sheet(id_globals,sheet="copy_to_csv_2020_leg",col_names = FALSE)
+csv_minima<-read_sheet(id_globals,sheet="copy_to_csv_2017_leg",col_names = FALSE)
 csv_minima<-csv_minima%>%
-  subset(...1 %in% c("PERIOD","MIN_PENSION_CENTRAL_2014_T4","MINIMUM_WAGE_CENTRAL_2014_T4",
+  subset(...1 %in% c("PERIOD","ANIO","MIN_PENSION_CENTRAL_2014_T4","MINIMUM_WAGE_CENTRAL_2014_T4",
                      "MIN_PENSION_HIGH_2014_T4","MINIMUM_WAGE_HIGH_2014_T4","MIN_PENSION_LOW_2014_T4","MINIMUM_WAGE_LOW_2014_T4"))%>%
   t()%>%
   as.data.frame()#Transposing gives a character string object, put it back to df
 names(csv_minima)<-csv_minima[1,] #Put first row as column names
 csv_minima<-csv_minima[-1,]%>%
-  mutate(PERIOD=as.numeric(PERIOD))%>%
-  subset(PERIOD>=49 & PERIOD<153)#We keep only projected periods
+  subset(ANIO>=2015 & ANIO<2041)#We keep only projected periods
 view(csv_minima)
 minima_low<-csv_minima%>%
   select(c("MINIMUM_WAGE_LOW_2014_T4","MIN_PENSION_LOW_2014_T4"))%>%
   mutate(across(where(is.character),~as.numeric(.x))#Convert to numeric all character variables
-  )
+         )
 
 minima_central<-csv_minima%>%
   select(c("MINIMUM_WAGE_CENTRAL_2014_T4","MIN_PENSION_CENTRAL_2014_T4"))%>%
@@ -358,13 +302,11 @@ rm(list=ls(pattern="^minima_"))
 rm(csv_minima)
 
 
-
-
 #Update values on redistribution sheets
 
-id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita"))
-id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC"))
-id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE"))
+id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita_CFK_leg"))
+id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC_CFK_leg"))
+id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE_CFK_leg"))
 
 
 write_sheet(csv_redistribution_central,ss=id_redistribution,sheet="Redistribution_central")
@@ -380,21 +322,21 @@ write_sheet(csv_redistribution_low_insee,ss=id_redistribution_INSEE,sheet="Redis
 write_sheet(csv_redistribution_high_insee,ss=id_redistribution_INSEE,sheet="Redistribution_high")
 
 #Update simulated number of pensions in globals file -----
-
+head(csv_adequacy_central)
 sim_benefits_central<-csv_adequacy_central%>%
-  select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
+  select(period,Total_SIPA_benefits,Total_SIPA_non_mor_benefits)%>%
   rename(Central_total=Total_SIPA_benefits, 
-         Central_cont=Total_non_moratorium_benefits)
+         Central_cont=Total_SIPA_non_mor_benefits)
 
 sim_benefits_low<-csv_adequacy_low%>%
-  select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
+  select(period,Total_SIPA_benefits,Total_SIPA_non_mor_benefits)%>%
   rename(Pesimista_total=Total_SIPA_benefits, 
-         Pesimista_cont=Total_non_moratorium_benefits)
+         Pesimista_cont=Total_SIPA_non_mor_benefits)
 
 sim_benefits_high<-csv_adequacy_high%>%
-  select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
+  select(period,Total_SIPA_benefits,Total_SIPA_non_mor_benefits)%>%
   rename(Optimista_total=Total_SIPA_benefits, 
-         Optimista_cont=Total_non_moratorium_benefits)
+         Optimista_cont=Total_SIPA_non_mor_benefits)
 
 
 sim_benefits<-sim_benefits_central%>%
@@ -405,7 +347,7 @@ rm(sim_benefits_central,sim_benefits_low,sim_benefits_high)
 
 sim_benefits<-sim_benefits[,c(1,3,5,2,4,6)] #Re-order columns
 
-range_write(sim_benefits,ss=id_globals,sheet="Simulated_ANSES_contributions",range="AV3:BA107",reformat=FALSE)
+range_write(sim_benefits,ss=id_globals,sheet="Simulated_ANSES_contributions_2015",range="AV3:BA107",reformat=FALSE)
 
 rm(list=ls(pattern="^sim_"))
 rm(list=ls(pattern="^csv_"))
