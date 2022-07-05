@@ -1097,7 +1097,8 @@ entities:
             - temporary_pension_bonus: {type: float, initialdata: false} 
             #We record total contributed years after 2003, important for determining access to Law 26970 pension moratorium for women
             - car_post_2003: {type: int, initialdata: false}
-            #We record total contributed years after march 2012, important for determining access to the proposed buyback mechanism
+            #We record total contributed years after march 2012 and after december 2008, important for determining access to the proposed buyback mechanism and to the new moratorium
+            - car_post_2008_q4: {type: int, initialdata: false}
             - car_post_2012_q1: {type: int, initialdata: false}
             - quarters_bought_back: {type: int, initialdata: false}
             #We count for each woman the maximum number of children she had, and how many of these had the AUH. This is used for Decree 475/2021 recognisition
@@ -1346,10 +1347,13 @@ entities:
                 - temp_10: lag_mono_11+lag_mono_12+lag_mono_13+lag_mono_14+lag_mono_15+lag_mono_16+lag_mono_17+lag_mono_18+lag_mono_19+lag_mono_20
                 - temp_11: lag_mono_21+lag_mono_22+lag_mono_23+lag_mono_24+lag_mono_25+lag_mono_26+lag_mono_27+lag_mono_28+lag_mono_29+lag_mono_30
                 - temp_12: lag_mono_31+lag_mono_32+lag_mono_33+lag_mono_34+lag_mono_35+lag_mono_36+lag_mono_37+lag_mono_38+lag_mono_39+lag_mono_40
+                - temp_13: lag_count_sal_21+lag_count_sal_22+lag_count_sal_23+lag_count_ind_21+lag_count_ind_22+lag_count_ind_23+lag_mono_21+lag_mono_22+lag_mono_23
                 - car_post_2003: temp_1+temp_2+temp_3+temp_4+temp_5+temp_6+temp_7+temp_8+temp_9+temp_10+temp_11+temp_12
         #Eight, the proposed permanent buyback mechanism allows buying back missing contribution years up to 31/03/2012, that is, period 37. We thus count the career after that date, 
-               #to determine whether a given worker can buy back enough missing months to get to 30 years of contributions. That means, reaching as far back as lag_count_sal_10 (second quarter of 2012)
+               #to determine whether a given worker can buy back enough missing months to get to 30 years of contributions. That means, reaching as far back as lag_count_sal_10 (second quarter of 2012). Similarly, 
+               #we compute total contributed quarters since 01/01/2009, so up to lag_count_sal_23. 
                 - car_post_2012_q1: temp_1+temp_5+temp_9
+                - car_post_2008_q4: car_post_2012_q1 + temp_2 + temp_6 + temp_10 
                 - quarters_bought_back: 0
         #Ninth, we keep track of the total number of quarters a given child received the AUH child benefit. This is relevant for recognisition of contribution on account
                 #of unpaid household labour. 
@@ -2633,6 +2637,14 @@ entities:
                                     car_post_2003+1)
                 - car_post_2003: if(monotributo==0, car_post_2003, 
                                     car_post_2003+1)
+                - car_post_2008_q4: if(autonomo==0, car_post_2008_q4, 
+                                    car_post_2008_q4+1)
+                - car_post_2008_q4: if(monotributo==0, car_post_2008_q4, 
+                                    car_post_2008_q4+1)
+                - car_post_2012_q1: if(autonomo==0, car_post_2012_q1, 
+                                    car_post_2012_q1+1)
+                - car_post_2012_q1: if(monotributo==0, car_post_2012_q1, 
+                                    car_post_2012_q1+1)
     #2- We then determine each "Monotributista"'s category. For Monotributistas, we only look at Monotributo categories' income limits. 
         #How we compute these limits is explained in my PhD. thesis, Appendix F. 
                 - monotributo_cat: if(monotributo==0, 0, 
@@ -2994,6 +3006,10 @@ entities:
                 - car_sal: if(labour_market_state==1,car_sal+1,car_sal)
                 - car_post_2003: if(labour_market_state==1, car_post_2003+1, 
                                     car_post_2003)
+                - car_post_2008_q4: if(labour_market_state==1, car_post_2008_q4+1, 
+                                       car_post_2008_q4)
+                - car_post_2012_q1: if(labour_market_state==1, car_post_2012_q1+1, 
+                                       car_post_2012_q1)
                         
         #It is worthy to note the discounting index used by ANSES before 2016 (used in variable lag_sal) and the new post 2016 discounting index (lag_sal_2) are identical
                 #since the implementation of the pension mobility law in March 2009. Therefore, the difference between these two ways to compute retirement pensions will 
@@ -3149,55 +3165,7 @@ entities:
                 - extra_trim: if(male, (age_quarters-65*4), (age_quarters-60*4))
                 - extra_trim: if(extra_trim<=0, 0, extra_trim)
                 - extra_trim: extra_trim + care_trim*2
-    #1.4.- Proposed 2022 moratorium: you can rebuy missing contribution years when nearing retirement age, up to 31/3/2012. This is a permanent measure. You can only
-        #do this if you are a registered worker and you have enough income to buy the required months; and it is voluntary. We will have to make a lot of assumptions, 
-        #but we will assume that: 
-        #1- If you can retire without buying back any month, assuming you keep registered work until retirement age, then you don't buy back. 
-        #2- You buy back the required minimum of months to retire, assuming you keep your registered work until retirement age. 
-        #3- You can only buy back months for up to 25% of net monthly income. 
-        #4- If needed, you can buy back more than a month at a time, if it rests below 25% of your gross income. 
-        #5- This measure is implemented from the fourth quarter of 2022 onward, so period==80; and can buy until period==37 (first quarter of 2012)
-             #   - retirement_date: if(ISMALE, period + (65-ageconti), 
-              #                       period + (60-ageconti)
-               #                      )
-                - legal_retirement_age: if(ISMALE, 65, 
-                                           60)
-                - contributed_quarters: car_sal + car_ind + car_mono_norref + quarters_bought_back
-                - buyable_quarters: age_quarters-18*4 -(period-37) - (contributed_quarters - car_post_2012_q1)
-                - remaining_career: if(ISMALE, 65*4-age_quarters, 
-                                       60*4-age_quarters)
-        #This should work for people that cannot retire with the new moratorium; there should however be a provision for those who could retire with the moratorium
-                #without needing to buy back missing quarters before reaching retirement age. SEGUIR AQUI
-                - buyback_quarter: if(age<(legal_retirement_age-10) or age >=(legal_retirement_age) or period <80, False,
-                                             if(contributed_quarters>=(120-remaining_career), False, 
-                                                if((buyable_quarters + contributed_quarters + remaining_career )<(120-extra_trim/2), False,
-                                                   if(monotributo==0 and not IS_INDEPENDENT and not IS_WAGE_EARNER, False,
-                                                   True)
-                                                   )
-                                                )
-                                           )
-
-        #For variables that may have missing values, we use the sum() function with skip_na=True. Since each individual only has one family benefit or temporary pension bonus
-               #bonus variable, it is equal to the family benefits or pension bonus value; but doing so allows us to get an individual all_income variable even if these values 
-                #are missing. 
-                - all_income: discounted_itl + discounted_v2_m + sum(discounted_v5_m,skip_na=True) + sum(temporary_pension_bonus,skip_na=True)
-                - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
-                - new_quarters_bought: if(not buyback_quarter, 0, 
-                                       trunc((all_income*0.25)/(min_contributive_base*0.29))
-                                       )
-                - excess_quarters: if(not buyback_quarter, 0, 
-                                      buyable_quarters + contributed_quarters + remaining_career + new_quarters_bought -(120-extra_trim/2))
-                - new_quarters_bought: if(not buyback_quarter, 0, 
-                                          if(excess_quarters>0, new_quarters_bought-excess_quarters, 
-                                             new_quarters_bought)
-                                          )
-                - quarters_bought_back: if(ISMALE and age<55 or ISFEMALE and age<50, 0, 
-                                           quarters_bought_back)
-        #For the first periods, new_quarters bought (equal 0) is automatically considered a float, when it should be an integer. We thus truncate to fall back to an 
-                # integer
-                - new_quarters_bought: trunc(new_quarters_bought)
-                - quarters_bought_back: quarters_bought_back + new_quarters_bought
-                - buyback_payment: new_quarters_bought*min_contributive_base*0.29
+    
                 
     #2- We compute contributory retirement pensions.  
         #First, we compute the replacement ratio an individual would get if he retired now. By definition, this ratio is null before the legal retirement age.
@@ -4257,7 +4225,72 @@ entities:
                 - decree_216_2022_bonus: if(limite_joven, 0,
                                             decree_216_2022_bonus)
                 - individual_IFE: decree_216_2022_bonus*1
-                
+
+		
+		
+		
+#1.4.- Proposed 2022 moratorium: you can rebuy missing contribution years when nearing retirement age, up to 31/3/2012. This is a permanent measure. You can only
+        #do this if you are a registered worker and you have enough income to buy the required months; and it is voluntary. We will have to make a lot of assumptions, 
+        #but we will assume that: 
+#1- If you can retire without buying back any month, assuming you keep registered work until retirement age, then you don't buy back. 
+#2- You buy back the required minimum of months to retire, assuming you keep your registered work until retirement age. 
+#3- You can only buy back months for up to 25% of net monthly income. 
+#4- If needed, you can buy back more than a month at a time, if it rests below 25% of your gross income. 
+#5- This measure is implemented from the fourth quarter of 2022 onward, so period==80; and can buy until period==37 (first quarter of 2012)
+#6- If you reach retirement age up until four years after the implementation of this law (so until period==96), you only buy back the years necessary to 
+        #retire with the moratorium (that you can buy until 31/12/2008, so until period==24)
+            proposed_moratorium:
+                - legal_retirement_age: if(ISMALE, 65, 
+                                           60)
+                - legal_retirement_date: period + legal_retirement_age*4 - age_quarters
+                - contributed_quarters: car_sal + car_ind + car_mono_norref + quarters_bought_back
+                - remaining_career: if(ISMALE, 65*4-age_quarters, 
+                                       60*4-age_quarters)
+                - remaining_career: if(remaining_career<=0, 0, 
+                                       remaining_career)
+                - buyable_quarters: age_quarters-18*4 -(period-37) - (contributed_quarters - car_post_2012_q1)
+                - buyback_quarter: if(age<(legal_retirement_age-10) or age >=(legal_retirement_age) or period <80, False,
+                                             if(contributed_quarters + remaining_career>=(120-extra_trim/2), False, 
+                                                if((buyable_quarters + contributed_quarters + remaining_career )<(120-extra_trim/2), False,
+                                                   if(monotributo==0 and not IS_INDEPENDENT and not IS_WAGE_EARNER, False,
+                                                   True)
+                                                   )
+                                                )                                           )
+                - moratorium_quarters: age_quarters-18*4 - (period-24) - (contributed_quarters - car_post_2008_q4)
+        #We assume those who can enter the proposed moratorium during the four proposed years, will only buy back the quarters needed to enter the moratorium (so only
+                #if contribution years after december 2008 are not enough to complement years between age 18 and december 2008). 
+                - can_enter_moratorium: if(legal_retirement_date<80 or legal_retirement_date>96, False, 
+                                           if(age<legal_retirement_age, False,
+                                              if(contributed_quarters + remaining_career>=(120-extra_trim/2), False, 
+                                                 if((moratorium_quarters + contributed_quarters)<(120-extra_trim/2), False					   
+                                                    True)
+                                                )
+                                             )
+                                           )
+                - moratorium_quarters: age_quarters-18*4 -(period-24) - (contributed_quarters - car_post_2012_q1)
+		
+        #For variables that may have missing values, we use the sum() function with skip_na=True. Since each individual only has one family benefit or temporary pension bonus
+               #bonus variable, it is equal to the family benefits or pension bonus value; but doing so allows us to get an individual all_income variable even if these values 
+                #are missing. 
+                - all_income: discounted_itl + discounted_v2_m + sum(discounted_v5_m,skip_na=True) + sum(temporary_pension_bonus,skip_na=True)
+                - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
+                - new_quarters_bought: if(not buyback_quarter, 0, 
+                                       trunc((all_income*0.25)/(min_contributive_base*0.29))
+                                       )
+                - excess_quarters: if(not buyback_quarter, 0, 
+                                      buyable_quarters + contributed_quarters + remaining_career + new_quarters_bought -(120-extra_trim/2))
+                - new_quarters_bought: if(not buyback_quarter, 0, 
+                                          if(excess_quarters>0, new_quarters_bought-excess_quarters, 
+                                             new_quarters_bought)
+                                          )
+                - quarters_bought_back: if(ISMALE and age<55 or ISFEMALE and age<50, 0, 
+                                           quarters_bought_back)
+        #For the first periods, new_quarters bought (equal 0) is automatically considered a float, when it should be an integer. We thus truncate to fall back to an 
+                # integer
+                - new_quarters_bought: trunc(new_quarters_bought)
+                - quarters_bought_back: quarters_bought_back + new_quarters_bought
+                - buyback_payment: new_quarters_bought*min_contributive_base*0.29
+		
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
@@ -4295,7 +4328,7 @@ simulation:
         - household: [household_composition, igf_household]
     #We simulate retirement pensions before family benefits because the former enter in the computation of the Family-Group Income (IGF). Family benefits
             #are means-tested on the IGF. 
-        - person: [retirement,temporary_measures_pensions,IFE_person]
+        - person: [retirement,temporary_measures_pensions,IFE_person,proposed_moratorium]
         - household: [household_composition,clean_empty, igf_household]
         - person: [family_benefits,adequacy] 
     #You can add the percentiles module after adequacy above if you want to measure contributory retirement income distribution. Remember to uncomment, at the end of 
