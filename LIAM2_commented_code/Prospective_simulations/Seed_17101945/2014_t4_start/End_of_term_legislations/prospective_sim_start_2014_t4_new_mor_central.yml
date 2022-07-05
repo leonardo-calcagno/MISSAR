@@ -1429,6 +1429,9 @@ entities:
                 - csv('Period','All_pensions','Contributory_pensions','Moratorium_and_PUAM',
                                                 fname='temporary_pension_bonus_central.csv',mode='a')
                 - csv('Period','AUH','Contributory_fam_ben', fname='temporary_fam_ben_bonus_central.csv',mode='a')
+        ###############################################################################################################
+                - csv('Period','Total_buyers','Mean_quarters_bought','Total_payment',
+                                                fname='buyback_mechanism_central.csv',mode='a')
         ###############################################################################################################        
            #     - csv('Period', '90_100_dec','80_90_dec','70_80_dec','60_70_dec','50_60_dec',
             #                        '40_50_dec','30_40_dec','20_30_dec','10_20_dec','0_100_dec',
@@ -1476,8 +1479,14 @@ entities:
             #The vast majority of survivor's pensions originate from the death of a retiree. Under some conditions however, the death of a worker may trigger survivor's pensions.
                 #First, if the worker had contributed 30 years or more (including the discount of years due to old age if he exceeded the minimum retirement age), he is considered a regular contributor.
                     #Else, if he contributed at least during two and a half years during the last five years, then he is also considered a regular contributor. 
+            #See the retirement process for comments on the care_trim variable. 
+                - care_trim: if(male, 0,
+                                   if(period <76,0,
+                                        (total_child_mother-total_auh_mother)*4+total_auh_mother*12)
+                                )
                 - extra_trim: if(male, (age_quarters-65*4), (age_quarters-60*4))
                 - extra_trim: if(extra_trim<=0, 0, extra_trim)
+                - extra_trim: extra_trim + care_trim*2
                 - val_years: trunc((car_sal+car_ind+car_mono_norref+extra_trim/2)/4)
                 - regular_contributor: if(liqui_retirement, False, 
                                     if(val_years>=30, True, 
@@ -4226,10 +4235,7 @@ entities:
                                             decree_216_2022_bonus)
                 - individual_IFE: decree_216_2022_bonus*1
 
-		
-		
-		
-#1.4.- Proposed 2022 moratorium: you can rebuy missing contribution years when nearing retirement age, up to 31/3/2012. This is a permanent measure. You can only
+#Proposed 2022 moratorium: you can rebuy missing contribution years when nearing retirement age, up to 31/3/2012. This is a permanent measure. You can only
         #do this if you are a registered worker and you have enough income to buy the required months; and it is voluntary. We will have to make a lot of assumptions, 
         #but we will assume that: 
 #1- If you can retire without buying back any month, assuming you keep registered work until retirement age, then you don't buy back. 
@@ -4240,6 +4246,14 @@ entities:
 #6- If you reach retirement age up until four years after the implementation of this law (so until period==96), you only buy back the years necessary to 
         #retire with the moratorium (that you can buy until 31/12/2008, so until period==24)
             buyback_mechanism:
+        #See the retirement process for comments on care_trim and extra_trim
+                - care_trim: if(male, 0,
+                                   if(period <76,0,
+                                        (total_child_mother-total_auh_mother)*4+total_auh_mother*12)
+                                )
+                - extra_trim: if(male, (age_quarters-65*4), (age_quarters-60*4))
+                - extra_trim: if(extra_trim<=0, 0, extra_trim)
+                - extra_trim: extra_trim + care_trim*2
                 - legal_retirement_age: if(ISMALE, 65, 
                                            60)
                 - legal_retirement_date: period + legal_retirement_age*4 - age_quarters
@@ -4247,15 +4261,15 @@ entities:
                 - remaining_career: if(ISMALE, 65*4-age_quarters, 
                                        60*4-age_quarters)
                 - remaining_career: if(remaining_career<=0, 0, 
-                                       remaining_career)                                          )
+                                       remaining_career)
                 - moratorium_quarters: age_quarters-18*4 - (period-24) - (contributed_quarters - car_post_2008_q4)
         #We assume those who can enter the proposed moratorium during the four proposed years, will only buy back the quarters needed to enter the moratorium (so only
                 #if contribution years after december 2008 are not enough to complement years between age 18 and december 2008). Also, if it may retire normally, 
                 #assuming it has registered labour until the legal retirement age, it is not flagged as retiring with a pension moratorium. 
         #We need a distinct process for those who can enter the moratorium but are currently earning the PUAM, o no benefit at all despite having the legal retirement age
                 - can_enter_moratorium: if(legal_retirement_date<80 or legal_retirement_date>96, False, 
-                                              if(contributed_quarters + remaining_career>=(120-extra_trim/2), False, 
-                                                 if((moratorium_quarters + contributed_quarters + remaining_career)<(120-extra_trim/2), False					   
+                                              if((contributed_quarters + remaining_career)>=(120-extra_trim/2), False, 
+                                                 if((moratorium_quarters + contributed_quarters + remaining_career)<(120-extra_trim/2), False,
                                                     True)
                                                 )
                                            )
@@ -4271,8 +4285,8 @@ entities:
                                                    )
                                                 )
                                         )
-                                      )					
-		
+                                      )
+
         #For variables that may have missing values, we use the sum() function with skip_na=True. Since each individual only has one family benefit or temporary pension bonus
                #bonus variable, it is equal to the family benefits or pension bonus value; but doing so allows us to get an individual all_income variable even if these values 
                 #are missing. 
@@ -4293,7 +4307,11 @@ entities:
                 - new_quarters_bought: trunc(new_quarters_bought)
                 - quarters_bought_back: quarters_bought_back + new_quarters_bought
                 - buyback_payment: new_quarters_bought*min_contributive_base*0.29
-		
+                - breakpoint()
+            #    - csv(period,count(pondera,filter=buyback_payment>0),avg(new_quarters_bought,weights=pondera,filter=)
+             #   - csv('Period,'Total_buyers','Mean_quarters_bought','Total_payment', 
+              #                                  fname='buyback_mechanism_central.csv',mode='a')
+
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
