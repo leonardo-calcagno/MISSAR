@@ -1430,7 +1430,7 @@ entities:
                                                 fname='temporary_pension_bonus_central.csv',mode='a')
                 - csv('Period','AUH','Contributory_fam_ben', fname='temporary_fam_ben_bonus_central.csv',mode='a')
         ###############################################################################################################
-                - csv('Period','Total_buyers','Mean_quarters_bought','Total_payment',
+                - csv('Period','Total_buyers','Mean_quarters_bought','Total_quarters_bought','Total_payment','Average_income_buyers',
                                                 fname='buyback_mechanism_central.csv',mode='a')
         ###############################################################################################################        
            #     - csv('Period', '90_100_dec','80_90_dec','70_80_dec','60_70_dec','50_60_dec',
@@ -4304,14 +4304,17 @@ entities:
                                           new_quarters_bought)
         #For the first periods, new_quarters bought (equal 0) is automatically considered a float, when it should be an integer. We thus truncate to fall back to an 
                 # integer
+                - new_quarters_bought: if(new_quarters_bought<=0, 0, 
+                                          new_quarters_bought)
                 - new_quarters_bought: trunc(new_quarters_bought)
+                - quarters_bought_back: if(quarters_bought_back<0, 0, 
+                                           quarters_bought_back)
                 - quarters_bought_back: quarters_bought_back + new_quarters_bought
                 - buyback_payment: new_quarters_bought*min_contributive_base*0.29
-                - breakpoint()
-            #    - csv(period,count(pondera,filter=buyback_payment>0),avg(new_quarters_bought,weights=pondera,filter=)
-             #   - csv('Period,'Total_buyers','Mean_quarters_bought','Total_payment', 
-              #                                  fname='buyback_mechanism_central.csv',mode='a')
-
+                - bought_quarters: if(new_quarters_bought>0, 1, 
+                                 0)
+                - csv(period,sum(bought_quarters*pondera),avg(new_quarters_bought,filter=new_quarters_bought>0, weights=pondera),sum(quarters_bought_back*pondera), sum(buyback_payment*pondera),avg(all_income,weights=pondera,filter=new_quarters_bought>0),
+                                                fname='buyback_mechanism_central.csv',mode='a')
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
                             male,marital_status,age,pondera,
