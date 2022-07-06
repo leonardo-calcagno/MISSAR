@@ -1101,6 +1101,11 @@ entities:
             - car_post_2008_q4: {type: int, initialdata: false}
             - car_post_2012_q1: {type: int, initialdata: false}
             - quarters_bought_back: {type: int, initialdata: false}
+            - quarters_needed: {type: int, initialdata: false}
+            - remaining_payments: {type: int, initialdata: false}
+            - tag_moratorium_senate: {type: bool, initialdata: false}
+            - gross_moratorium_senate: {type: float, initialdata: false}
+            - gross_moratorium_senate_2: {type: float, initialdata: false}
             #We count for each woman the maximum number of children she had, and how many of these had the AUH. This is used for Decree 475/2021 recognisition
                  #of contributed years for household care work.
             - total_child_mother: {type: int, initialdata: false}
@@ -3198,8 +3203,10 @@ entities:
         #We now see who starts earning a new contributory retirement pension. We tag him/her as having liquidated his/her retirement rights. Monotributo contributions 
                 #do give access to a contributory pension (to the PBU more specifically), although they do not count for either the PC or the PAP. They must however 
                 #be taken into account when determining who retires.
+        #Missing quarters bought back in advance are included here for access to a contributory pension
                 - new_contributory_pension: if(liqui_retirement or age<60 or (age<65 and male), False, 
-                                    if((age>=65 or(age>=60 and not male)) and((car_sal + car_ind + car_mono_norref)>=(120-extra_trim/2)), True,False))                    
+                                               if((age>=65 or(age>=60 and not male)) and((car_sal + car_ind + car_mono_norref + quarters_bought_back)>=(120-extra_trim/2)), True,
+                                                 False))                    
                 - liqui_retirement: if(new_contributory_pension,True,liqui_retirement)
         #We then compute individual rights to a pension. The reference income of formal dependent labour spells is the discounted average of the last 10 years of 
                 #dependent formal work. Periods where the individual was not a formal wage-earner are not taken into consideration. Thus the computation of variable 
@@ -3210,10 +3217,11 @@ entities:
             #Past income that enters in the computation of retirement pensions is discounted as if the individual retired in November 2014. To get actual retirement rights 
                     #that take into account the increase in real wages since November 2014, we multiply the reference income by the gross real wage of the period where the individual
                     #retires and divide it by the RIPTE of November 2014 (11,802.61 pesos). 
-                - right_to_a_pension: if(car_sal+car_ind+car_mono_norref>0,
+            #We include quarters bought back for determining if an individual has the right to get a contributive retirement benefit. 
+                - right_to_a_pension: if(car_sal + car_ind + car_mono_norref + quarters_bought_back>0,
                                             GROSS_WAGE_CENTRAL_2014_T4/11802.61*replacement_ratio*((sum_rent_aut/car_ind*ind_ponderation + sum_lag_sal/sum_count_40_sal*sal_ponderation)), 
                                                 0)
-                - right_to_a_pension_2: if(car_sal+car_ind +car_mono_norref>0,
+                - right_to_a_pension_2: if(car_sal + car_ind + car_mono_norref + quarters_bought_back>0,
                                             GROSS_WAGE_CENTRAL_2014_T4/11802.61*replacement_ratio*((sum_rent_aut_2/car_ind*ind_ponderation + sum_lag_sal_2/sum_count_40_sal*sal_ponderation)), 
                                                 0)      
             #The right_to_a_pension variable corresponds to the sum of the PAP and the PC. To get the actual new pension, we add the PBU. Its value depends on the pension
@@ -3304,6 +3312,112 @@ entities:
                 - gross_retirement: if(moratorium_date==0 or moratorium_date==-1, gross_retirement, moratorium_value)
                 - gross_retirement_2: if(moratorium_date==0 or moratorium_date==-1, gross_retirement_2, moratorium_value)
         #3.4. New proposed moratorium pension:
+                - legal_retirement_age: if(ISMALE, 65, 
+                                           60)
+                - legal_retirement_date: period + legal_retirement_age*4 - age_quarters
+                - contributed_quarters: car_sal + car_ind + car_mono_norref + quarters_bought_back
+                - remaining_career: if(ISMALE, 65*4-age_quarters, 
+                                       60*4-age_quarters)
+                - remaining_career: if(remaining_career<=0, 0, 
+                                       remaining_career)
+                - moratorium_quarters: age_quarters-18*4 - (period-24) - (contributed_quarters - car_post_2008_q4)
+        #We assume here the moratorium is only available for four years (so until the fourth quarter of 2026, period 96). People that today have the PUAM may enter. Contrary to the 
+                #buyback mechanism, here you can only enter the moratorium if you reached retirement age. Following Art. 13 of the draft law, those earning today a moratorium pension 
+                #can't enter this new moratorium program. 
+        #It is not possible to earn this proposed moratorium pension if you already have a retirement benefit, including a 2006 or a Law 26.970 moratorium pension.
+                - new_moratorium_senate: if(period<80 or period>96, False,
+                                           if(age<legal_retirement_age, False, 
+                                              if(liqui_retirement, False,
+                                                 if((contributed_quarters)>=(120-extra_trim/2), False, 
+                                                    if((moratorium_quarters + contributed_quarters)<(120-extra_trim/2), False,
+                                                       True)
+                                                   )
+                                                )
+                                              )
+                                          )
+        #The draft law does not include any explicit means condition to enter the pension moratorium; this is only mentioned when evaluating the characteristics 
+                #and span of the payment plan, and the characteristics of such plan are not explicit in the draft law. Our interpretation is thus that anyone can 
+                #enter, and for now we assume everyone gets the 10 year span to pay back missing months. 
+                - quarters_needed: if(period<80, 0, 
+                                      quarters_needed)
+                - quarters_needed: if(quarters_needed>0, quarters_needed,
+                                     if(new_moratorium_senate, 
+                                        30*4 - contributed_quarters - trunc(extra_trim/2), 
+                                        quarters_needed)
+                                      )
+                - quarters_needed: if(quarters_needed<0, 0, 
+                                      quarters_needed)
+                - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
+                - tag_moratorium_senate: if(period<80, False, 
+                                            tag_moratorium_senate)
+        #Following Art. 12, it is possible to earn a survivors benefit together with this moratorium pension, but only if its below the minimum pension. 
+                - tag_moratorium_senate: if(new_moratorium_senate, True,
+                                            if(gross_pension>MIN_PENSION_CENTRAL_2014_T4, False,
+                                               tag_moratorium_senate)
+                                            )
+                - liqui_retirement: if(tag_moratorium_senate, True, 
+                                       liqui_retirement)
+        #Once you enter the pension moratorium, you get a benefit normally.
+                - right_to_a_moratorium_pension: if(new_moratorium_senate and tag_moratorium_senate,
+                                                  GROSS_WAGE_CENTRAL_2014_T4/11802.61*replacement_ratio*((sum_rent_aut/car_ind*ind_ponderation + sum_lag_sal/sum_count_40_sal*sal_ponderation)), 
+                                                0)   
+                - right_to_a_moratorium_pension_2: if(new_moratorium_senate and tag_moratorium_senate,
+                                                    GROSS_WAGE_CENTRAL_2014_T4/11802.61*replacement_ratio*((sum_rent_aut_2/car_ind*ind_ponderation + sum_lag_sal_2/sum_count_40_sal*sal_ponderation)), 
+                                                   0)  
+            #The right_to_a_pension variable corresponds to the sum of the PAP and the PC. To get the actual new pension, we add the PBU. Its value depends on the pension
+                    #mobility up to the studied period, which in turn depends (to some extent) on the evolution of wages. As such, the real PBU depends on the chosen economic 
+                    #scenario. 
+                - gross_moratorium_senate: if(new_moratorium_senate and tag_moratorium_senate, PBU_CENTRAL_2014_T4+ right_to_a_moratorium_pension,
+                                              gross_moratorium_senate) 
+                - gross_moratorium_senate_2: if(new_moratorium_senate and tag_moratorium_senate, PBU_CENTRAL_2014_T4+ right_to_a_moratorium_pension_2,
+                                                gross_moratorium_senate_2)
+            #We submit these retirement pensions to the minimum and maximum pensions in force for the period. 
+                - gross_moratorium_senate: if(new_moratorium_senate and tag_moratorium_senate, 
+                                              if(gross_moratorium_senate<MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4, 
+                                                 if(gross_moratorium_senate>MAX_PENSION_CENTRAL_2014_T4, MAX_PENSION_CENTRAL_2014_T4, 
+                                                    gross_moratorium_senate)),
+                                              gross_moratorium_senate) 
+                - gross_moratorium_senate_2: if(new_moratorium_senate and tag_moratorium_senate, 
+                                                if(gross_moratorium_senate_2<MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4, 
+                                                   if(gross_moratorium_senate_2>MAX_PENSION_CENTRAL_2014_T4, MAX_PENSION_CENTRAL_2014_T4, 
+                                                      gross_moratorium_senate_2)),
+                                                gross_moratorium_senate_2)
+        #Those entering the pension moratorium (technically, those buying back the "pension payment unity") don't need to pay out of pocket. Instead, they can pay 
+                #on instalments over 1, 5 or 10 years, following conditions not specified in the draft law. As such, we assume here all individuals choose to pay 
+                #over 10 years, which gives the highest inmediate pension level. 
+        #Each instalment is discounted following pension mobility, so it is correct to recompute the initial debt at each period. 
+                - total_debt: quarters_needed*min_contributive_base*0.29
+                - remaining_payments: if(period<80, 0, 
+                                         remaining_payments)
+                - remaining_payments: if(new_moratorium_senate and tag_moratorium_senate, 40, 
+                                         remaining_payments)
+        #It is not possible to reduce by more than 20% the pension benefit. However, if paid across 10 years, even someone with 0 validated quarters and no care quarters
+                # would only see its (minimum) pension  reduced by 9.77%. As thus, we can simply reduce the gross retirement by the payment plan amount. 
+                - gross_retirement: if(tag_moratorium_senate and remaining_payments>0, gross_moratorium_senate-total_debt/40,
+                                       if(tag_moratorium_senate and remaining_payments==0, gross_moratorium_senate,
+                                          gross_retirement)
+                                       )
+                - gross_retirement_2: if(tag_moratorium_senate and remaining_payments>0, gross_moratorium_senate_2-total_debt/40,
+                                       if(tag_moratorium_senate and remaining_payments==0, gross_moratorium_senate_2,
+                                          gross_retirement_2)
+                                       )
+        #People that started to earn a survivors benefit higher than the minimum pension lose the proposed moratorium pension.
+                - liqui_retirement: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), False, 
+                                       liqui_retirement)
+                - gross_retirement: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), 0,
+                                      gross_retirement)
+                - gross_moratorium_senate: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), 0,
+                                      gross_moratorium_senate)   
+                - gross_retirement_2: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), 0,  
+                                      gross_retirement_2)
+                - gross_moratorium_senate_2: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), 0, 
+                                      gross_moratorium_senate_2)
+
+                - remaining_payments: if(tag_moratorium_senate, remaining_payments-1, 
+                                         remaining_payments)
+                - remaining_payments: if(remaining_payments<0, 0, 
+                                         remaining_payments)
+                
     #4- We compute universal pension beneficiaries. These pensions were given starting from period 56 (fourth quarter of 2016) to people aged 65 or more 
                 #that did not have any other retirement pension (survivors pensions can not be accumulated with a universal benefit).  
                 - new_pension_uni: if(period<56, False, 
@@ -3315,6 +3429,8 @@ entities:
                                             if(gross_pension>0, False, 
                                                 tag_pension_uni
                                      ))))
+                - tag_pension_uni: if(tag_moratorium_senate, False, 
+                                      tag_pension_uni)
         #The 2019 budget Law 27467 forbids formal workers from earning the universal pension, except those in the social monotributo program. 
                 - forbid_pension_uni: if(period<65, False, 
                                           if(labour_market_state==1 or labour_market_state==2, True, 
@@ -3332,11 +3448,11 @@ entities:
                 #Law 24241 pension beneficiaries even if they did not contribute the required 30 years as long as they fulfilled the conditions established in this Law
                 #to retire. Therefore, the 30 years of contributions are no longer a mandatory condition. 
         #On August 2022, the minimum pension of $37526.96 is lower than 82% of the minimum wage ($39.237), but only for a month. We thus ignore this period (lesser error).
-                - gross_retirement: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni, gross_retirement, 
+                - gross_retirement: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni or tag_moratorium_senate, gross_retirement, 
                                         if((car_sal+car_ind+car_mono_norref)<(120-extra_trim/2), gross_retirement,
                                             if(period==79, gross_retirement,
                                                if(gross_retirement<0.82*MINIMUM_WAGE_CENTRAL_2014_T4, MINIMUM_WAGE_CENTRAL_2014_T4*0.82, gross_retirement))))
-                - gross_retirement_2: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni, gross_retirement_2, 
+                - gross_retirement_2: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni or tag_moratorium_senate, gross_retirement_2, 
                                         if((car_sal+car_ind+car_mono_norref)<(120-extra_trim/2), gross_retirement_2, 
                                             if(period==79, gross_retirement_2,
                                                if(gross_retirement_2<0.82*MINIMUM_WAGE_CENTRAL_2014_T4, MINIMUM_WAGE_CENTRAL_2014_T4*0.82, gross_retirement_2))))
@@ -3414,11 +3530,20 @@ entities:
                                     if(gross_retirement_2>=0, (gross_retirement_2)/6,0))
                 - sac_jp_gross_2: if(modulo_period==1 or modulo_period==3,0, 
                                     if(gross_pension_2>=0, sac_jp_gross_2+gross_pension_2/6, sac_jp_gross_2))
+        #It is unclear how the payment plan handles the 13th month for retirement benefits. For the sake of simplicity, we will assume the 13th month is computed on the  
+                #actual benefit without the reduction caused by the payment plan. 
+                - sac_jp_gross: if(modulo_period==1 or modulo_period==3, 0, 
+                                   if(gross_moratorium_senate>=0, gross_moratorium_senate/6,0)
+                                   )
+                - sac_jp_gross_2: if(modulo_period==1 or modulo_period==3, 0, 
+                                   if(gross_moratorium_senate_2>=0, gross_moratorium_senate_2/6,0)
+                                   )
         #The thirteenth month also pays compulsory PAMI contributions. 
                 - sac_jp_net: if((gross_retirement+gross_pension)>=MIN_PENSION_CENTRAL_2014_T4, sac_jp_gross*0.94,
                                     sac_jp_gross*0.97)
                 - sac_jp_net_2: if((gross_retirement_2+gross_pension_2)>=MIN_PENSION_CENTRAL_2014_T4, sac_jp_gross_2*0.94,
-                                    sac_jp_gross_2*0.97)    
+                                    sac_jp_gross_2*0.97)
+        
     #10- We compute separately the universal pension's level. This is important because this benefit is not de jure funded by the ANSES but by 
             #the federal budget. 
                 - universal_gross_pension: if(not tag_pension_uni, 0, 
@@ -4300,8 +4425,8 @@ entities:
                                  all_income)
                 - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
                 - quarters_needed: if(legal_retirement_date>=80 and legal_retirement_date<=96, 
-                                      30*4 - moratorium_quarters - car_post_2008_q4 - extra_trim/2 - remaining_career,
-                                      30*4 - contributed_quarters - extra_trim/2 - remaining_career)
+                                      30*4 - moratorium_quarters - car_post_2008_q4 - trunc(extra_trim/2) - remaining_career,
+                                      30*4 - contributed_quarters - trunc(extra_trim/2) - remaining_career)
                 - new_quarters_bought: if(not buyback_quarter, 0, 
                                        trunc((all_income*0.25)/(min_contributive_base*0.29))
                                        )
