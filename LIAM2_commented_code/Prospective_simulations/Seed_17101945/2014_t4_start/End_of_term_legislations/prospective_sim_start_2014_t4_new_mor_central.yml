@@ -1430,7 +1430,8 @@ entities:
                                                 fname='temporary_pension_bonus_central.csv',mode='a')
                 - csv('Period','AUH','Contributory_fam_ben', fname='temporary_fam_ben_bonus_central.csv',mode='a')
         ###############################################################################################################
-                - csv('Period','Total_buyers','Mean_quarters_bought','Total_quarters_bought','Total_payment','Average_income_buyers',
+                - csv('Period','Total_buyers','Mean_quarters_bought','Total_payment','Average_income_buyers',
+        #Uncomment to verify Total_buyers and Mean_quartes_bought is correct.                'Total_quarters_bought',
                                                 fname='buyback_mechanism_central.csv',mode='a')
         ###############################################################################################################        
            #     - csv('Period', '90_100_dec','80_90_dec','70_80_dec','60_70_dec','50_60_dec',
@@ -4287,10 +4288,13 @@ entities:
                                         )
                                       )
 
-        #For variables that may have missing values, we use the sum() function with skip_na=True. Since each individual only has one family benefit or temporary pension bonus
-               #bonus variable, it is equal to the family benefits or pension bonus value; but doing so allows us to get an individual all_income variable even if these values 
-                #are missing. 
-                - all_income: discounted_itl + discounted_v2_m + sum(discounted_v5_m,skip_na=True) + sum(temporary_pension_bonus,skip_na=True)
+        #For the first periods, discounted_v5_m and temporary_pension_bonus may be missing; to avoid missing values for all_income, we use the following workaround so we  
+                #can still add up these variables. 
+                - all_income: discounted_itl + discounted_v2_m 
+                - all_income: if(discounted_v5_m>0, all_income + discounted_v5_m, 
+                                 all_income)
+                - all_income: if(temporary_pension_bonus>0, all_income + temporary_pension_bonus, 
+                                 all_income)
                 - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
                 - quarters_needed: if(legal_retirement_date>=80 and legal_retirement_date<=96, 
                                       30*4 - moratorium_quarters - car_post_2008_q4 - extra_trim/2 - remaining_career,
@@ -4313,7 +4317,8 @@ entities:
                 - buyback_payment: new_quarters_bought*min_contributive_base*0.29
                 - bought_quarters: if(new_quarters_bought>0, 1, 
                                  0)
-                - csv(period,sum(bought_quarters*pondera),avg(new_quarters_bought,filter=new_quarters_bought>0, weights=pondera),sum(quarters_bought_back*pondera), sum(buyback_payment*pondera),avg(all_income,weights=pondera,filter=new_quarters_bought>0),
+                - csv(period,sum(bought_quarters*pondera),avg(new_quarters_bought,filter=new_quarters_bought>0, weights=pondera), sum(buyback_payment*pondera),avg(all_income,weights=pondera,filter=new_quarters_bought>0),
+                #Uncomment if you want to check sum(bought_quarters) and avg(new_quarters_bought) are OK      sum(quarters_bought_back*pondera),
                                                 fname='buyback_mechanism_central.csv',mode='a')
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
