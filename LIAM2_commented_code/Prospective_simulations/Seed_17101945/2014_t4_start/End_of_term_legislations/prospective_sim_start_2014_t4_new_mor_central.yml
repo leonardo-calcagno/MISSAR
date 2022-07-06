@@ -1431,7 +1431,6 @@ entities:
                 - csv('Period','AUH','Contributory_fam_ben', fname='temporary_fam_ben_bonus_central.csv',mode='a')
         ###############################################################################################################
                 - csv('Period','Total_buyers','Mean_quarters_bought','Total_payment','Average_income_buyers',
-        #Uncomment to verify Total_buyers and Mean_quartes_bought is correct.                'Total_quarters_bought',
                                                 fname='buyback_mechanism_central.csv',mode='a')
         ###############################################################################################################        
            #     - csv('Period', '90_100_dec','80_90_dec','70_80_dec','60_70_dec','50_60_dec',
@@ -2905,6 +2904,144 @@ entities:
                 #income from which is computed retirement pensions since the year 2000.                 
                 - sum_rent_aut: sum_rent_aut + rent_aut
                 - sum_rent_aut_2: sum_rent_aut_2 + rent_aut_2
+
+     #5- We then actualise the formal wage-earner careers of individuals in our database.     
+                - car_sal: if(labour_market_state==1,car_sal+1,car_sal)
+                - car_post_2003: if(labour_market_state==1, car_post_2003+1, 
+                                    car_post_2003)
+                - car_post_2008_q4: if(labour_market_state==1, car_post_2008_q4+1, 
+                                       car_post_2008_q4)
+                - car_post_2012_q1: if(labour_market_state==1, car_post_2012_q1+1, 
+                                       car_post_2012_q1)
+                        
+        #It is worthy to note the discounting index used by ANSES before 2016 (used in variable lag_sal) and the new post 2016 discounting index (lag_sal_2) are identical
+                #since the implementation of the pension mobility law in March 2009. Therefore, the difference between these two ways to compute retirement pensions will 
+                #quickly fade over time for new retirement benefits. This is also why we do not distinguish them neither in our "globals" file nor in the new 
+                #formal wage-earner labour-market spells. 
+                - itl_anses_sal: if(labour_market_state==1,itl_anses,0)
+                - lag_sal_40: lag_sal_39
+                - lag_sal_39: lag_sal_38
+                - lag_sal_38: lag_sal_37
+                - lag_sal_37: lag_sal_36
+                - lag_sal_36: lag_sal_35
+                - lag_sal_35: lag_sal_34
+                - lag_sal_34: lag_sal_33
+                - lag_sal_33: lag_sal_32
+                - lag_sal_32: lag_sal_31
+                - lag_sal_31: lag_sal_30
+                - lag_sal_30: lag_sal_29
+                - lag_sal_29: lag_sal_28
+                - lag_sal_28: lag_sal_27
+                - lag_sal_27: lag_sal_26
+                - lag_sal_26: lag_sal_25
+                - lag_sal_25: lag_sal_24
+                - lag_sal_24: lag_sal_23
+                - lag_sal_23: lag_sal_22
+                - lag_sal_22: lag_sal_21
+                - lag_sal_21: lag_sal_20
+                - lag_sal_20: lag_sal_19
+                - lag_sal_19: lag_sal_18
+                - lag_sal_18: lag_sal_17
+                - lag_sal_17: lag_sal_16
+                - lag_sal_16: lag_sal_15
+                - lag_sal_15: lag_sal_14
+                - lag_sal_14: lag_sal_13
+                - lag_sal_13: lag_sal_12
+                - lag_sal_12: lag_sal_11
+                - lag_sal_11: lag_sal_10
+                - lag_sal_10: lag_sal_9
+                - lag_sal_9: lag_sal_8
+                - lag_sal_8: lag_sal_7
+                - lag_sal_7: lag_sal_6
+                - lag_sal_6: lag_sal_5
+                - lag_sal_5: lag_sal_4
+                - lag_sal_4: lag_sal_3
+                - lag_sal_3: lag_sal_2
+                - lag_sal_2: lag_sal_1
+                - lag_sal_1: itl_anses_sal
+
+                ###########################################
+                - lag_sal_2_40: lag_sal_2_39
+                - lag_sal_2_39: lag_sal_2_38
+                - lag_sal_2_38: lag_sal_2_37
+                - lag_sal_2_37: lag_sal_2_36
+                - lag_sal_2_36: lag_sal_2_35
+                - lag_sal_2_35: lag_sal_2_34
+                - lag_sal_2_34: lag_sal_2_33
+                - lag_sal_2_33: lag_sal_2_32
+                - lag_sal_2_32: lag_sal_2_31
+                - lag_sal_2_31: lag_sal_2_30
+                - lag_sal_2_30: lag_sal_2_29
+                - lag_sal_2_29: lag_sal_2_28
+                - lag_sal_2_28: lag_sal_2_27
+                - lag_sal_2_27: lag_sal_2_26
+                - lag_sal_2_26: lag_sal_2_25
+                - lag_sal_2_25: lag_sal_2_24
+                - lag_sal_2_24: lag_sal_2_23
+                - lag_sal_2_23: lag_sal_2_22
+                - lag_sal_2_22: lag_sal_2_21
+                - lag_sal_2_21: lag_sal_2_20
+                - lag_sal_2_20: lag_sal_2_19
+                - lag_sal_2_19: lag_sal_2_18
+                - lag_sal_2_18: lag_sal_2_17
+                - lag_sal_2_17: lag_sal_2_16
+                - lag_sal_2_16: lag_sal_2_15
+                - lag_sal_2_15: lag_sal_2_14
+                - lag_sal_2_14: lag_sal_2_13
+                - lag_sal_2_13: lag_sal_2_12
+                - lag_sal_2_12: lag_sal_2_11
+                - lag_sal_2_11: lag_sal_2_10
+                - lag_sal_2_10: lag_sal_2_9
+                - lag_sal_2_9: lag_sal_2_8
+                - lag_sal_2_8: lag_sal_2_7
+                - lag_sal_2_7: lag_sal_2_6
+                - lag_sal_2_6: lag_sal_2_5
+                - lag_sal_2_5: lag_sal_2_4
+                - lag_sal_2_4: lag_sal_2_3
+                - lag_sal_2_3: lag_sal_2_2
+                - lag_sal_2_2: lag_sal_2_1
+                - lag_sal_2_1: itl_anses_sal
+                ###################################################
+                - lag_count_sal_40: lag_count_sal_39
+                - lag_count_sal_39: lag_count_sal_38
+                - lag_count_sal_38: lag_count_sal_37
+                - lag_count_sal_37: lag_count_sal_36
+                - lag_count_sal_36: lag_count_sal_35
+                - lag_count_sal_35: lag_count_sal_34
+                - lag_count_sal_34: lag_count_sal_33
+                - lag_count_sal_33: lag_count_sal_32
+                - lag_count_sal_32: lag_count_sal_31
+                - lag_count_sal_31: lag_count_sal_30
+                - lag_count_sal_30: lag_count_sal_29
+                - lag_count_sal_29: lag_count_sal_28
+                - lag_count_sal_28: lag_count_sal_27
+                - lag_count_sal_27: lag_count_sal_26
+                - lag_count_sal_26: lag_count_sal_25
+                - lag_count_sal_25: lag_count_sal_24
+                - lag_count_sal_24: lag_count_sal_23
+                - lag_count_sal_23: lag_count_sal_22
+                - lag_count_sal_22: lag_count_sal_21
+                - lag_count_sal_21: lag_count_sal_20
+                - lag_count_sal_20: lag_count_sal_19
+                - lag_count_sal_19: lag_count_sal_18
+                - lag_count_sal_18: lag_count_sal_17
+                - lag_count_sal_17: lag_count_sal_16
+                - lag_count_sal_16: lag_count_sal_15
+                - lag_count_sal_15: lag_count_sal_14
+                - lag_count_sal_14: lag_count_sal_13
+                - lag_count_sal_13: lag_count_sal_12
+                - lag_count_sal_12: lag_count_sal_11
+                - lag_count_sal_11: lag_count_sal_10
+                - lag_count_sal_10: lag_count_sal_9
+                - lag_count_sal_9: lag_count_sal_8
+                - lag_count_sal_8: lag_count_sal_7
+                - lag_count_sal_7: lag_count_sal_6
+                - lag_count_sal_6: lag_count_sal_5
+                - lag_count_sal_5: lag_count_sal_4
+                - lag_count_sal_4: lag_count_sal_3
+                - lag_count_sal_3: lag_count_sal_2
+                - lag_count_sal_2: lag_count_sal_1
+                - lag_count_sal_1: if(labour_market_state==1,1,0)
     #5- We simulate here formal wage-earners compulsory contributions to social security, both employer's and employees'. See section 1.1.4. of my PhD. thesis for the full contribution rules. 
         #Employer's contributions depend on the firm's economic sector (primary and secondary, services and public). Unfortunately, we do not really simulate economic sectors
                 #in this model. The determination of formal wage-earners' economic sector is thus largely random, although these are based on real aggregate distribution of 
@@ -3012,153 +3149,19 @@ entities:
             retirement:
 #Here we compute accumulated retirement rights, new retirement pensions and put up to date old retirement pensions (through pension mobility. We also increase moratorium 
         #pensions after the five-year penalty period has passed). 
-    #1- We first actualise the formal wage-earner careers of individuals in our database.     
-                - car_sal: if(labour_market_state==1,car_sal+1,car_sal)
-                - car_post_2003: if(labour_market_state==1, car_post_2003+1, 
-                                    car_post_2003)
-                - car_post_2008_q4: if(labour_market_state==1, car_post_2008_q4+1, 
-                                       car_post_2008_q4)
-                - car_post_2012_q1: if(labour_market_state==1, car_post_2012_q1+1, 
-                                       car_post_2012_q1)
-                        
-        #It is worthy to note the discounting index used by ANSES before 2016 (used in variable lag_sal) and the new post 2016 discounting index (lag_sal_2) are identical
-                #since the implementation of the pension mobility law in March 2009. Therefore, the difference between these two ways to compute retirement pensions will 
-                #quickly fade over time for new retirement benefits. This is also why we do not distinguish them neither in our "globals" file nor in the new 
-                #formal wage-earner labour-market spells. 
-                - itl_anses_sal: if(labour_market_state==1,itl_anses,0)
-                - lag_sal_40: lag_sal_39
-                - lag_sal_39: lag_sal_38
-                - lag_sal_38: lag_sal_37
-                - lag_sal_37: lag_sal_36
-                - lag_sal_36: lag_sal_35
-                - lag_sal_35: lag_sal_34
-                - lag_sal_34: lag_sal_33
-                - lag_sal_33: lag_sal_32
-                - lag_sal_32: lag_sal_31
-                - lag_sal_31: lag_sal_30
-                - lag_sal_30: lag_sal_29
-                - lag_sal_29: lag_sal_28
-                - lag_sal_28: lag_sal_27
-                - lag_sal_27: lag_sal_26
-                - lag_sal_26: lag_sal_25
-                - lag_sal_25: lag_sal_24
-                - lag_sal_24: lag_sal_23
-                - lag_sal_23: lag_sal_22
-                - lag_sal_22: lag_sal_21
-                - lag_sal_21: lag_sal_20
-                - lag_sal_20: lag_sal_19
-                - lag_sal_19: lag_sal_18
-                - lag_sal_18: lag_sal_17
-                - lag_sal_17: lag_sal_16
-                - lag_sal_16: lag_sal_15
-                - lag_sal_15: lag_sal_14
-                - lag_sal_14: lag_sal_13
-                - lag_sal_13: lag_sal_12
-                - lag_sal_12: lag_sal_11
-                - lag_sal_11: lag_sal_10
-                - lag_sal_10: lag_sal_9
-                - lag_sal_9: lag_sal_8
-                - lag_sal_8: lag_sal_7
-                - lag_sal_7: lag_sal_6
-                - lag_sal_6: lag_sal_5
-                - lag_sal_5: lag_sal_4
-                - lag_sal_4: lag_sal_3
-                - lag_sal_3: lag_sal_2
-                - lag_sal_2: lag_sal_1
-                - lag_sal_1: itl_anses_sal
+    #1.1.- First, we compute the reference income for wage-earners, following the pre-June 2016 discounting index (_2) and the current one.
                 - temp_1: lag_sal_1+lag_sal_2+lag_sal_3+lag_sal_4+lag_sal_5+lag_sal_6+lag_sal_7+lag_sal_8+lag_sal_9+lag_sal_10
                 - temp_2: lag_sal_11+lag_sal_12+lag_sal_13+lag_sal_14+lag_sal_15+lag_sal_16+lag_sal_17+lag_sal_18+lag_sal_19+lag_sal_20
                 - temp_3: lag_sal_21+lag_sal_22+lag_sal_23+lag_sal_24+lag_sal_25+lag_sal_26+lag_sal_27+lag_sal_28+lag_sal_29+lag_sal_30
                 - temp_4: lag_sal_31+lag_sal_32+lag_sal_33+lag_sal_34+lag_sal_35+lag_sal_36+lag_sal_37+lag_sal_38+lag_sal_39+lag_sal_40
                 - sum_lag_sal: temp_1+temp_2+temp_3+temp_4
 
-                ###########################################
-                - lag_sal_2_40: lag_sal_2_39
-                - lag_sal_2_39: lag_sal_2_38
-                - lag_sal_2_38: lag_sal_2_37
-                - lag_sal_2_37: lag_sal_2_36
-                - lag_sal_2_36: lag_sal_2_35
-                - lag_sal_2_35: lag_sal_2_34
-                - lag_sal_2_34: lag_sal_2_33
-                - lag_sal_2_33: lag_sal_2_32
-                - lag_sal_2_32: lag_sal_2_31
-                - lag_sal_2_31: lag_sal_2_30
-                - lag_sal_2_30: lag_sal_2_29
-                - lag_sal_2_29: lag_sal_2_28
-                - lag_sal_2_28: lag_sal_2_27
-                - lag_sal_2_27: lag_sal_2_26
-                - lag_sal_2_26: lag_sal_2_25
-                - lag_sal_2_25: lag_sal_2_24
-                - lag_sal_2_24: lag_sal_2_23
-                - lag_sal_2_23: lag_sal_2_22
-                - lag_sal_2_22: lag_sal_2_21
-                - lag_sal_2_21: lag_sal_2_20
-                - lag_sal_2_20: lag_sal_2_19
-                - lag_sal_2_19: lag_sal_2_18
-                - lag_sal_2_18: lag_sal_2_17
-                - lag_sal_2_17: lag_sal_2_16
-                - lag_sal_2_16: lag_sal_2_15
-                - lag_sal_2_15: lag_sal_2_14
-                - lag_sal_2_14: lag_sal_2_13
-                - lag_sal_2_13: lag_sal_2_12
-                - lag_sal_2_12: lag_sal_2_11
-                - lag_sal_2_11: lag_sal_2_10
-                - lag_sal_2_10: lag_sal_2_9
-                - lag_sal_2_9: lag_sal_2_8
-                - lag_sal_2_8: lag_sal_2_7
-                - lag_sal_2_7: lag_sal_2_6
-                - lag_sal_2_6: lag_sal_2_5
-                - lag_sal_2_5: lag_sal_2_4
-                - lag_sal_2_4: lag_sal_2_3
-                - lag_sal_2_3: lag_sal_2_2
-                - lag_sal_2_2: lag_sal_2_1
-                - lag_sal_2_1: itl_anses_sal
                 - temp_8: lag_sal_2_1+lag_sal_2_2+lag_sal_2_3+lag_sal_2_4+lag_sal_2_5+lag_sal_2_6+lag_sal_2_7+lag_sal_2_8+lag_sal_2_9+lag_sal_2_10
                 - temp_5: lag_sal_2_11+lag_sal_2_12+lag_sal_2_13+lag_sal_2_14+lag_sal_2_15+lag_sal_2_16+lag_sal_2_17+lag_sal_2_18+lag_sal_2_19+lag_sal_2_20
                 - temp_6: lag_sal_2_21+lag_sal_2_22+lag_sal_2_23+lag_sal_2_24+lag_sal_2_25+lag_sal_2_26+lag_sal_2_27+lag_sal_2_28+lag_sal_2_29+lag_sal_2_30
                 - temp_7: lag_sal_2_31+lag_sal_2_32+lag_sal_2_33+lag_sal_2_34+lag_sal_2_35+lag_sal_2_36+lag_sal_2_37+lag_sal_2_38+lag_sal_2_39+lag_sal_2_40
-                - sum_lag_sal_2: temp_5+temp_6+temp_7+temp_8   
-                ###################################################
-                - lag_count_sal_40: lag_count_sal_39
-                - lag_count_sal_39: lag_count_sal_38
-                - lag_count_sal_38: lag_count_sal_37
-                - lag_count_sal_37: lag_count_sal_36
-                - lag_count_sal_36: lag_count_sal_35
-                - lag_count_sal_35: lag_count_sal_34
-                - lag_count_sal_34: lag_count_sal_33
-                - lag_count_sal_33: lag_count_sal_32
-                - lag_count_sal_32: lag_count_sal_31
-                - lag_count_sal_31: lag_count_sal_30
-                - lag_count_sal_30: lag_count_sal_29
-                - lag_count_sal_29: lag_count_sal_28
-                - lag_count_sal_28: lag_count_sal_27
-                - lag_count_sal_27: lag_count_sal_26
-                - lag_count_sal_26: lag_count_sal_25
-                - lag_count_sal_25: lag_count_sal_24
-                - lag_count_sal_24: lag_count_sal_23
-                - lag_count_sal_23: lag_count_sal_22
-                - lag_count_sal_22: lag_count_sal_21
-                - lag_count_sal_21: lag_count_sal_20
-                - lag_count_sal_20: lag_count_sal_19
-                - lag_count_sal_19: lag_count_sal_18
-                - lag_count_sal_18: lag_count_sal_17
-                - lag_count_sal_17: lag_count_sal_16
-                - lag_count_sal_16: lag_count_sal_15
-                - lag_count_sal_15: lag_count_sal_14
-                - lag_count_sal_14: lag_count_sal_13
-                - lag_count_sal_13: lag_count_sal_12
-                - lag_count_sal_12: lag_count_sal_11
-                - lag_count_sal_11: lag_count_sal_10
-                - lag_count_sal_10: lag_count_sal_9
-                - lag_count_sal_9: lag_count_sal_8
-                - lag_count_sal_8: lag_count_sal_7
-                - lag_count_sal_7: lag_count_sal_6
-                - lag_count_sal_6: lag_count_sal_5
-                - lag_count_sal_5: lag_count_sal_4
-                - lag_count_sal_4: lag_count_sal_3
-                - lag_count_sal_3: lag_count_sal_2
-                - lag_count_sal_2: lag_count_sal_1
-                - lag_count_sal_1: if(labour_market_state==1,1,0)
+                - sum_lag_sal_2: temp_5+temp_6+temp_7+temp_8
+
     #1.2.- By Decree 475/2021, women can validate contribution years depending on the children they had: 1 year per child, 3 years per child with AUH. In the 
         #family benefits module we kept track of maximum amount of children, and maximum amount of children with an AUH benefit, for each woman. 
         #This benefit started on July 2021 (implemented 29/07/2021), but women pensioner numbers went down between june and september 2021, and started going up 
@@ -4317,8 +4320,8 @@ entities:
                 - buyback_payment: new_quarters_bought*min_contributive_base*0.29
                 - bought_quarters: if(new_quarters_bought>0, 1, 
                                  0)
-                - csv(period,sum(bought_quarters*pondera),avg(new_quarters_bought,filter=new_quarters_bought>0, weights=pondera), sum(buyback_payment*pondera),avg(all_income,weights=pondera,filter=new_quarters_bought>0),
                 #Uncomment if you want to check sum(bought_quarters) and avg(new_quarters_bought) are OK      sum(quarters_bought_back*pondera),
+                - csv(period,sum(bought_quarters*pondera),avg(new_quarters_bought,filter=new_quarters_bought>0, weights=pondera), sum(buyback_payment*pondera)/1000,avg(all_income,weights=pondera,filter=new_quarters_bought>0),
                                                 fname='buyback_mechanism_central.csv',mode='a')
 #Lastly, at the end of the period, we export all variables of interest into a csv format. The default HDF5 format is very impractical.                 
             dump_all: csv(dump(labour_market_state,id,household_id,mother_id,father_id,partner_id,little_children,minor_children, 
