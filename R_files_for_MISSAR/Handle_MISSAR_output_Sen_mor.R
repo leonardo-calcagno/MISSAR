@@ -41,7 +41,7 @@ setwd("MISSAR_output/")
 
 ###Generate csv globals ----
 #Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
-#decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
+#decimal part (.x%%1>0), those that are more than 50 times larger than their median, excluding null values, and correct them. 
 correct_csv<-function(input){
   input<-input%>%
     mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
@@ -51,7 +51,7 @@ correct_csv<-function(input){
   
 }
 
-leg<-"Macri_legislation/"
+leg<-"Senate_moratorium_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
 #Google authentification may trigger here again, proceed with authentification before going further
@@ -85,7 +85,6 @@ csv_low_v2_m <- read_csv("low_v2_m.csv")%>%
   correct_csv()
 csv_high_v2_m <- read_csv("high_v2_m.csv")%>%
   correct_csv()
-
 csv_central_v5_m <- read_csv("central_v5_m.csv")%>%
   correct_csv()
 csv_low_v5_m <- read_csv("low_v5_m.csv")%>%
@@ -93,12 +92,18 @@ csv_low_v5_m <- read_csv("low_v5_m.csv")%>%
 csv_high_v5_m <- read_csv("high_v5_m.csv")%>%
   correct_csv()
 
+view(csv_low_v5_m)
+
 csv_central_SIPA_income <- read_csv("central_SIPA_income.csv")%>%
   correct_csv()
 csv_low_SIPA_income <- read_csv("low_SIPA_income.csv")%>%
   correct_csv()
 csv_high_SIPA_income <- read_csv("high_SIPA_income.csv")%>%
   correct_csv()
+
+csv_buyback_mechanism_central <- read_csv("buyback_mechanism_central.csv")
+csv_buyback_mechanism_low <- read_csv("buyback_mechanism_low.csv")
+csv_buyback_mechanism_high <- read_csv("buyback_mechanism_high.csv")
 
 
 csv_temporary_pension_bonus_low <- read_csv("temporary_pension_bonus_low.csv")%>%
@@ -110,7 +115,7 @@ csv_temporary_pension_bonus_high <- read_csv("temporary_pension_bonus_high.csv")
 
 #Modify results sheets -----
 
-id_deficit<- drive_get(paste0(leg,"Deficit_computation_Macri_leg"))
+id_deficit<- drive_get(paste0(leg,"Deficit_computation_Sen_mor"))
 
 write_sheet(csv_workers_and_wage_low,ss=id_deficit,sheet="workers_and_wage_low")
 write_sheet(csv_workers_and_wage_central,ss=id_deficit,sheet="workers_and_wage_central")
@@ -132,6 +137,12 @@ write_sheet(csv_high_v5_m,ss=id_deficit,sheet="high_v5_m")
 write_sheet(csv_low_SIPA_income,ss=id_deficit,sheet="low_SIPA_income")
 write_sheet(csv_central_SIPA_income,ss=id_deficit,sheet="central_SIPA_income")
 write_sheet(csv_high_SIPA_income,ss=id_deficit,sheet="high_SIPA_income")
+
+
+write_sheet(csv_buyback_mechanism_low,ss=id_deficit,sheet="Buyback_low")
+write_sheet(csv_buyback_mechanism_central,ss=id_deficit,sheet="Buyback_central")
+write_sheet(csv_buyback_mechanism_high,ss=id_deficit,sheet="Buyback_high")
+
 
 
 rm(list=ls(pattern="^csv_"))

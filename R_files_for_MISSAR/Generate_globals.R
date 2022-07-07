@@ -45,9 +45,8 @@ setwd("MISSAR_output/")
 correct_csv<-function(input){
   input<-input%>%
     mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
-                                           .x))
-           
-    )
+                                           .x)) 
+           )
   
 }
 
@@ -59,8 +58,17 @@ generate_globals<-function(id,input,output,ruta){
   
   csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
   csv_globals<-csv_globals%>%
-    select(-c(152))%>%
-    correct_csv()# #Remove last column with #REF!
+    select(-c(152)) #Remove last column with #REF!
+  
+  take_out_cpi<-csv_globals%>%
+    subset(PERIOD %in% c("CPI_HIGH","CPI_LOW","CPI_CENTRAL")) #It is normal for inflation indexes to wildly vary nominally
+  
+  csv_globals<-subset(csv_globals,!(PERIOD %in% c("CPI_HIGH","CPI_LOW","CPI_CENTRAL")))
+
+    csv_globals<-csv_globals%>%
+    correct_csv()%>%
+    rbind(take_out_cpi)#
+  
   
   # mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
   
@@ -78,6 +86,8 @@ id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare 
 sheet_name<-"copy_to_csv_2020_leg"
 output_name<-"globals_prosp_jun_2022_leg.csv"
 generate_globals(id_globals,sheet_name,output_name,leg)
+
+
 
 
 sheet_name<-"copy_to_csv_Macri_leg"
