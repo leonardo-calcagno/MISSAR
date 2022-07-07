@@ -1023,9 +1023,9 @@ entities:
                 #IGF stands for Family group income. See the details in the family benefits module
             - igf: {type: float, initialdata: false}
             # Fourthly, these are the retirement and survivors pensions we compute in our model. 
-                # In spanish, jubilación stands for retirement benefit and pensión for survivors pension. We keep this nomenclature in our variables.
+                # In spanish, jubilaciÃ³n stands for retirement benefit and pensiÃ³n for survivors pension. We keep this nomenclature in our variables.
                 # We start with retirement benefits, or retirementes. Liqui_retirement is True when the individual liquidated his retirement rights (by retiring)
-                    # Jubilación bruta means gross retirement benefits, jubilación neta is the benefit actually earned by the retiree once the compulsory healthcare contribution
+                    # JubilaciÃ³n bruta means gross retirement benefits, jubilaciÃ³n neta is the benefit actually earned by the retiree once the compulsory healthcare contribution
                     #to the PAMI is discounted. 
             - liqui_retirement: {type: bool, initialdata: false}
             - net_retirement: {type: float, initialdata: false}
@@ -1211,7 +1211,7 @@ entities:
                 - student: if(too_old,False,student)
             # People that leave studies enter a special labour-market state "having finished studies". It is a (significant) explanatory variable in some of our behavourial equations.
                 - labour_market_state: if(too_old, 6, labour_market_state)
-            #Finally, we force people aged 15 to be in the first year of the now extint "polimodal" education, which equals junior year of high school (the antepenúltimo year of secondary studies)
+            #Finally, we force people aged 15 to be in the first year of the now extint "polimodal" education, which equals junior year of high school (the antepenÃºltimo year of secondary studies)
                 - polimodal: if(age <15,0,
                                 if(age==15, 1, 
                                     polimodal))
@@ -1280,7 +1280,7 @@ entities:
                                             if(male, discounted_v2_m/3 + uniform(), 
                                                 (discounted_v2_m + uniform()
                                       ))))
-                #We know on 2014 16,86% of SIPA beneficiaries received two benefits, and 17,02% in 2015, from the Boletín Estadístico de la Seguridad Social of September 2020. 
+                #We know on 2014 16,86% of SIPA beneficiaries received two benefits, and 17,02% in 2015, from the BoletÃ­n EstadÃ­stico de la Seguridad Social of September 2020. 
                         #We have trouble however aligning these exact proportions due to the align instruction not allowing for a weights option. We thus experimented
                         #until we found an align value that resulted in around 17% of SIPA beneficiaries earning two benefits at the same time in 2015, and found it 
                         #to be 20.75%. Once we correct the problems with weights as pointed out by Gijs Dekkers, this should no longer be an issue.
@@ -1306,7 +1306,7 @@ entities:
                     #had adhered to the 2006 pension moratorium. We know this moratorium was only open up until early 2007, so the youngest cohorts of pensioners
                     #the fourth quarter of 2014 cannot be from the 2006 moratorium. This means by 2014, only men aged 72 or more and women
                     #aged 67 or more could have been moratorium pensioners. 
-            #We know from the September 2020 Boletín Estadístico de la Seguridad Social that on 2014, 53.88% of retirement and survivor pensioners were contributive. 
+            #We know from the September 2020 BoletÃ­n EstadÃ­stico de la Seguridad Social that on 2014, 53.88% of retirement and survivor pensioners were contributive. 
                     #More precisely, 41.74% of retirement pensioners were contributive, and 88.80% of survivor pensioners were contributive. We also know from this
                     #Bulletin the total number of benefits and of beneficiaries in 2014: by substracting to the total number of beneficiaries, for each gender, 
                     #total number of retirement benefits, we know how many beneficiaries only received a survivors' benefit. If we assume 88.8% of these were 
@@ -1679,16 +1679,16 @@ entities:
                    
         # We compute individual pensions repartition as a percentage of the pension of reference. We also know total survivor's pensions are equal to 70% of the pension of reference
             #The full rules are laid out in Appendix C of my PhD, and are taken out from Art. 98 of Law 24241. Here we have individual pensions as a percentage of the pension of reference.
-                # "a) [70%] for the widow or cohabitant, were there no children entitled to a [survivor’s] pension. 
-                # b) [50%] for the widow or cohabitant, when there are children entitled to a [survivor’s] pension. 
+                # "a) [70%] for the widow or cohabitant, were there no children entitled to a [survivorâ€™s] pension. 
+                # b) [50%] for the widow or cohabitant, when there are children entitled to a [survivorâ€™s] pension. 
                 # c) [20%] for each [entitled] child." 
             #Sections I to III of Article 98 also state that 
-                #"I. Were there not a widow or cohabitant entitled to a [survivor’s] pension, the children benefits’ percentage established in incise c)
+                #"I. Were there not a widow or cohabitant entitled to a [survivorâ€™s] pension, the children benefitsâ€™ percentage established in incise c)
                     #will be raised and shared equally between eligible children up to the percentage established in incise b).
                 #II. The sum of the pensions of all the beneficiaries shall not exceed [100%] of the [pension of reference]
-                    #of the [deceased]. Were it to happen, each of the beneficiaries’ pensions will be recalculated, keeping
+                    #of the [deceased]. Were it to happen, each of the beneficiariesâ€™ pensions will be recalculated, keeping
                     #the proportions resulting from the [aforementioned] percentages (...). 
-                #III. If any of the beneficiaries were to be no longer entitled to [a survivor’s] benefit, the pension of the remaining beneficiaries shall be
+                #III. If any of the beneficiaries were to be no longer entitled to [a survivorâ€™s] benefit, the pension of the remaining beneficiaries shall be
                     #computed again, excluding the former beneficiary".
                 - pension_partner: if(minor_children==0, pension_partner, 
                                         if(minor_children==1 or minor_children==2, pension_partner*0.5/0.7, 
@@ -1856,7 +1856,7 @@ entities:
             #the household's characteristics. This estimated equation would then replace the arbitrary priority to women married or in a common-law union (temporary 
             #variable score_birth). This is nevertheless not a priority of this model and is thus left for future work. 
     
-    #We assume 51% of newborns are boys and 49% girls, in accordance with Argentinian data taken from the "Serie de Estadísticas vitales básicas".                                  
+    #We assume 51% of newborns are boys and 49% girls, in accordance with Argentinian data taken from the "Serie de EstadÃ­sticas vitales bÃ¡sicas".                                  
     #The wage residual follows a normal distribution of mean -0.13869 and standard error 0.580294 for the fourth quarter of 2014, as shown in the PDF 
             #Normality of wage residuals. We thus assign a wage residual upon birth following this distribution.
                 - new('person', filter=to_give_birth,
@@ -1959,7 +1959,7 @@ entities:
               #  - show('graduated',groupby(grad,lag(student)))
         #e- We determine who continues to tertiary education after graduating from high school. We make the hypothesis that all high school graduates continue to
             #college. Although false, it helps us replicate the numbers of students that enter university year (taken from the Ministry of Educations' Anuario de 
-            #Estadísticas Universitarias). This is explained in Appendix O and Section 2.5.4. of my PhD. thesis. It is possible to change these probabilities of 
+            #EstadÃ­sticas Universitarias). This is explained in Appendix O and Section 2.5.4. of my PhD. thesis. It is possible to change these probabilities of 
             #entry into college by changing the [1,0] interval in the choice() instruction with the desired probabilities of respectively entering and not entering college.      
                 - enter_uni: if(grad_bac and student==True,                                        
                                 if(male,choice([True, False], [1, 0])
@@ -2731,7 +2731,7 @@ entities:
             #an Autonomous worker category. 
         #We determine whether an independent worker from the formal sector is a boss or not when they enter that labour-market state. They keep their boss status for 
                 #as long as they are independent workers of the formal sector. They have a 50% chance of being a boss when they do, because 50% of independent workers of the formal
-                #sector are bosses in the EPHc(variable cat_ocup of the EPHc set at 1, "patrón"), the remaining 50% being own-account workers (cat_ocup set at 2, "Cuenta propia")
+                #sector are bosses in the EPHc(variable cat_ocup of the EPHc set at 1, "patrÃ³n"), the remaining 50% being own-account workers (cat_ocup set at 2, "Cuenta propia")
                 - boss: if(autonomo==0, 0, 
                             if(lag(boss)==1, 1, 
                                 if(lag(boss)==0 and lag_count_ind_1==1, 0, 
@@ -3135,7 +3135,7 @@ entities:
                                             taxable_income*(0.015)+(taxable_income_employee)*0.03)))
                 
                 #We add up in healthcare contributions (contribution_sal_obra_social) what goes to the "obras sociales" (90% of the total) with what goes to the Solidarity Redistribution
-                        #Fund ("Fondo Solidario de Redistribución"). It is possible to separate these contributions at this step, but we choose not to since we focus on the ANSES. 
+                        #Fund ("Fondo Solidario de RedistribuciÃ³n"). It is possible to separate these contributions at this step, but we choose not to since we focus on the ANSES. 
                 - contribution_sal_obra_social: if(labour_market_state!=1, 0, 
                                                 if(contribution==1, taxable_income*(0.06)+(taxable_income_employee)*0.03,
                                                     if(contribution==2, taxable_income*(0.06)+(taxable_income_employee)*0.03, 
@@ -3494,7 +3494,7 @@ entities:
         
     #EX-ANTE POLICY EVALUATION: the pension mobility formula is suspended for the first half of 2020, so the March and possibly June 2020 increases will be made 
             #by Decree (as of Art. 55 of Law 27541). 
-        #We are in 13/03/2020 and don't know yet what will be the March 2020 (or June 2020) increase. We take from this Página 12 article the range of increase
+        #We are in 13/03/2020 and don't know yet what will be the March 2020 (or June 2020) increase. We take from this PÃ¡gina 12 article the range of increase
                 #leaked by ANSES: between $1500 and $2500 pesos of fixed sum increase, and maybe a simultaneous proportional increase of between 2% and 6%. 
         #In this ex ante scenario, we take the high adjustment hypothesis: 6% increase and $2500 pesos for all, in both March and June. 
         #As usual, we take into account the March (June) increase in the second (third) quarter, since we work with mid-quarter pensions. This also means we take the
@@ -3638,7 +3638,7 @@ entities:
                                     if(mother.discounted_itl_sal_gross>IND_FAM_CAP_LOW or father.discounted_itl_sal_gross>IND_FAM_CAP_LOW, 0, 
                                         if(igf>FAM_CAP_LOW_4, 0, BIRTH_BEN_LOW ))))
     #3- We compute pregnancy benefits. These are the pre-natal benefit, given to formal private sector wage-earners and monotributistas, and the 
-            #"Asignación por pregnancy_sp para Protección Social" , or Pregnancy benefit for Social Protection, for pregnant women that are unemployed or working in the informal sector. 
+            #"AsignaciÃ³n por pregnancy_sp para ProtecciÃ³n Social" , or Pregnancy benefit for Social Protection, for pregnant women that are unemployed or working in the informal sector. 
         #Labour-market conditions for granting this benefit apply to both members of the couple. So for instance if the father is a formal wage-earner and 
                 #the mother is unemployed, then the pregnant woman may only receive the pre-natal benefit if her husband's income passes the means test. The woman 
                 #may not receive in this case the pregnancy benefit for social protection. 
@@ -3673,7 +3673,7 @@ entities:
                                         if(mother_id==UNSET, 
                                             if(father.labour_market_state==5, 0, pregnancy_sp),
                                                 pregnancy_sp)))   
-    #4- We compute contributive child benefits, the "asignación por hijo". These benefits are means-tested and open to the children of formal workers
+    #4- We compute contributive child benefits, the "asignaciÃ³n por hijo". These benefits are means-tested and open to the children of formal workers
             # and of retirement pensioners. The minor children of recipiendaries of the universal pension do not get access to this child benefit. 
            #For computing the contributive child benefit, the means-test is made on the child's parents' income. This variable igf_parents allows to 
                 #recompute the IGF variable with a narrower definition of the family group, limiting it to the nuclear family. 
@@ -4119,7 +4119,7 @@ entities:
                                                                      moratorium_senate_pensioners_share,moratorium_senate_coverage_legal_age,moratorium_senate_coverage_65, mean_moratorium_senate_pension,  
                                             fname='adequacy_low.csv',mode='a')
             temporary_measures_pensions: 
-            #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri and Fernández governments. 
+            #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri and FernÃ¡ndez governments. 
 #First, a bonus was paid on March 2018 to compensate retirement and survivors' pensioners for the change in pension mobility 
                     #($375 pesos for moratorium pensioners or PUAM beneficiaries, $750 pesos for the rest). This is only paid to pensioners that earned less than $10,000 in March 2018.
                
@@ -4390,7 +4390,7 @@ entities:
                                                     )
                                                )
                                             )
-                #Following Annex I of Joint Res. 1/2022 of Secretaría de Política Económica and Secretaría de Seguridad Social, you check the labour income of people aged 18 to 24
+                #Following Annex I of Joint Res. 1/2022 of SecretarÃ­a de PolÃ­tica EconÃ³mica and SecretarÃ­a de Seguridad Social, you check the labour income of people aged 18 to 24
                         #that have no children, no spouse, and are not living together with his or her partner in a common-law union
                 #The income limit is three times the minimum wage, which between 01/04/2022 and 01/06/2022 reached $38.940 in gross terms. Since inscription was made on early May, 
                         #we use April official infaltion figures to get the real value. This can be re-evalued when May 2022 CPI figures are available. 
