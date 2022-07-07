@@ -1058,6 +1058,7 @@ entities:
             - tag_initial_moratorium: {type: bool, initialdata: false}
             - tag_second_pension_moratorium: {type: bool, initialdata: false}
             - moratorium_survivor_pensioner: {type: bool, initialdata: false}
+            - moratorium_senate_survivor_pensioner: {type: bool, initialdata: false}
             - net_pension: {type: float, initialdata: false}
                     # The suffix c indicates a survivors benefit earned by the deceased's child, while the suffix p indicates a pension received by the departed's spouse. 
             - net_pension_child: {type: float, initialdata: false}
@@ -1112,6 +1113,7 @@ entities:
             - total_auh_mother: {type: int, initialdata: false}
             - retiree_care: {type: bool, initialdata: false}
             - moratoria_care: {type: bool, initialdata: false}
+            - senate_moratorium_care: {type: bool, initialdata: false}
             - track_auh: {type: int, initialdata: false}
             #Finally, we add an individual IFE variable, consistent with the Decree 216/2022 income reinforcement bonus, but also with the proposed Universal Base Wage
             - individual_IFE: {type: float, initialdata: false}
@@ -1335,6 +1337,7 @@ entities:
             #We finally tag as False all initial moratorium survivor pensioners: these are simulated by our model in the death module, and correspond to non-initial 
                     #survivor pensioners that get their benefit from the death of a moratorium pensioner.
                 - moratorium_survivor_pensioner: False 
+                - moratorium_senate_survivor_pensioner: False
         #Seventh, we realised that since Law 26.970 is being indefinitely prolonged for women, then its real limit is the fact you can only buy back years up to 2003: 
                 #you need thus to have contributed enough years since 2004 to retire. We should change the import file to include the whole career since the first 
                 #quarter of 2004, but since we start the fourth quarter of 2014, the lag_count variables in the initial period are good enough (cover up to fourth
@@ -1413,6 +1416,7 @@ entities:
                                             'Total_thirteenth_month_of_pension_pre-2016_cost','Total_net_thirteenth_month_of_pension_pre-2016','Total_thirteenth_month_of_pension_post-2016_cost','Total_net_thirteenth_month_of_pension_post-2016',
                                                 'Total_thirteenth_month_of_universal_pension_cost','Total_net_thirteenth_month_of_universal_pension',
                                                      'Contributory_retirement_care','Moratorium_retirement_care','New_contributory_pensioners','New_moratorium_pensioners','New_PUAM','Percent_care_pensioners','Percent_care_moratorium',
+                                                         'Moratorium_senate_care','New_moratorium_senate_pensioners','Percent_care_moratorium_senate',
                                                         fname='central_v2_m.csv',mode='a')
                 - csv('period','Total_family_benefits','Total_contributive_child_benefits','Total_auh','Total_spouse_benefit',
                                 'Total_school_aid','Total_wedding_benefit','Total_prenatal_benefit','Total_pregnancy_benefit','Total_birth_benefit',
@@ -1429,6 +1433,7 @@ entities:
                                                             'Total_SIPA_beneficiaries','Total_SIPA_benefits', 'Total_non_moratorium_beneficiaries', 'Total_non_moratorium_benefits','Total_PUAM_benefits',
                                                                 'Total_women_SIPA_beneficaries', 'Total_women_non_moratorium_beneficiaries', 'Total_women_PUAM_benefits',
                                                                     'Cont_retiree_by_care','Moratorium_by_care',
+                                                                         'Moratorium_senate_pensioners_share','Moratorium_senate_coverage_legal_age','Moratorium_senate_coverage_65','Mean_moratorium_senate_pension',
                                                     fname='adequacy_central.csv',mode='a')
         ###############################################################################################################
                 - csv('Period','All_pensions','Contributory_pensions','Moratorium_and_PUAM',
@@ -1481,6 +1486,10 @@ entities:
                                             if(tag_initial_moratorium, True, 
                                                 False)), False
                                         )
+                - moratorium_senate_retiree: if(retiree==1,
+                                                if(tag_moratorium_senate, True,
+                                                   False), False
+                                                )
             #The vast majority of survivor's pensions originate from the death of a retiree. Under some conditions however, the death of a worker may trigger survivor's pensions.
                 #First, if the worker had contributed 30 years or more (including the discount of years due to old age if he exceeded the minimum retirement age), he is considered a regular contributor.
                     #Else, if he contributed at least during two and a half years during the last five years, then he is also considered a regular contributor. 
@@ -1785,8 +1794,21 @@ entities:
                 - moratorium_survivor_pensioner: if(check_mother, if(mother.moratorium_retiree, True, 
                                                                 moratorium_survivor_pensioner),
                                                                      moratorium_survivor_pensioner
-                                            )                
-                                        
+                                            )   
+
+                - moratorium_senate_survivor_pensioner: if(check_partner, if(partner.moratorium_senate_retiree, True, 
+                                                                moratorium_senate_survivor_pensioner),
+                                                                    moratorium_senate_survivor_pensioner
+                                            )
+                - moratorium_senate_survivor_pensioner: if(check_father, if(father.moratorium_senate_retiree, True,
+                                                                moratorium_senate_survivor_pensioner),
+                                                                    moratorium_senate_survivor_pensioner
+                                            )
+                - moratorium_senate_survivor_pensioner: if(check_mother, if(mother.moratorium_senate_retiree, True, 
+                                                                moratorium_senate_survivor_pensioner),
+                                                                     moratorium_senate_survivor_pensioner
+                                            )
+                                   
     # 6- Since we are done computing survivor's pensions, we can now remove dead people from the database.
         #We also erase their id in their relatives' observations (the surviving spouse gets an unset partner id).      
                 - partner_id: if(partner.dead, UNSET, partner_id)
@@ -3417,7 +3439,17 @@ entities:
                                          remaining_payments)
                 - remaining_payments: if(remaining_payments<0, 0, 
                                          remaining_payments)
-                
+        #3.5. We identify who retires with the new moratorium thanks to the recognised quarters for care labour.
+                - senate_moratorium_care: if(period<80, False,
+                                            if(retiree_care or moratoria_care, False,
+                                               senate_moratorium_care))
+                - new_moratorium_senate_care: if(not (new_moratorium_senate and tag_moratorium_senate), False,
+                                                if((age_quarters-18*4-(period-4)+car_post_2008_q4) < (120-extra_trim/2 + care_trim), True,
+                                             False))
+                - senate_moratorium_care: if(new_moratorium_senate_care, True, 
+                                             senate_moratorium_care)
+                - total_care_senate_moratorium: sum(senate_moratorium_care,weights=pondera)
+                - new_moratorium_senate_by_care: sum(new_moratorium_senate_care,weights=pondera) / sum(new_moratorium_senate and not male,weights=pondera)
     #4- We compute universal pension beneficiaries. These pensions were given starting from period 56 (fourth quarter of 2016) to people aged 65 or more 
                 #that did not have any other retirement pension (survivors pensions can not be accumulated with a universal benefit).  
                 - new_pension_uni: if(period<56, False, 
@@ -3559,7 +3591,7 @@ entities:
     #11- We've had some cases where individuals who do not get any pension still appear as having liquidated their retirement rights. 
             #We thus add this instruction to correct this error at every simulated period.
                 - liqui_retirement: if(discounted_v2_m==0 or discounted_v2_m_2==0, False, liqui_retirement)
-        #We identify who retires normally thanks to the recognised quarters for care labour.
+    #12- We identify who retires normally thanks to the recognised quarters for care labour.
                 - retiree_care: if(period<76, False, 
                                    retiree_care)
                 - new_retiree_care: if(not new_contributory_pension, False,
@@ -3572,15 +3604,19 @@ entities:
                 - new_retiree_by_care: sum(new_retiree_care,weights=pondera) / sum(new_contributory_pension and not male,weights=pondera)
                 - new_pension_uni: if(tag_pension_uni and not lag(tag_pension_uni), True, 
                                       False)
+                - new_moratorium_senate: if(tag_moratorium_senate and not lag(tag_moratorium_senate), True, 
+                                            False)
 
-    #12- We export total paid retirement benefits by type and computation method. This allows for a faster computation of ANSES deficit.  
+    #14- We export total paid retirement benefits by type and computation method. This allows for a faster computation of ANSES deficit.  
                 - csv(period,sum(disc_cost_v2_m*pondera)/1000,sum(discounted_v2_m*pondera)/1000,sum(disc_cost_v2_m_2*pondera)/1000,sum(discounted_v2_m_2*pondera)/1000
                                 ,sum(net_retirement*pondera)/1000,sum(net_pension*pondera)/1000,sum(net_retirement_2*pondera)/1000,sum(net_pension_2*pondera)/1000
                                     ,sum(universal_gross_pension*pondera)/1000,sum(universal_net_pension*pondera)/1000,
                                         sum(sac_jp_gross*pondera)/1000,sum(sac_jp_net*pondera)/1000,sum(sac_jp_gross_2*pondera)/1000,sum(sac_jp_net_2*pondera)/1000,
                                             sum(sac_up_gross*pondera)/1000,sum(sac_up_net*pondera)/1000,
-                                                total_care_retirees,total_care_moratoria,sum(new_contributory_pension and discounted_v2_m>0,weights=pondera),sum(new_moratoria,weights=pondera),sum(new_pension_uni,weights=pondera),new_retiree_by_care,new_moratoria_by_care,
-                                                   fname='central_v2_m.csv',mode='a')
+                                                total_care_retirees,total_care_moratoria,sum(new_contributory_pension and discounted_v2_m>0,weights=pondera),sum(new_moratoria and discounted_v2_m>0,weights=pondera),sum(new_pension_uni and discounted_v2_m>0,weights=pondera),  
+                                                     new_retiree_by_care,new_moratoria_by_care,
+                                                         total_care_senate_moratorium,sum(new_moratorium_senate and discounted_v2_m>0,weights=pondera),new_moratorium_senate_by_care,
+                                                             fname='central_v2_m.csv',mode='a')
                 
             family_benefits: 
 #Lastly, we compute family benefits. All of these are de jure means-tested on the family-group level (variable IGF, or family-group income). 
@@ -3884,14 +3920,15 @@ entities:
                                                     if(moratorium_date>0, False, 
                                                         if(universal_net_pension>0, False,
                                                             if(tag_initial_moratorium, False,
-                                                                True))))
+                                                               if(tag_moratorium_senate, False, 
+                                                                True)))))
                 - has_survivors_benefit: if(survivors_benefit>0, True,
                                             if(tag_second_pension, True, 
                                                 False
                                             ))
                 - has_contributory_survivors_benefit: if(not has_survivors_benefit, False,  
-                                                            if(moratorium_survivor_pensioner, False,
-                                                                if(tag_second_pension_moratorium, False, 
+                                                            if(moratorium_survivor_pensioner or moratorium_senate_survivor_pensioner, False,
+                                                                if(tag_second_pension_moratorium, False,
                                                                     True)
                                                         ))
                 - has_contributory_benefit: if(has_contributory_retirement, True, 
@@ -3903,12 +3940,17 @@ entities:
                                                 if(moratorium_date>0, True,
                                                     if(tag_initial_moratorium, True, 
                                             False)))
+                - has_moratorium_senate_pension: if(discounted_v2_m==0, False, 
+                                            if(tag_moratorium_senate, True, 
+                                               False))
                 - has_universal_pension: if(universal_net_pension==0, False, 
                                         True)
                 - has_retirement_pension: if(has_contributory_retirement, True, 
                                                 if(has_moratorium_pension, True,  
-                                                    if(has_universal_pension, True, 
-                                                        False)))
+                                                    if(has_universal_pension, True,
+                                                       if(has_moratorium_senate_pension, True,
+                                                          False))))
+
                 - has_any_benefit: if(has_retirement_pension, True, 
                                         if(has_survivors_benefit, True, 
                                             False))
@@ -3926,6 +3968,8 @@ entities:
                                                 filter=has_moratorium_pension, weights=pondera)
                 - mean_universal_pension: avg(retirement_pension, 
                                                 filter=has_universal_pension, weights=pondera)
+                - mean_moratorium_senate_pension: avg(retirement_pension, 
+                                                      filter=has_moratorium_senate_pension, weights=pondera)
         # Finally, we compute mean retirement benefits across all retirement programs (normal, moratorium and universal pension benefits)                                        
                 - mean_retirement_pension: avg(retirement_pension, 
                                                 filter= has_retirement_pension, weights=pondera)
@@ -3952,6 +3996,8 @@ entities:
                                                     /sum(has_retirement_pension,weights=pondera)
                 - universal_pensioners_share: sum(has_universal_pension,weights=pondera)
                                                     /sum(has_retirement_pension,weights=pondera)
+                - moratorium_senate_pensioners_share: sum(has_moratorium_senate_pension,weights=pondera)
+                                                    /sum(has_retirement_pension,weights=pondera)
         #We then take the proportion of the elderly (legal age or 65+) that have a direct retirement benefit        
                 - retirement_coverage_legal_age: (sum(has_retirement_pension and reached_retirement_age,weights=pondera))
                                                     /sum(reached_retirement_age,weights=pondera)
@@ -3975,6 +4021,10 @@ entities:
                 - moratorium_coverage_legal_age: (sum(has_moratorium_pension and reached_retirement_age,weights=pondera))
                                                     /sum(reached_retirement_age,weights=pondera)
                 - moratorium_coverage_65: (sum(has_moratorium_pension and age>=65,weights=pondera))
+                                                    /sum(age>=65,weights=pondera)                                     
+                - moratorium_senate_coverage_legal_age: (sum(has_moratorium_senate_pension and reached_retirement_age,weights=pondera))
+                                                    /sum(reached_retirement_age,weights=pondera)
+                - moratorium_senate_coverage_65: (sum(has_moratorium_senate_pension and age>=65,weights=pondera))
                                                     /sum(age>=65,weights=pondera)
                 - PUAM_coverage_legal_age: (sum(has_universal_pension and reached_retirement_age,weights=pondera))
                                                     /sum(reached_retirement_age,weights=pondera)
@@ -4066,6 +4116,7 @@ entities:
                                                         total_sipa_beneficiaries,total_sipa_benefits,total_sipa_non_moratorium_beneficiaries,total_sipa_non_moratorium_benefits,total_PUAM_benefits,
                                                              total_women_sipa_beneficiaries, total_women_sipa_non_moratorium_beneficiaries, total_women_PUAM_benefits,
                                                                  stock_by_care,stock_moratorium_by_care,
+                                                                     moratorium_senate_pensioners_share,moratorium_senate_coverage_legal_age,moratorium_senate_coverage_65, mean_moratorium_senate_pension,  
                                             fname='adequacy_central.csv',mode='a')
             temporary_measures_pensions: 
             #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri and Fernández governments. 
