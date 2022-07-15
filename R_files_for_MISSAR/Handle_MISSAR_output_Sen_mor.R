@@ -34,7 +34,6 @@ if(!file.exists("MISSAR_output")) {
   dir.create("MISSAR_output")
 }
 
-
 setwd("MISSAR_output/")
 
 
@@ -92,7 +91,6 @@ csv_low_v5_m <- read_csv("low_v5_m.csv")%>%
 csv_high_v5_m <- read_csv("high_v5_m.csv")%>%
   correct_csv()
 
-view(csv_low_v5_m)
 
 csv_central_SIPA_income <- read_csv("central_SIPA_income.csv")%>%
   correct_csv()
@@ -147,8 +145,102 @@ write_sheet(csv_buyback_mechanism_high,ss=id_deficit,sheet="Buyback_high")
 
 rm(list=ls(pattern="^csv_"))
 
-#Update adequacy results file ----
 
+#Export projected GDP and ANSES income to the globals making sheet file ------
+
+sim_GDP_central<-read_sheet(id_deficit,sheet="GDP evolution by scenario",range="E11:E114",col_names = FALSE)%>% #We import simulated GDP, since 2015
+  rename(Central=c(1))%>%
+  mutate(mergeid=row_number())
+sim_GDP_high<-read_sheet(id_deficit,sheet="GDP evolution by scenario",range="K11:K114",col_names = FALSE)%>%
+  rename(High=c(1))%>%
+  mutate(mergeid=row_number())
+sim_GDP_low<-read_sheet(id_deficit,sheet="GDP evolution by scenario",range="P11:P114",col_names = FALSE)%>%
+  rename(Low=c(1))%>%
+  mutate(mergeid=row_number())
+
+sim_GDP<-sim_GDP_central%>%
+  left_join(sim_GDP_low)%>%
+  left_join(sim_GDP_high)%>%
+  select(-c(mergeid))
+rm(sim_GDP_central,sim_GDP_low,sim_GDP_high)
+head(sim_GDP)
+
+
+
+sim_income_central<-read_sheet(id_deficit,sheet="Central SIPA income",range="E9:E112",col_names = FALSE)%>% #We import simulated contributions
+  rename(Central=c(1))%>%
+  mutate(mergeid=row_number())
+sim_income_low<-read_sheet(id_deficit,sheet="Low SIPA income",range="E9:E112",col_names = FALSE)%>%
+  rename(Low=c(1))%>%
+  mutate(mergeid=row_number())
+sim_income_high<-read_sheet(id_deficit,sheet="High SIPA income",range="E9:E112",col_names = FALSE)%>%
+  rename(High=c(1))%>%
+  mutate(mergeid=row_number())
+
+
+
+sim_income<-sim_income_central%>%
+  left_join(sim_income_low)%>%
+  left_join(sim_income_high)%>%
+  select(-c(mergeid))
+rm(sim_income_central,sim_income_low,sim_income_high)
+head(sim_income)
+
+
+sim_workers_central<-read_sheet(id_deficit,sheet="workers_and_wage_central",range="C2:C105",col_names = FALSE)%>% #We import simulated contributions
+  rename(Central=c(1))%>%
+  mutate(mergeid=row_number())
+sim_workers_low<-read_sheet(id_deficit,sheet="workers_and_wage_low",range="C2:C105",col_names = FALSE)%>%
+  rename(Low=c(1))%>%
+  mutate(mergeid=row_number())
+sim_workers_high<-read_sheet(id_deficit,sheet="workers_and_wage_high",range="C2:C105",col_names = FALSE)%>%
+  rename(High=c(1))%>%
+  mutate(mergeid=row_number())
+
+sim_wage_central<-read_sheet(id_deficit,sheet="workers_and_wage_central",range="B2:B105",col_names = FALSE)%>% #We import simulated contributions
+  rename(Central=c(1))%>%
+  mutate(mergeid=row_number())
+sim_wage_low<-read_sheet(id_deficit,sheet="workers_and_wage_low",range="B2:B105",col_names = FALSE)%>%
+  rename(Low=c(1))%>%
+  mutate(mergeid=row_number())
+sim_wage_high<-read_sheet(id_deficit,sheet="workers_and_wage_high",range="B2:B105",col_names = FALSE)%>%
+  rename(High=c(1))%>%
+  mutate(mergeid=row_number())
+
+sim_workers<-sim_workers_low%>%
+  left_join(sim_workers_central)%>%
+  left_join(sim_workers_high)%>%
+  select(-c(mergeid))
+rm(sim_workers_low,sim_workers_central,sim_workers_high)
+head(sim_workers)
+
+
+sim_wage<-sim_wage_low%>%
+  left_join(sim_wage_central)%>%
+  left_join(sim_wage_high)%>%
+  select(-c(mergeid))
+rm(sim_wage_central,sim_wage_low,sim_wage_high)
+head(sim_wage)
+
+id_globals<- drive_get("Globals_moratorium_senate")
+range_write(sim_income,ss=id_globals,sheet="Simulated_ANSES_contributions",range="B3:D107",reformat=FALSE)
+range_write(sim_GDP,ss=id_globals,sheet="Simulated_ANSES_contributions",range="H3:J107",reformat=FALSE)
+range_write(sim_workers,ss=id_globals,sheet="Labour GDP participation",range="N3:P107",reformat=FALSE)
+range_write(sim_wage,ss=id_globals,sheet="Labour GDP participation",range="Q3:S107",reformat=FALSE)
+
+rm(list=ls(pattern="^sim_"))
+
+
+
+
+
+
+
+
+
+
+
+#Update adequacy results file ----
 csv_adequacy_low <- read_csv("adequacy_low.csv")%>%
   correct_csv()
 csv_adequacy_central <- read_csv("adequacy_central.csv")%>%
@@ -179,7 +271,7 @@ csv_redistribution_high_insee <- read_csv("redistribution_high_insee.csv")%>%
 
 
 #Modify the corresponding sheets
-id_adequacy<- drive_get(paste0(leg,"Graphics_adequacy_Macri_leg"))
+id_adequacy<- drive_get(paste0(leg,"Graphics_adequacy_Sen_mor"))
 
 write_sheet(csv_adequacy_central,ss=id_adequacy,sheet="Adequacy_central")
 write_sheet(csv_adequacy_low,ss=id_adequacy,sheet="Adequacy_low")
@@ -201,8 +293,8 @@ range_write(sim_wage_high,ss=id_adequacy,sheet="Retirement benefit values", rang
 
 #Update minimum wage and minimum pension figures in adequacy sheets
 
-id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
-csv_minima<-read_sheet(id_globals,sheet="copy_to_csv_Macri_leg",col_names = FALSE)
+id_globals<- drive_get("Globals_moratorium_senate")
+csv_minima<-read_sheet(id_globals,sheet="copy_to_csv_2020_leg",col_names = FALSE)
 csv_minima<-csv_minima%>%
   subset(...1 %in% c("PERIOD","MIN_PENSION_CENTRAL_2014_T4","MINIMUM_WAGE_CENTRAL_2014_T4",
                      "MIN_PENSION_HIGH_2014_T4","MINIMUM_WAGE_HIGH_2014_T4","MIN_PENSION_LOW_2014_T4","MINIMUM_WAGE_LOW_2014_T4"))%>%
@@ -237,12 +329,11 @@ rm(csv_minima)
 
 
 
-
 #Update values on redistribution sheets
 
-id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita_Macri_leg"))
-id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC_Macri_leg"))
-id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE_Macri_leg"))
+id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita_Sen_mor"))
+id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC_Sen_mor"))
+id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE_Sen_mor"))
 
 
 write_sheet(csv_redistribution_central,ss=id_redistribution,sheet="Redistribution_central")
@@ -257,6 +348,48 @@ write_sheet(csv_redistribution_central_insee,ss=id_redistribution_INSEE,sheet="R
 write_sheet(csv_redistribution_low_insee,ss=id_redistribution_INSEE,sheet="Redistribution_low")
 write_sheet(csv_redistribution_high_insee,ss=id_redistribution_INSEE,sheet="Redistribution_high")
 
+
+#Update simulated number of pensions in globals file -----
+
+sim_benefits_central<-csv_adequacy_central%>%
+  select(period,Total_SIPA_benefits,Moratorium_senate_benefits,Total_PUAM_benefits,Total_non_moratorium_benefits)%>%
+  mutate(Total_old_mor_benefits=Total_SIPA_benefits - Moratorium_senate_benefits - Total_PUAM_benefits - Total_non_moratorium_benefits)%>%    
+  rename(Central_total=Total_SIPA_benefits, 
+         Central_cont=Total_non_moratorium_benefits, 
+         Central_old_mor=Total_old_mor_benefits, 
+         Central_mor_senate=Moratorium_senate_benefits,
+         Central_PUAM=Total_PUAM_benefits)
+
+sim_benefits_low<-csv_adequacy_low%>%
+  select(period,Total_SIPA_benefits,Moratorium_senate_benefits,Total_PUAM_benefits,Total_non_moratorium_benefits)%>%
+  mutate(Total_old_mor_benefits=Total_SIPA_benefits - Moratorium_senate_benefits - Total_PUAM_benefits - Total_non_moratorium_benefits)%>%    
+  rename(Pesimista_total=Total_SIPA_benefits, 
+         Pesimista_cont=Total_non_moratorium_benefits,
+         Pesimista_old_mor=Total_old_mor_benefits, 
+         Pesimista_mor_senate=Moratorium_senate_benefits,
+         Pesimista_PUAM=Total_PUAM_benefits)
+
+sim_benefits_high<-csv_adequacy_high%>%
+  select(period,Total_SIPA_benefits,Moratorium_senate_benefits,Total_PUAM_benefits,Total_non_moratorium_benefits)%>%
+  mutate(Total_old_mor_benefits=Total_SIPA_benefits - Moratorium_senate_benefits - Total_PUAM_benefits - Total_non_moratorium_benefits)%>%    
+  rename(Optimista_total=Total_SIPA_benefits, 
+         Optimista_cont=Total_non_moratorium_benefits,
+         Optimista_old_mor=Total_old_mor_benefits, 
+         Optimista_mor_senate=Moratorium_senate_benefits,
+         Optimista_PUAM=Total_PUAM_benefits)
+
+
+sim_benefits<-sim_benefits_central%>%
+  left_join(sim_benefits_low)%>%
+  left_join(sim_benefits_high)%>%
+  select(-c(period))
+rm(sim_benefits_central,sim_benefits_low,sim_benefits_high)
+
+sim_benefits<-sim_benefits[,c(1,6,11,4,9,14,3,8,13,2,7,12)] #Re-order columns
+range_write(sim_benefits,ss=id_globals,sheet="Simulated_ANSES_contributions",range="AV3:BG107",reformat=FALSE)
+
+rm(list=ls(pattern="^sim_"))
+rm(list=ls(pattern="^csv_"))
 
 #Cleanup -----
 setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
