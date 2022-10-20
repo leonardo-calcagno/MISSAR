@@ -69,6 +69,7 @@ Version 1.4. (ongoing)
 - Correct major birth probability error in p_birth_f3.csv; also, stop dividing by 4 for quarterly probabilities of giving birth
 - Add Decree 475/2021 quarter validation for women depending on total children, and number of children with AUH
 - Generate and handle globals with R and google drive
+- Handle MISSAR results with R and google drive
 - Include 2022 proposed pension moratorium legislation
 - Updated economic data: 
 	* Autonomous and monotributista information up to February 2022
