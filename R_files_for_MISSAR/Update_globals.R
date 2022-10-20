@@ -49,7 +49,8 @@ lag_year<-as.integer(year)-1
 lag_year<- as.character(lag_year)
 
 lag_month<- if(lag_month==0) {12
-  }
+}else {lag_month
+}
 
 lag_month<- if (lag_month>9) {as.character(lag_month)
 } else {
@@ -129,10 +130,22 @@ rm(df_CPI_for_globals,df_latest_CPI)
 #named two months after  (here, March).
 date<-Sys.Date()
 year<-substr(date,start=3,stop=4)
-month<-as.integer(substr(date,start=6,stop=7))-1
+month<-substr(date,start=6,stop=7)
+month<-as.integer(month)-1
+month<- if(month==0){12
+}else {month
+}
+
+month<- if (month>9) {as.character(month)
+} else {
+  paste0("0",month)
+}
 
 #day<-substr(date,start=9,stop=10)
-lag_month<-as.integer(month)-1
+lag_month<-month-1
+lag_month<- if(lag_month==0){12
+}else {lag_month
+}
 lag_year<-as.integer(year)-1
 lag_year<- as.character(lag_year)
 
@@ -142,9 +155,10 @@ lag_month<- if (lag_month>9) {as.character(lag_month)
 }
 
 
-CPI_url <- paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",month,"_",year,".xls")
-alt_CPI_url<- if (month=="01") {paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",lag_month,"_",lag_year,".xls")
-} else {paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",lag_month,"_",year,".xls")
+wage_url <- paste0("https://www.indec.gob.ar/ftp/cuadros/sociedad/variaciones_salarios_",month,"_",year,".xls")
+
+alt_wage_url<- if (month=="01") {paste0("https://www.indec.gob.ar/ftp/cuadros/sociedad/variaciones_salarios_",lag_month,"_",lag_year,".xls")
+} else {paste0("https://www.indec.gob.ar/ftp/cuadros/sociedad/variaciones_salarios_",lag_month,"_",year,".xls")
 }
 rm(date,year,month,day,lag_year,lag_month)
 
@@ -155,22 +169,23 @@ urlFileExist <- function(url){ #Source: https://stackoverflow.com/questions/6031
   list(exists = status == HTTP_STATUS_OK, status = status)
 }
 
-current_month_exists<-urlFileExist(CPI_url)$exists
-last_month_exists<-urlFileExist(alt_CPI_url)$exists
+current_month_exists<-urlFileExist(wage_url)$exists
+last_month_exists<-urlFileExist(alt_wage_url)$exists
 
-correct_CPI_url<- if(current_month_exists==TRUE){CPI_url
-}else if(last_month_exists==TRUE) {alt_CPI_url
+correct_wage_url<- if(current_month_exists==TRUE){wage_url
+}else if(last_month_exists==TRUE) {alt_wage_url
 } else {"ERROR"
 }
 
-correct_CPI_url #Prints the URL, shows ERROR if neither exist
+correct_wage_url #Prints the URL, shows ERROR if neither exist
 
 download.file(
-  url = correct_CPI_url, 
-  destfile = "latest_CPI.xls", mode='wb'
+  url = correct_wage_url, 
+  destfile = "latest_INDEC_wage.xls", mode='wb'
 )
 
 
+rm(correct_wage_url,alt_wage_url,wage_url,current_month_exists,last_month_exists)
 
 #Cleanup -----
 rm(output_name,sheet_name)
