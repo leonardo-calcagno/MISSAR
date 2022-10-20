@@ -25,6 +25,9 @@ library(googlesheets4)
 library(googledrive)
 
 gs4_auth() #Connection to google account
+
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
+id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
 
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR")
@@ -57,7 +60,7 @@ alt_CPI_url<- if (month=="01") {paste0("https://www.indec.gob.ar/ftp/cuadros/eco
 }
 rm(date,year,month,day,lag_year,lag_month)
 
-urlFileExist <- function(url){
+urlFileExist <- function(url){ #Source: https://stackoverflow.com/questions/60318926/how-to-check-if-file-exists-in-the-url-before-use-download-file-in-r
   HTTP_STATUS_OK <- 200
   hd <- httr::HEAD(url)
   status <- hd$all_headers[[1]]$status
@@ -79,39 +82,46 @@ download.file(
   destfile = "latest_CPI.xls", mode='wb'
 )
 
-#Update distinct globals sheets with current legislation macroeconomic data and projections ---
-id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
+rm(correct_CPI_url,alt_CPI_url,CPI_url,current_month_exists,last_month_exists)
 
+df_latest_CPI<-read_excel("latest_CPI.xls",sheet="Índices IPC Cobertura Nacional") %>% 
+  rename(CPI_index_type=1) %>%  #Rename the first column
+  subset(CPI_index_type=="Nivel general") %>% 
+  mutate(CPI_region=ifelse(row_number(CPI_index_type)==1, "Nacional",
+                           ifelse(row_number(CPI_index_type)==2, "GBA", 
+                                  ifelse(row_number(CPI_index_type)==3, "Pampeana", 
+                                                    ifelse(row_number(CPI_index_type)==4, "NOA", 
+                                                                      ifelse(row_number(CPI_index_type)==5, "NEA", 
+                                                                                        ifelse(row_number(CPI_index_type)==6, "Cuyo",
+                                                                                               "Patagonia")
+                                                                             )
+                                                           )
+                                         )
+                                  )
+                           )
+         ) %>% 
+  select(c(CPI_region),everything()) %>% #Put the region name as first column
+  select(-c(CPI_index_type))
 
-id_globals_senate<- drive_get("Globals_moratorium_senate") 
+df_CPI_for_globals<-df_latest_CPI %>% 
+  subset(CPI_region %in% c("Nacional","GBA")) %>% 
+  arrange(CPI_region)
 
+df_CPI_for_globals<-as.data.frame(t(df_CPI_for_globals))
+df_CPI_for_globals<-df_CPI_for_globals[-1,] #Remove first row
+names(df_CPI_for_globals)<- c("GBA","nacional")
+df_CPI_for_globals<-df_CPI_for_globals %>% 
+  mutate(GBA=as.double(GBA),
+         nacional=as.double(nacional)
+         )
+#Now we update the CPI index in the globals file
 
-sheet_delete(ss=id_globals_senate,sheet="Test1")
-sheet_copy(from_ss=id_globals,from_sheet="Test1",to_ss=id_globals_senate,to_sheet="Test1")
-test<-gs4_get(id_globals,sheet="Inflation and wages")
-csv_inflation_wages<- read_sheet(id_globals,sheet="Inflation and wages")
-head(csv_inflation_wages)
-
-
-unzip(zipfile = 'Bases_afip/arancel.zip', exdir = "Bases_afip")
-unlink('Bases_afip/arancel.zip') # Borra el archivo zip
-
-fecha<-Sys.Date()
-anio<-substr(fecha,start=1,stop=4)
-mes<-substr(fecha,start=6,stop=7)
-dia<-substr(fecha,start=9,stop=10)
-ruta_base<-"Bases_afip/nomenclador_"
-
-nomenclador <- readr::read_delim(paste0(ruta_base,dia,mes,anio,".txt"), 
-                                 delim = "@", escape_double = FALSE, col_names = FALSE, 
-                                 trim_ws = TRUE) #El archivo de AFIP lleva la fecha de hoy
-
-
-
+range_write(df_CPI_for_globals,ss=id_globals,range="E889",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE) #Son las 3 células que hay que cambiar en el drive
+rm(df_CPI_for_globals,df_latest_CPI)
 
 
 #Cleanup -----
 rm(output_name,sheet_name)
-setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
-unlink("MISSAR_output",recursive=TRUE)
+setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR/")
+unlink("download_folder",recursive=TRUE)
 rm(list=ls())
