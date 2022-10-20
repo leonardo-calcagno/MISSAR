@@ -48,11 +48,13 @@ lag_month<-as.integer(month)-1
 lag_year<-as.integer(year)-1
 lag_year<- as.character(lag_year)
 
+lag_month<- if(lag_month==0) {12
+  }
+
 lag_month<- if (lag_month>9) {as.character(lag_month)
 } else {
 paste0("0",lag_month)
 }
-
 
 CPI_url <- paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",month,"_",year,".xls")
 alt_CPI_url<- if (month=="01") {paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",lag_month,"_",lag_year,".xls")
@@ -118,6 +120,56 @@ df_CPI_for_globals<-df_CPI_for_globals %>%
 
 range_write(df_CPI_for_globals,ss=id_globals,range="E889",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE) #Son las 3 células que hay que cambiar en el drive
 rm(df_CPI_for_globals,df_latest_CPI)
+
+####INDEC wage index ------
+ #URL: https://www.indec.gob.ar/ftp/cuadros/sociedad/variaciones_salarios_09_22.xls for July data
+
+
+#We automate the URL for downloading the latest INDEC wage index: for figures of a given month (say, January), the URL is 
+#named two months after  (here, March).
+date<-Sys.Date()
+year<-substr(date,start=3,stop=4)
+month<-as.integer(substr(date,start=6,stop=7))-1
+
+#day<-substr(date,start=9,stop=10)
+lag_month<-as.integer(month)-1
+lag_year<-as.integer(year)-1
+lag_year<- as.character(lag_year)
+
+lag_month<- if (lag_month>9) {as.character(lag_month)
+} else {
+  paste0("0",lag_month)
+}
+
+
+CPI_url <- paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",month,"_",year,".xls")
+alt_CPI_url<- if (month=="01") {paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",lag_month,"_",lag_year,".xls")
+} else {paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",lag_month,"_",year,".xls")
+}
+rm(date,year,month,day,lag_year,lag_month)
+
+urlFileExist <- function(url){ #Source: https://stackoverflow.com/questions/60318926/how-to-check-if-file-exists-in-the-url-before-use-download-file-in-r
+  HTTP_STATUS_OK <- 200
+  hd <- httr::HEAD(url)
+  status <- hd$all_headers[[1]]$status
+  list(exists = status == HTTP_STATUS_OK, status = status)
+}
+
+current_month_exists<-urlFileExist(CPI_url)$exists
+last_month_exists<-urlFileExist(alt_CPI_url)$exists
+
+correct_CPI_url<- if(current_month_exists==TRUE){CPI_url
+}else if(last_month_exists==TRUE) {alt_CPI_url
+} else {"ERROR"
+}
+
+correct_CPI_url #Prints the URL, shows ERROR if neither exist
+
+download.file(
+  url = correct_CPI_url, 
+  destfile = "latest_CPI.xls", mode='wb'
+)
+
 
 
 #Cleanup -----
