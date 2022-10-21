@@ -203,6 +203,26 @@ range_write(vector_wage_index,ss=id_globals,range="G269",col_names =FALSE,sheet=
 
 rm(vector_wage_index,df_latest_wage)
 
+
+#### Actualise RIPTE wage index -----
+
+url_RIPTE<-"https://infra.datos.gob.ar/catalog/sspm/dataset/158/distribution/158.1/download/remuneracion-imponible-promedio-trabajadores-estables-ripte-total-pais-pesos-serie-mensual.csv"
+
+
+download.file(
+  url = url_RIPTE, 
+  destfile = "RIPTE_index.csv", mode='wb'
+)
+vector_RIPTE <- read_csv("RIPTE_index.csv") %>% 
+  select(c(ripte))
+
+head(vector_RIPTE)
+
+range_write(vector_RIPTE,ss=id_globals,range="N620",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE) #
+rm(vector_RIPTE)
+unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .csv is not in gitignore
+
+
 #Cleanup -----
 rm(output_name,sheet_name)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR/")
