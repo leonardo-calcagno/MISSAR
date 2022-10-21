@@ -136,15 +136,16 @@ month<- if(month==0){12
 }else {month
 }
 
-month<- if (month>9) {as.character(month)
-} else {
-  paste0("0",month)
-}
 
 #day<-substr(date,start=9,stop=10)
 lag_month<-month-1
 lag_month<- if(lag_month==0){12
 }else {lag_month
+}
+
+month<- if (month>9) {as.character(month)
+} else {
+  paste0("0",month)
 }
 lag_year<-as.integer(year)-1
 lag_year<- as.character(lag_year)
@@ -162,12 +163,6 @@ alt_wage_url<- if (month=="01") {paste0("https://www.indec.gob.ar/ftp/cuadros/so
 }
 rm(date,year,month,day,lag_year,lag_month)
 
-urlFileExist <- function(url){ #Source: https://stackoverflow.com/questions/60318926/how-to-check-if-file-exists-in-the-url-before-use-download-file-in-r
-  HTTP_STATUS_OK <- 200
-  hd <- httr::HEAD(url)
-  status <- hd$all_headers[[1]]$status
-  list(exists = status == HTTP_STATUS_OK, status = status)
-}
 
 current_month_exists<-urlFileExist(wage_url)$exists
 last_month_exists<-urlFileExist(alt_wage_url)$exists
@@ -186,6 +181,27 @@ download.file(
 
 
 rm(correct_wage_url,alt_wage_url,wage_url,current_month_exists,last_month_exists)
+
+df_latest_wage<-read_excel("latest_INDEC_wage.xls")
+names(df_latest_wage)[length(names(df_latest_wage))]<-"wage_index" 
+
+df_latest_wage<-df_latest_wage%>% 
+  rename(year=1,
+         month=2) %>% 
+  select(c(year,month,wage_index)) %>% 
+  mutate(keep=ifelse(as.integer(substr(wage_index,start=1,stop=1))>0, 1, 
+                     0)
+         ) %>% 
+  subset(keep==1) %>% 
+  select(-c(keep)) %>% 
+  mutate(wage_index=as.double(wage_index))
+
+vector_wage_index<-df_latest_wage %>% 
+  select(c(wage_index))
+
+range_write(vector_wage_index,ss=id_globals,range="G269",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
+
+rm(vector_wage_index,df_latest_wage)
 
 #Cleanup -----
 rm(output_name,sheet_name)
