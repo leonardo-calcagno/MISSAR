@@ -9,6 +9,8 @@ install.packages('questionr')
 install.packages('readr')
 install.packages('googlesheets4')
 install.packages('googledrive')
+install.packages('glue')
+install.packages('rlist')
 
 rm(list=ls())
 gc()
@@ -23,6 +25,8 @@ library(questionr)
 library(readr)
 library(googlesheets4)
 library(googledrive)
+library(glue)
+library(rlist)
 
 gs4_auth() #Connection to google account
 
@@ -204,7 +208,7 @@ range_write(vector_wage_index,ss=id_globals,range="G269",col_names =FALSE,sheet=
 rm(vector_wage_index,df_latest_wage)
 
 
-#### Actualise RIPTE wage index -----
+#### Update RIPTE wage index --------
 
 url_RIPTE<-"https://infra.datos.gob.ar/catalog/sspm/dataset/158/distribution/158.1/download/remuneracion-imponible-promedio-trabajadores-estables-ripte-total-pais-pesos-serie-mensual.csv"
 
@@ -221,6 +225,155 @@ head(vector_RIPTE)
 range_write(vector_RIPTE,ss=id_globals,range="N620",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE) #
 rm(vector_RIPTE)
 unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .csv is not in gitignore
+
+###### Update ANSES fiscal income, from Savings-Investment-Funding Account-------
+
+
+##Folder creation
+
+if(!file.exists("AIF")) {
+  dir.create("AIF")
+}
+
+setwd("AIF/")
+getwd()
+
+#Possible imported months and years names
+month <- c("ene", "feb", "mar", "abr", "may", "jun", "jul",
+         "ago", "sep", "oct", "nov", "dic", 
+         "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+         "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+
+
+#Put different names for each option, or they get overwritten
+numeric_month <- c("01", "02", "03", "04", "05", "06", "07",
+             "08", "09", "10", "11", "12", 
+             "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+             "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+
+year <- c("14","15","16","17","18","19", "20", "21", "22")
+
+
+##Possible names and links, with and without .xls
+urls_xls <- 
+  tidyr::expand_grid(month, year) %>%
+  glue_data("https://www.economia.gob.ar/onp/documentos/resultado/caja/c20{year}/archivos/{month}{year}.xls")
+
+urls_xlsx <- 
+  tidyr::expand_grid(month, year) %>%
+  glue_data("https://www.economia.gob.ar/onp/documentos/resultado/caja/c20{year}/archivos/{month}{year}.xlsx")
+
+# File names for xls y xlsx
+names_xls <- 
+  tidyr::expand_grid(numeric_month, year) %>%
+  glue_data("20{year}_{numeric_month}.xls")
+
+names_xlsx <- 
+  tidyr::expand_grid(numeric_month, year) %>% 
+  glue_data("20{year}_{numeric_month}.xlsx")
+
+#---- Download excels with purrr library
+
+walk2(urls_xls,names_xls,safely(download.file), mode = "wb")
+
+walk2(urls_xlsx,names_xlsx,safely(download.file), mode = "wb")
+
+
+###Import all downloaded excel files (from https://stackoverflow.com/questions/32888757/how-can-i-read-multiple-excel-files-into-r)
+
+
+list_xls <- list.files(pattern='*.xls')
+
+read_third_sheet <- function(path) { #Sometimes, the correct table is in the third sheet
+  x <-try(read_excel(path=path, sheet = 3)) #Some tables have only one sheet: try() keeps the code running even through errors
+}
+
+read_second_sheet <- function(path) { #Sometimes, the correct table is in the second sheet
+  x <-try(read_excel(path=path, sheet = 2)) #Some tables have only one sheet: try() keeps the code running even through errors
+}
+read_excel_as_df <- function(path) {
+ x<-try(as.data.frame(read_excel(path=path)))  
+}
+
+df_list_xls <- sapply(list_xls, read_excel,simplify=FALSE)#This keeps the file names 
+df_list_s2_xls <- sapply(list_xls, read_second_sheet,simplify=FALSE)
+df_list_s3_xls <- sapply(list_xls, read_third_sheet,simplify=FALSE)
+
+##The read_second_sheet() and read_third_sheet() function allow for errors, so the end result is a list with both characters
+    #and lists. We thus need to first remove non-list elements from the list of lists. 
+keep_s2_xls<-sapply(df_list_s2_xls,is.list)
+keep_s3_xls<-sapply(df_list_s3_xls,is.list)
+df_list_s2_xls<- df_list_s2_xls [which(keep_s2_xls==TRUE)]
+df_list_s3_xls<- df_list_s3_xls [which(keep_s3_xls==TRUE)]
+
+##We only want the sheet with the AIF table, which has 10 columns.
+n.cols_xls<-unlist(lapply(df_list_xls, function(t) dim(t) [2])) #[1] for rows, [2] for columns
+n.cols_s2_xls<-unlist(lapply(df_list_s2_xls, function(t) dim(t) [2]))
+n.cols_s3_xls<-unlist(lapply(df_list_s3_xls, function(t) dim(t) [2]))
+
+df_list_xls<-df_list_xls[which(n.cols_xls==10)]
+df_list_s2_xls<-df_list_s2_xls[which(n.cols_s2_xls==10)]
+df_list_s3_xls<-df_list_s3_xls[which(n.cols_s3_xls==10)]
+
+#Sometimes, the second or third sheet has 10 columns, but is not the sheet with the AIF Table. 
+    #This causes duplicates, as the sheet with the AIF table is, in that case, correctly in  
+    #respectively the first and second sheet. 
+
+names_first_sheet<-names(df_list_xls)
+
+df_list_s2_xls<- df_list_s2_xls[- which(names(df_list_s2_xls) %in% names_first_sheet) ]
+
+#For May 2018, the correct sheet is the third one, and the second one has 10 columns. It is the only case, so we correct it manually.
+#If rbind fails because the sixth column is double for a given table, it means that table needs to be 
+#reloaded manually. 
+df_list_s2_xls<-within(df_list_s2_xls, rm("2018_05.xls"))
+
+df_list_s3_xls<- df_list_s3_xls[- which(names(df_list_s3_xls) %in% names_first_sheet) ]
+
+
+df_AIF <- bind_rows(c(df_list_xls), .id = "file")
+df_AIF<-df_AIF[,-c(12,13)] #We remove the two last columns, with no relevant data
+df_AIF_s2<-bind_rows (c(df_list_s2_xls), .id="file")
+df_AIF_s3<-bind_rows (c(df_list_s3_xls), .id="file")
+
+df_AIF<-rbind(df_AIF,df_AIF_s2,df_AIF_s3) #We concatenate all AIF table into one dataset
+
+rm(list=ls(pattern="*df_list"))
+rm(list=ls(pattern="*n.cols"))
+rm(list_xls,keep_s2_xls,df_AIF_s2,df_2018_05)
+table(df_AIF$file) ###We check all periods are in the df, true at least for the 2014- Sep. 2022 period
+
+
+
+id_carpeta<- drive_get("Extensión PAIS")
+#gs4_create(name="impo_LNA_mes",sheets=df_impo_1_22) 
+#drive_mv(file="impo_LNA_mes",overwrite=TRUE,path=id_carpeta)
+
+id_importaciones<-drive_get("impo_LNA_mes")
+
+write_sheet(df_impo_1_22,ss=id_importaciones,sheet="Enero")
+
+credito_mensual_2022 <- read_csv("~/credito-mensual-2022.csv")
+View(credito_mensual_2022)
+
+transf<-credito_mensual_2022%>%
+  subset(finalidad_id=="4" & inciso_id=="5" & funcion_id=="1" & principal_id=="1" & parcial_id=="9")
+
+head(transf)
+table(transf$programa_id)
+view(transf
+)
+
+#4 finalidad servicios económicos
+# función 1 energía, combustibles... finalidad 4 (servicios económicos)
+#para IAESA, inciso 5 (transferencias) principal 5 (otros entes del sector público) parcial 2 (a empresas públicas)
+
+
+
+#Cleanup -----
+setwd("C:/Users/Ministerio/Documents/Contribuciones_IVA_exportaciones/Bases_externas/")
+unlink("AIF",recursive=TRUE)
+rm(list=ls())
 
 
 #Cleanup -----
