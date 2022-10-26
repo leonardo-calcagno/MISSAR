@@ -336,9 +336,12 @@ df_list_s3_xls<- df_list_s3_xls[- which(names(df_list_s3_xls) %in% names_first_s
 
 
 df_AIF <- bind_rows(c(df_list_xls), .id = "file")
-df_AIF<-df_AIF[,-c(12,13)] #We remove the two last columns, with no relevant data
 df_AIF_s2<-bind_rows (c(df_list_s2_xls), .id="file")
 df_AIF_s3<-bind_rows (c(df_list_s3_xls), .id="file")
+
+df_AIF<-df_AIF[,1:11] #We keep only the first 11 columns: the file name and the 10 columns with relevant data.
+df_AIF_s2<-df_AIF_s2[,1:11] 
+df_AIF_s3<-df_AIF_s3[,1:11] 
 
 df_AIF<-rbind(df_AIF,df_AIF_s2,df_AIF_s3) #We concatenate all AIF table into one dataset
 table(df_AIF$file) ###We check all periods are in the df, true at least for the 2014- Sep. 2022 period
@@ -422,7 +425,7 @@ df_ISS_fiscal_income<-df_AIF %>%
 #those rows.
 total_files<-nrow(as.data.frame(table(df_AIF$archivo)))
 head(total_files)
-table(control$concepto) 
+table(df_ISS_fiscal_income$concepto) 
 
 #We update ANSES fiscal income information in the global file
 vector_ISS_fiscal_income<-df_ISS_fiscal_income %>% 
@@ -436,6 +439,7 @@ rm(total_files,control,list_AIF,table_file_size,concept_names,vector_ISS_fiscal_
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
+#On 4 GB Ram laptop, 7.6 minutes. 
 #Cleanup -----
 rm(output_name,sheet_name)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR/")
