@@ -228,6 +228,7 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 
 ###### Update ANSES fiscal income, from Savings-Investment-Funding Account-------
 
+start.time=Sys.time()
 
 ##Folder creation
 
@@ -251,7 +252,10 @@ numeric_month <- c("01", "02", "03", "04", "05", "06", "07",
              "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
              "agosto", "septiembre", "octubre", "noviembre", "diciembre")
 
-year <- c("14","15","16","17","18","19", "20", "21", "22")
+#We have manually corrected 2017 fiscal income for ANSES for fiscal amnesty tax recollection, 
+    #so we'd rather run this from 2018 onward. This code is verified to work for periods 2014
+    #onward. 
+year <- c("18","19", "20", "21", "22") 
 
 
 ##Possible names and links, with and without .xls
@@ -429,6 +433,9 @@ range_write(vector_ISS_fiscal_income,ss=id_globals,range="I284",col_names =FALSE
 
 rm(total_files,control,list_AIF,table_file_size,concept_names,vector_ISS_fiscal_income,df_ISS_fiscal_income)
 
+end.time=Sys.time()
+time.taken=end.time-start.time
+head(time.taken)
 #Cleanup -----
 rm(output_name,sheet_name)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR/")
