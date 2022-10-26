@@ -337,44 +337,97 @@ df_AIF_s2<-bind_rows (c(df_list_s2_xls), .id="file")
 df_AIF_s3<-bind_rows (c(df_list_s3_xls), .id="file")
 
 df_AIF<-rbind(df_AIF,df_AIF_s2,df_AIF_s3) #We concatenate all AIF table into one dataset
-
-rm(list=ls(pattern="*df_list"))
-rm(list=ls(pattern="*n.cols"))
-rm(list_xls,keep_s2_xls,df_AIF_s2,df_2018_05)
 table(df_AIF$file) ###We check all periods are in the df, true at least for the 2014- Sep. 2022 period
 
 
-
-id_carpeta<- drive_get("Extensión PAIS")
-#gs4_create(name="impo_LNA_mes",sheets=df_impo_1_22) 
-#drive_mv(file="impo_LNA_mes",overwrite=TRUE,path=id_carpeta)
-
-id_importaciones<-drive_get("impo_LNA_mes")
-
-write_sheet(df_impo_1_22,ss=id_importaciones,sheet="Enero")
-
-credito_mensual_2022 <- read_csv("~/credito-mensual-2022.csv")
-View(credito_mensual_2022)
-
-transf<-credito_mensual_2022%>%
-  subset(finalidad_id=="4" & inciso_id=="5" & funcion_id=="1" & principal_id=="1" & parcial_id=="9")
-
-head(transf)
-table(transf$programa_id)
-view(transf
-)
-
-#4 finalidad servicios económicos
-# función 1 energía, combustibles... finalidad 4 (servicios económicos)
-#para IAESA, inciso 5 (transferencias) principal 5 (otros entes del sector público) parcial 2 (a empresas públicas)
+rm(list=ls(pattern="*df_list"))
+rm(list=ls(pattern="*n.cols"))
+rm(list_xls,keep_s2_xls,keep_s3_xls,df_AIF_s2,df_AIF_s3,names_first_sheet)
 
 
 
-#Cleanup -----
-setwd("C:/Users/Ministerio/Documents/Contribuciones_IVA_exportaciones/Bases_externas/")
-unlink("AIF",recursive=TRUE)
-rm(list=ls())
 
+df_AIF<-df_AIF %>% 
+  mutate(file=gsub(".xlsx","",file),
+         file=gsub(".xls","",file),
+    year=as.integer(substr(start=1,stop=4,file)), 
+    month=substr(start=5,stop=length(file),file), 
+    month=gsub("_","",month),
+    month=gsub("enero","01",month),  
+    month=gsub("febrero","02",month),  
+    month=gsub("marzo","03",month),  
+    month=gsub("abril","04",month),  
+    month=gsub("mayo","05",month),  
+    month=gsub("junio","06",month),  
+    month=gsub("julio","07",month),  
+    month=gsub("agosto","08",month),  
+    month=gsub("septiembre","09",month),  
+    month=gsub("octubre","10",month),  
+    month=gsub("noviembre","11",month),  
+    month=gsub("diciembre","12",month) 
+    ) %>%
+  select(c(file,month,year,everything())) %>% 
+  select(-c(4))
+
+list_AIF<-c("concepto","tesoro_nac","recursos_afect","org_desc","ISS","Ex-cajas_prov","total_AN","PAMI_otros","total")
+names(df_AIF)<-c("archivo","mes","ano4",list_AIF)
+control<-df_AIF %>% 
+  subset(!grepl("[0-9]",total)) %>% 
+  subset(grepl("[0-9]",total_AN)) #We show there is no relevant information when the "total" variable is blank
+head(control)
+rm(control)
+
+list_AIF<-list_AIF[list_AIF!="concepto"]
+
+df_AIF<-df_AIF %>% 
+  subset(grepl("[0-9]",total)) %>%  #We delete lines with no information (no numeric data on the total variable)
+  mutate(across(list_AIF ,~as.double(.x) #The remaining lines are converted to numeric
+         )) %>% 
+  group_by(archivo) %>% 
+  mutate(numero_linea=row_number()) %>% 
+  ungroup() %>%   #Row number keeps the integrity of each table even when arranged
+  select(c("archivo","ano4","mes","numero_linea",everything()))
+
+table_file_size<-df_AIF %>% 
+  group_by(archivo) %>% 
+  tally() %>% 
+  ungroup() %>%  #The most recent monthly AIF lacks financial sources and applications, beware. 
+  rename(total_lineas=n)
+
+
+
+##This gives us a concatenation of each monthly Savings-Investment-Funding account for Argentina, 
+#for the wanted period. Here we are only interested in fiscal income for social security
+
+
+#Concept names may change; run this to check how the concept you are interested in may be named. 
+    #Combine with row number for some concepts that may be repeated (such as "transferencias corrientes)
+concept_names<- as.data.frame(df_AIF$concepto)
+view(concept_names)
+#Here, we are only interested in ANSES fiscal income, used for pension mobiliy computation. 
+
+df_ISS_fiscal_income<-df_AIF %>% 
+  mutate(is_fiscal_income=ifelse(grepl("*INGRESOS TRIBUTARIOS",concepto), 1, 
+                                 0)
+         )%>% 
+  subset(is_fiscal_income==1 ) %>% 
+  mutate(mes_num=as.numeric(mes)) %>% 
+  arrange(ano4,mes) %>% 
+  select(c(ano4,mes,concepto,ISS))
+#Here we check is_fiscal_income captures all rows that correspond to fiscal income, and only 
+#those rows.
+total_files<-nrow(as.data.frame(table(df_AIF$archivo)))
+head(total_files)
+table(control$concepto) 
+
+#We update ANSES fiscal income information in the global file
+vector_ISS_fiscal_income<-df_ISS_fiscal_income %>% 
+  subset(ano4>=2018) %>%  #We added manual corrections in 2017 to account for 2017 fiscal amnesty tax income
+  select(c(ISS))
+
+range_write(vector_ISS_fiscal_income,ss=id_globals,range="I284",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
+
+rm(total_files,control,list_AIF,table_file_size,concept_names,vector_ISS_fiscal_income,df_ISS_fiscal_income)
 
 #Cleanup -----
 rm(output_name,sheet_name)
