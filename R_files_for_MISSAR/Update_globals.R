@@ -41,7 +41,7 @@ if(!file.exists("download_folder")) {
 }
 setwd("download_folder/")
 
-###Update inflation figures -----
+#Update inflation figures -----
 #We automate the URL for downloading the latest inflation figures: for figures of a given month (say, January), the URL is 
     #named after the following month (here, February).
 date<-Sys.Date()
@@ -126,7 +126,7 @@ df_CPI_for_globals<-df_CPI_for_globals %>%
 range_write(df_CPI_for_globals,ss=id_globals,range="E889",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE) #Son las 3 células que hay que cambiar en el drive
 rm(df_CPI_for_globals,df_latest_CPI)
 
-####INDEC wage index ------
+#INDEC wage index ------
  #URL: https://www.indec.gob.ar/ftp/cuadros/sociedad/variaciones_salarios_09_22.xls for July data
 
 
@@ -208,7 +208,7 @@ range_write(vector_wage_index,ss=id_globals,range="G269",col_names =FALSE,sheet=
 rm(vector_wage_index,df_latest_wage)
 
 
-#### Update RIPTE wage index --------
+# Update RIPTE wage index --------
 
 url_RIPTE<-"https://infra.datos.gob.ar/catalog/sspm/dataset/158/distribution/158.1/download/remuneracion-imponible-promedio-trabajadores-estables-ripte-total-pais-pesos-serie-mensual.csv"
 
@@ -226,7 +226,7 @@ range_write(vector_RIPTE,ss=id_globals,range="N620",col_names =FALSE,sheet="Infl
 rm(vector_RIPTE)
 unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .csv is not in gitignore
 
-###### Update ANSES fiscal income, from Savings-Investment-Funding Account-------
+# Update ANSES fiscal income, from Savings-Investment-Funding Account----
 
 start.time=Sys.time()
 
