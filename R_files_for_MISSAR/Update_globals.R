@@ -41,7 +41,7 @@ if(!file.exists("download_folder")) {
 }
 setwd("download_folder/")
 
-#Update inflation figures -----
+#Inflation figures -----
 #We automate the URL for downloading the latest inflation figures: for figures of a given month (say, January), the URL is 
     #named after the following month (here, February).
 date<-Sys.Date()
@@ -208,7 +208,7 @@ range_write(vector_wage_index,ss=id_globals,range="G269",col_names =FALSE,sheet=
 rm(vector_wage_index,df_latest_wage)
 
 
-# Update RIPTE wage index --------
+#RIPTE wage index --------
 
 url_RIPTE<-"https://infra.datos.gob.ar/catalog/sspm/dataset/158/distribution/158.1/download/remuneracion-imponible-promedio-trabajadores-estables-ripte-total-pais-pesos-serie-mensual.csv"
 
@@ -226,7 +226,7 @@ range_write(vector_RIPTE,ss=id_globals,range="N620",col_names =FALSE,sheet="Infl
 rm(vector_RIPTE)
 unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .csv is not in gitignore
 
-# Update ANSES fiscal income, from Savings-Investment-Funding Account----
+#ANSES fiscal income, from Savings-Investment-Funding Account----
 
 start.time=Sys.time()
 
@@ -530,6 +530,9 @@ end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
 #On 4 GB Ram laptop, 7.6 minutes. 
+
+
+# Social security contributions----
 #Cleanup -----
 rm(output_name,sheet_name)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR/")
