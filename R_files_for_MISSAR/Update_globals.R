@@ -533,6 +533,34 @@ head(time.taken)
 
 
 # Social security contributions----
+
+setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR")
+setwd("download_folder/")
+getwd()
+
+library(xml2)
+library(rvest)
+
+detect_excel<-function(input_url){
+URL <- input_url
+
+pg <- read_html(URL)
+
+list_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href")) %>% 
+  rename(list_href=1) %>% 
+  mutate(detect_excel=ifelse(grepl("*.xls",list_href),1,
+                             0)
+  ) %>% 
+  subset(detect_excel==1) %>% 
+  select(c(1)) %>% 
+  as.character()
+#This detects in the parent link (constant over time) the URL that downloads an excel file
+}
+test<-detect_excel("https://www.afip.gob.ar/institucional/estudios/boletines-mensuales-de-seguridad-social/2022.asp")
+download.file(try(test),destfile="bol_ss_2022.xls",mode="wb")
+
+df_2022<-read_excel("bol_ss_2022.xls")
+
 #Cleanup -----
 rm(output_name,sheet_name)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR/")
