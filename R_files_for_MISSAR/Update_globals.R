@@ -232,7 +232,7 @@ list_xls<-list_xls[!list_xls %in% "2000_01.xls"]
 #We added manual corrections in 2017 to account for 2017 fiscal amnesty tax income. Thus, we only
     #want ANSES fiscal income starting from 2018
 #This function lets us specify we only want to upload files from 2018 onward.
-load_some_years<-function(indata,min_year,max_year){
+load_some_years<-function(min_year,max_year){
   df_list_xls <- as.data.frame(list.files(pattern='*.xls')) %>%
     rename(file_name=1) %>% 
     mutate(year=as.integer(substr(start=1,stop=4,file_name))) %>% 
@@ -243,7 +243,7 @@ load_some_years<-function(indata,min_year,max_year){
   list_xls<-as.character(df_list_xls)
 }
 
-list_xls<-load_some_years(list_xls,2018,2100)
+list_xls<-load_some_years(2018,2100)
 view(list_xls)
 read_third_sheet <- function(path) { #Sometimes, the correct table is in the third sheet
   x <-try(read_excel(path=path, sheet = 3)) #Some tables have only one sheet: try() keeps the code running even through errors
@@ -526,6 +526,112 @@ head(time.taken)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR")
 setwd("bol_men_ss/")
 getwd()
+
+#List all social-security bulletin excel files
+list_xls<-list.files(pattern='*.xls')
+
+
+###Import all downloaded excel files (from https://stackoverflow.com/questions/32888757/how-can-i-read-multiple-excel-files-into-r)
+
+#Social security contributions for ANSES are always on sheet "Cuadro 9" from May 2003 to November 2008; 
+    #after that date, they are always on sheet "Cuadro 8". We thus identify for which df we import sheet "Cuadro 9", 
+    #and for which others we import sheet "Cuadro 8". 
+
+df_list_xls <- as.data.frame(list.files(pattern='*.xls')) %>%
+  rename(file_name=1) %>% 
+  mutate(title_length=str_count(file_name), #File names have either 2 or 4 digit years, we identify them
+         year=ifelse(title_length!=9, as.integer(substr(start=1,stop=4,file_name)), #4 digit years
+                     as.integer(paste0("20",substr(start=1,stop=2,file_name)) #2 digit years
+                     )
+                     ), 
+         alt_name=gsub("[^0-9_]","",file_name), #deletes everything except _ and numbers
+         month=as.integer(substr(start=str_count(alt_name)-1,stop=str_count(alt_name),alt_name))
+         )
+
+
+list_xls_pre_2008<-df_list_xls %>% 
+  subset(year<=2007 | (year==2008 & month!=12)) %>%  #For all datasets up to November 2008
+  #You can restrict imported years or months with another subset() instruction
+  select(c(file_name)) %>% 
+  t() %>% 
+  as.character()
+
+
+list_xls_2008_2016<-df_list_xls %>% 
+  subset((year<2017 & year>=2009) | (year==2008 & month==12)) %>%  #For all datasets since December 2008
+  #You can restrict imported years or months with another subset() instruction
+  select(c(file_name)) %>% 
+  t() %>% 
+  as.character()
+
+list_xls_post_2017<-df_list_xls %>% 
+  subset(year>=2017) %>%  #For all datasets since December 2008
+  #You can restrict imported years or months with another subset() instruction
+  select(c(file_name)) %>% 
+  t() %>% 
+  as.character()
+
+read_cuadro_8<-function(path){
+  nm_8 <- try(grep("Cuadro 8", excel_sheets(path), 
+               ignore.case = TRUE, value = TRUE)
+              )
+  x <- try(read_excel(path=path, sheet = nm_8,skip=10))
+  
+}
+
+format_cuadro_8_monthly<-function(x){
+x<-x %>% 
+  filter(if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
+  rename(destino=3,
+         monto=4) %>% 
+  mutate(monto=as.double(monto)) %>% 
+  select(c(destino,monto)) #Keeps only the destination and total pesos transferred
+}
+
+read_cuadro_9<-function(path){
+  
+  nm_9 <- try(grep("Cuadro 9", excel_sheets(path), 
+               ignore.case = TRUE, value = TRUE)
+              )
+  x <- try(read_excel(path=path, sheet = nm_9,skip=10))
+  x<-x %>% 
+    filter(if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
+    rename(destino=3,
+           monto=4) %>% 
+    mutate(monto=as.double(monto)) %>% 
+    select(c(destino,monto)) #Keeps only the destination and total pesos transferred
+}
+
+rm(list_xls,df_list_xls)
+gc()
+df_list_pre_2008<-sapply(list_xls_pre_2008,read_cuadro_9,simplify=FALSE)#This keeps the file names 
+gc()
+df_list_2008_2016<-sapply(list_xls_2008_2016,read_cuadro_8,simplify=FALSE)#This keeps the file names 
+df_list_2008_2016<-sapply(df_list_2008_2016,format_cuadro_8_monthly,simplify=FALSE)
+
+
+nm_8 <- try(grep("Cuadro 8", excel_sheets("2013_07.xls"), 
+                 ignore.case = TRUE, value = TRUE)
+)
+x <- try(read_excel(path="2013_07.xls", sheet = nm_8))
+
+df_2003_2016<- bind_rows(c(df_list_pre_2008,test), .id = "file_name") %>% 
+  mutate(title_length=str_count(file_name), #File names have either 2 or 4 digit years, we identify them
+         year=ifelse(title_length!=9, as.integer(substr(start=1,stop=4,file_name)), #4 digit years
+                     as.integer(paste0("20",substr(start=1,stop=2,file_name)) #2 digit years
+                     )
+         ), 
+         alt_name=gsub("[^0-9_]","",file_name), #deletes everything except _ and numbers
+         month=as.integer(substr(start=str_count(alt_name)-1,stop=str_count(alt_name),alt_name))
+        ) %>% 
+  select(c(year,month,destino,monto))
+
+
+gc()
+
+df_list_xls <- sapply(list_xls, read_excel,simplify=FALSE)#This keeps the file names 
+df_list_s2_xls <- sapply(list_xls, read_second_sheet,simplify=FALSE)
+df_list_s3_xls <- sapply(list_xls, read_third_sheet,simplify=FALSE)
 
 
 output<-read_excel("temp.xls",sheet="Cuadro 8") %>% 
