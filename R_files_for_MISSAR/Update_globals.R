@@ -1,17 +1,5 @@
 
 # Packages -----------------
-install.packages("tidyverse")
-install.packages("readxl")
-install.packages("openxlsx")
-install.packages("ggplot2")
-install.packages('Rcpp')
-install.packages('questionr')
-install.packages('readr')
-install.packages('googlesheets4')
-install.packages('googledrive')
-install.packages('glue')
-install.packages('rlist')
-
 rm(list=ls())
 gc()
 
@@ -19,7 +7,6 @@ gc()
 library(tidyverse)
 library(readxl)
 library(openxlsx)
-library(ggplot2)
 library(Rcpp)
 library(questionr)
 library(readr)
@@ -27,6 +14,8 @@ library(googlesheets4)
 library(googledrive)
 library(glue)
 library(rlist)
+library(xml2)
+library(rvest)
 
 gs4_auth() #Connection to google account
 
@@ -538,8 +527,8 @@ setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MIS
 setwd("download_folder/")
 getwd()
 
-library(xml2)
-library(rvest)
+#library(xml2)
+#library(rvest)
 
 detect_excel<-function(input_url){
 URL <- input_url
@@ -556,10 +545,24 @@ list_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href")) %>%
   as.character()
 #This detects in the parent link (constant over time) the URL that downloads an excel file
 }
-test<-detect_excel("https://www.afip.gob.ar/institucional/estudios/boletines-mensuales-de-seguridad-social/2022.asp")
-download.file(try(test),destfile="bol_ss_2022.xls",mode="wb")
 
-df_2022<-read_excel("bol_ss_2022.xls")
+
+
+upload_ss_bulletin<-function(year){
+
+  
+  try_url<- 
+    tidyr::expand_grid(year) %>%
+    glue_data("https://www.afip.gob.ar/institucional/estudios/boletines-mensuales-de-seguridad-social/{year}.asp") %>% 
+    detect_excel()
+
+  
+  download.file(try(try_url),destfile="temp.xls",mode="wb")
+  
+output<-read_excel("temp.xls",sheet="Cuadro 8") 
+  }
+df_2021<-upload_ss_bulletin(2021)
+
 
 #Cleanup -----
 rm(output_name,sheet_name)
