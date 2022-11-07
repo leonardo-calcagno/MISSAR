@@ -522,47 +522,21 @@ head(time.taken)
 
 
 # Social security contributions----
-
+#Set the working directory to the folder with the downloaded monthly social security bulletin excel files
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR")
-setwd("download_folder/")
+setwd("bol_men_ss/")
 getwd()
 
-#library(xml2)
-#library(rvest)
 
-detect_excel<-function(input_url){
-URL <- input_url
-
-pg <- read_html(URL)
-
-list_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href")) %>% 
-  rename(list_href=1) %>% 
-  mutate(detect_excel=ifelse(grepl("*.xls",list_href),1,
-                             0)
-  ) %>% 
-  subset(detect_excel==1) %>% 
-  select(c(1)) %>% 
-  as.character()
-#This detects in the parent link (constant over time) the URL that downloads an excel file
-}
+output<-read_excel("temp.xls",sheet="Cuadro 8") %>% 
+  rename(destino=3,
+         primer_mes=4) %>% 
+  subset(!is.na(destino) | !is.na(primer_mes)) 
 
 
 
-upload_ss_bulletin<-function(year){
-
-  
-  try_url<- 
-    tidyr::expand_grid(year) %>%
-    glue_data("https://www.afip.gob.ar/institucional/estudios/boletines-mensuales-de-seguridad-social/{year}.asp") %>% 
-    detect_excel()
-
-  
-  download.file(try(try_url),destfile="temp.xls",mode="wb")
-  
-output<-read_excel("temp.xls",sheet="Cuadro 8") 
-  }
-df_2021<-upload_ss_bulletin(2021)
-
+list_xls<-list.files(pattern='*.xls')
+#This lists all the monthly social security bulletin excel files for the May 2003- December 2016 period.
 
 #Cleanup -----
 rm(output_name,sheet_name)
