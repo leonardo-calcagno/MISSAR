@@ -217,6 +217,7 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 
 #ANSES fiscal income, from Savings-Investment-Funding Account----
 
+#On 4 GB Ram laptop, 7.6 minutes. 
 start.time=Sys.time()
 
 ##Go to the folder with updated AIF files (see download_all_AIF)
@@ -493,6 +494,8 @@ view(concept_names)
 ##Update global----
 #Here, we are only interested in ANSES fiscal income, used for pension mobiliy computation. 
 
+
+
 df_ISS_fiscal_income<-df_AIF %>% 
   mutate(is_fiscal_income=ifelse(grepl("*INGRESOS TRIBUTARIOS",concepto), 1, 
                                  0)
@@ -511,6 +514,7 @@ table(df_ISS_fiscal_income$concepto)
 vector_ISS_fiscal_income<-df_ISS_fiscal_income %>% 
   select(c(ISS))
 
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 range_write(vector_ISS_fiscal_income,ss=id_globals,range="I284",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
 
 rm(total_files,control,list_AIF,table_file_size,concept_names,vector_ISS_fiscal_income,df_ISS_fiscal_income)
@@ -518,11 +522,13 @@ rm(total_files,control,list_AIF,table_file_size,concept_names,vector_ISS_fiscal_
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
-#On 4 GB Ram laptop, 7.6 minutes. 
 
 
 # Social security contributions----
 #Set the working directory to the folder with the downloaded monthly social security bulletin excel files
+
+#On 4 GB Ram laptop, 2 minutes. 
+start.time=Sys.time()
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR")
 setwd("bol_men_ss/")
 getwd()
@@ -547,7 +553,6 @@ df_list_xls <- as.data.frame(list.files(pattern='*.xls')) %>%
          alt_name=gsub("[^0-9_]","",file_name), #deletes everything except _ and numbers
          month=as.integer(substr(start=str_count(alt_name)-1,stop=str_count(alt_name),alt_name))
          )
-
 
 list_xls_pre_2008<-df_list_xls %>% 
   subset(year<=2007 | (year==2008 & month!=12)) %>%  #For all datasets up to November 2008
@@ -575,17 +580,8 @@ read_cuadro_8<-function(path){
   nm_8 <- try(grep("Cuadro 8", excel_sheets(path), 
                ignore.case = TRUE, value = TRUE)
               )
-  x <- try(read_excel(path=path, sheet = nm_8,skip=10))
+  x <- try(read_excel(path=path, sheet = nm_8,skip=9))#No relevant information, and sometimes causes bugs
   
-}
-
-format_cuadro_8_monthly<-function(x){
-x<-x %>% 
-  filter(if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
-  rename(destino=3,
-         monto=4) %>% 
-  mutate(monto=as.double(monto)) %>% 
-  select(c(destino,monto)) #Keeps only the destination and total pesos transferred
 }
 
 read_cuadro_9<-function(path){
@@ -593,7 +589,7 @@ read_cuadro_9<-function(path){
   nm_9 <- try(grep("Cuadro 9", excel_sheets(path), 
                ignore.case = TRUE, value = TRUE)
               )
-  x <- try(read_excel(path=path, sheet = nm_9,skip=10))
+  x <- try(read_excel(path=path, sheet = nm_9))
   x<-x %>% 
     filter(if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
     rename(destino=3,
@@ -603,19 +599,25 @@ read_cuadro_9<-function(path){
 }
 
 rm(list_xls,df_list_xls)
+##Pre-2017 files----
 gc()
 df_list_pre_2008<-sapply(list_xls_pre_2008,read_cuadro_9,simplify=FALSE)#This keeps the file names 
 gc()
 df_list_2008_2016<-sapply(list_xls_2008_2016,read_cuadro_8,simplify=FALSE)#This keeps the file names 
+
+format_cuadro_8_monthly<-function(x){
+  x<-x %>% 
+    filter(if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
+    rename(destino=3,
+           monto=4) %>% 
+    mutate(monto=as.double(monto)) %>% 
+    select(c(destino,monto)) #Keeps only the destination and total pesos transferred
+}
+
 df_list_2008_2016<-sapply(df_list_2008_2016,format_cuadro_8_monthly,simplify=FALSE)
+gc()
 
-
-nm_8 <- try(grep("Cuadro 8", excel_sheets("2013_07.xls"), 
-                 ignore.case = TRUE, value = TRUE)
-)
-x <- try(read_excel(path="2013_07.xls", sheet = nm_8))
-
-df_2003_2016<- bind_rows(c(df_list_pre_2008,test), .id = "file_name") %>% 
+df_2003_2016<- bind_rows(c(df_list_pre_2008,df_list_2008_2016), .id = "file_name") %>% 
   mutate(title_length=str_count(file_name), #File names have either 2 or 4 digit years, we identify them
          year=ifelse(title_length!=9, as.integer(substr(start=1,stop=4,file_name)), #4 digit years
                      as.integer(paste0("20",substr(start=1,stop=2,file_name)) #2 digit years
@@ -624,25 +626,72 @@ df_2003_2016<- bind_rows(c(df_list_pre_2008,test), .id = "file_name") %>%
          alt_name=gsub("[^0-9_]","",file_name), #deletes everything except _ and numbers
          month=as.integer(substr(start=str_count(alt_name)-1,stop=str_count(alt_name),alt_name))
         ) %>% 
-  select(c(year,month,destino,monto))
-
-
+  select(c(year,month,monto)) %>% 
+  mutate(monto=ifelse(year==2016 & month==12, monto*1000, #December 2016, the imported data is in millions, not in thousands
+                      monto),
+         monto=monto/1000 #Puts transfers in millions of pesos
+         )
+head(df_2003_2016)
 gc()
 
-df_list_xls <- sapply(list_xls, read_excel,simplify=FALSE)#This keeps the file names 
-df_list_s2_xls <- sapply(list_xls, read_second_sheet,simplify=FALSE)
-df_list_s3_xls <- sapply(list_xls, read_third_sheet,simplify=FALSE)
+##Post- 2017 files----
+df_list_post_2017<-sapply(list_xls_post_2017,read_cuadro_8,simplify=FALSE)
 
 
-output<-read_excel("temp.xls",sheet="Cuadro 8") %>% 
-  rename(destino=3,
-         primer_mes=4) %>% 
-  subset(!is.na(destino) | !is.na(primer_mes)) 
+format_cuadro_8_yearly<-function(x){
+  x<-x %>% 
+    filter(if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE)))     #This keeps rows where the "Anses" pattern appears at least once
+  
+  column_names<-as.data.frame(names(x)) %>% 
+    rename(month=1) %>% 
+    mutate(idmerge=row_number())
+  
+  x<-x %>% 
+    t() %>% 
+    as.data.frame()%>% 
+    rename(monto=1) %>% 
+    mutate(idmerge=row_number()) %>% 
+    left_join(column_names) %>% 
+    select(-c(idmerge))
+  
+  x<-x[(grepl("[0-9]", x$monto)),]#Keeps only lines with numeric data
+  x<-x %>% 
+    mutate(numeric_month=row_number(), #Puts numeric months, for compatibility with pre-2017 datasets
+           monto=as.double(monto)
+           )   
+  }
 
+df_list_post_2017<-sapply(df_list_post_2017,format_cuadro_8_yearly,simplify=FALSE)
 
+df_post_2017<-bind_rows(c(df_list_post_2017), .id="file_name") %>% 
+  mutate(year=as.integer(substr(start=1,stop=4,file_name))) %>% 
+  select(c(year,month,numeric_month,monto))
 
-list_xls<-list.files(pattern='*.xls')
-#This lists all the monthly social security bulletin excel files for the May 2003- December 2016 period.
+#table(df_post_2017$numeric_month,df_post_2017$month) #run this to verify the numeric months are correct
+df_post_2017<-df_post_2017 %>% 
+  select(-c(month)) %>% 
+  rename(month=numeric_month)
+
+#Time series of monthly ANSES contributions, in millions of current pesos
+df_ANSES_contributions<-rbind(df_2003_2016,df_post_2017) 
+
+##Update globals file -----
+
+vector_ANSES_contributions<-df_ANSES_contributions %>% 
+  select(c(monto)) %>% 
+  mutate(monto=monto*1000) #The excel format is in thousands of pesos
+
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
+range_write(vector_ANSES_contributions,ss=id_globals,range="H108",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
+
+rm(vector_ANSES_contributions,df_2003_2016,df_post_2017,
+   format_cuadro_8_monthly,format_cuadro_8_yearly,read_cuadro_8,read_cuadro_9)
+rm(list=ls(pattern="*df_list"))
+rm(list=ls(pattern="*list_"))
+
+end.time=Sys.time()
+time.taken=end.time-start.time
+head(time.taken)
 
 #Cleanup -----
 rm(output_name,sheet_name)
