@@ -14,7 +14,8 @@ library(rlist)
 rm(list=ls())
 gc()
 start.time=Sys.time()
-setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR")
+setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
 
 if(!file.exists("bol_men_ss")) {
   dir.create("bol_men_ss")

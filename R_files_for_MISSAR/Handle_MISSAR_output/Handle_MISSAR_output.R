@@ -433,7 +433,7 @@ rm(list=ls(pattern="^sim_"))
 rm(list=ls(pattern="^csv_"))
 
 #Cleanup -----
-setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
+setwd("../")
 unlink("MISSAR_output",recursive=TRUE)
 rm(list=ls())
 

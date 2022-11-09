@@ -25,8 +25,8 @@ library(googlesheets4)
 library(googledrive)
 
 gs4_auth() #Connection to google account
-setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR")
-
+setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("MISSAR_private/R_files_for_MISSAR/Globals")
 #To verify working directory
 #getwd()
 
@@ -103,7 +103,7 @@ generate_globals(id_globals,sheet_name,output_name,leg_CFK)
 
 #Cleanup -----
 rm(output_name,sheet_name)
-setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
+setwd("../")
 unlink("MISSAR_output",recursive=TRUE)
 rm(list=ls())
 

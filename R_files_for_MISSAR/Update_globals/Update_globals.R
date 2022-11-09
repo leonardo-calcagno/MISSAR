@@ -23,7 +23,7 @@ id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
 setwd("C:/Users/lcalcagno/Documents/Investigación/")
-setwd("MISSAR_private/R_files_for_MISSAR")
+setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
   dir.create("download_folder")
@@ -221,7 +221,8 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 start.time=Sys.time()
 
 ##Go to the folder with updated AIF files (see download_all_AIF)
-setwd("C:/Users/lcalcagno/Documents/Investigación/argentina_fiscal_pension_data/AIF/")
+setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
 getwd()
 ###The only month that does not work is January 2000, it is a weird xml file. You need to open it with 
 #excel, and save it as an excel file in the AIF folder with a different name (2000_enero for instance). 
@@ -529,8 +530,8 @@ head(time.taken)
 
 #On 4 GB Ram laptop, 2 minutes. 
 start.time=Sys.time()
-setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR")
-setwd("bol_men_ss/")
+setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
 
 #List all social-security bulletin excel files
@@ -711,6 +712,7 @@ startServer()
 rD <- RSelenium::rsDriver() # This might throw an error
 #Cleanup -----
 rm(output_name,sheet_name)
-setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR/")
+setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 unlink("download_folder",recursive=TRUE)
 rm(list=ls())

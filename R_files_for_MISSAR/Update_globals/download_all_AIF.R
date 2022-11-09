@@ -12,7 +12,8 @@ library(rlist)
 start.time=Sys.time()
 
 ##Folder creation
-setwd("C:/Users/lcalcagno/Documents/Investigación/argentina_fiscal_pension_data")
+setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
 
 if(!file.exists("AIF")) {
   dir.create("AIF")
