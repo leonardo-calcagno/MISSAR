@@ -22,8 +22,8 @@ gs4_auth() #Connection to google account
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
-
-setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR")
+setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("MISSAR_private/R_files_for_MISSAR")
 
 if(!file.exists("download_folder")) {
   dir.create("download_folder")
@@ -693,6 +693,22 @@ end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
 
+
+
+#ANSES benefits-----
+
+URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
+
+pg <- read_html(URL)
+
+list_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+
+test<-detect_excel("https://www.argentina.gob.ar/trabajo/seguridadsocial/bess")
+
+install.packages("RSelenium")
+library(RSelenium)
+startServer()
+rD <- RSelenium::rsDriver() # This might throw an error
 #Cleanup -----
 rm(output_name,sheet_name)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private/R_files_for_MISSAR/")

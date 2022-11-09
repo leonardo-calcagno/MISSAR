@@ -25,7 +25,8 @@ library(googlesheets4)
 library(googledrive)
 
 gs4_auth() #Connection to google account
-setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
+setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("MISSAR_private/R_files_for_MISSAR")
 
 #To verify working directory
 #getwd()
@@ -33,10 +34,7 @@ setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
 if(!file.exists("MISSAR_output")) {
   dir.create("MISSAR_output")
 }
-
-
 setwd("MISSAR_output/")
-
 
 
 ###Generate csv globals ----
@@ -185,6 +183,28 @@ write_sheet(csv_high_SIPA_income,ss=id_deficit,sheet="high_SIPA_income")
 
 rm(list=ls(pattern="^csv_"))
 
+
+##Apply short-term growth, CPI and wage to results file 
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
+id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim"))
+
+apply_short_term_macro<-function(scenario){
+
+sheet_name<-paste0(scenario," macro hypothesis")
+df<-read_sheet(id_globals,sheet=sheet_name,range="B4:G39",col_names = FALSE) %>% 
+  select(c(1,4,6))
+vector_GDP<-df[,1]
+vector_CPI<-df[,2]
+vector_wage<-df[,3]
+
+range_write(vector_GDP_central,ss=id_deficit,sheet=sheet_name,range="B4",reformat=FALSE,col_names=FALSE)
+range_write(vector_CPI_central,ss=id_deficit,sheet=sheet_name,range="D4",reformat=FALSE,col_names=FALSE)
+range_write(vector_wage_central,ss=id_deficit,sheet=sheet_name,range="F4",reformat=FALSE,col_names=FALSE)
+}
+apply_short_term_macro("Central")
+apply_short_term_macro("Pessimistic")
+apply_short_term_macro("Optimist")
+
 #Export projected GDP and ANSES income to the globals making sheet file ------
 
 sim_GDP_central<-read_sheet(id_deficit,sheet="GDP evolution by scenario",range="E11:E114",col_names = FALSE)%>% #We import simulated GDP, since 2015
@@ -268,6 +288,8 @@ range_write(sim_workers,ss=id_globals,sheet="Labour GDP participation",range="N3
 range_write(sim_wage,ss=id_globals,sheet="Labour GDP participation",range="Q3:S107",reformat=FALSE)
 
 rm(list=ls(pattern="^sim_"))
+
+
 
 
 #Update adequacy results file ----
