@@ -130,10 +130,44 @@ table(control$labour_market_state,control$CAT_OCUP)
 table(control$labour_market_state,control$contributes)
 table(control$labour_market_state,control$is_indep)
 rm(control)
+
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   select(-c(contributes,is_indep,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
 head(df_EPH_post_2016)
 #Finally, we create 5-year age groups for MISSAR's age-dependent alignment
+make_5y_agegroup<-function(indata,agevariable){
+  indata<-indata %>% 
+    mutate(dizaines=get(agevariable)/10,
+           dizaines=floor(dizaines),
+           tranche=ifelse(as.integer(substr(start=nchar(get(agevariable)),stop=nchar(get(agevariable)),get(agevariable)))<5, 0, 
+                          5),
+           agegroup_ext=as.integer(paste0(dizaines,tranche)),
+           agegroup_ext=ifelse(agegroup_ext==15, 16,#We work with the 16-19 age group
+                               ifelse(agegroup_ext<15, 1, 
+                                      ifelse(agegroup_ext>=95, 95, #Up to 2016, the maximum recorded age was 98, for consistency we keep 95 as the maximum age-group
+                                             agegroup_ext
+                                             )
+                                      )
+                               ),
+           agegroup=agegroup_ext,
+           agegroup=ifelse(agegroup_ext>65, 300, 
+                           agegroup)
+           ) %>% 
+    select(-c(dizaines,tranche))
+}
+
+
+
+
+df_EPH_post_2016<-df_EPH_post_2016 %>% 
+  make_5y_agegroup("ageconti")
+
+#control<-df_EPH_post_2016 %>% #Controls the function works well
+#  select(c(ageconti,agegroup,agegroup_ext)) %>% 
+#  unique() %>% 
+#  arrange(ageconti)
+#view(control)
+#rm(control)
 
 #Descriptive statistics ----
 
