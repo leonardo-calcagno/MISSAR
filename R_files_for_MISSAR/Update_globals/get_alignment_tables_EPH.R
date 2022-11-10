@@ -63,6 +63,7 @@ df_EPH_post_2016<-dl_EPH_post_2016 %>%
                             FALSE)
     
         )
+rm(vector_periods)
 #Run this to control variables run as intended
 #table(df_EPH_post_2016$contributes,df_EPH_post_2016$PP07H)
 #table(df_EPH_post_2016$contributes,df_EPH_post_2016$PP07I)
@@ -161,6 +162,94 @@ make_5y_agegroup<-function(indata,agevariable){
 
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   make_5y_agegroup("ageconti")
+
+#Alignment tables ------
+
+cal_base_agegroup<-df_EPH_post_2016 %>% 
+  subset(agegroup!=1 & agegroup!=300 ) %>%
+  group_by(period,CH04,agegroup) %>% 
+  summarise(total=sum(PONDERA)) %>% 
+  ungroup()
+
+cal_base_agegroup_ext<-df_EPH_post_2016 %>% 
+  subset(agegroup!=1 ) %>%
+  group_by(period,CH04,agegroup_ext) %>% 
+  summarise(total=sum(PONDERA)) %>% 
+  ungroup()
+
+##Labour-market state ------
+
+cal_LMS<-df_EPH_post_2016 %>% 
+  subset(agegroup!=1 & agegroup!=300 ) %>%
+  group_by(period,CH04,agegroup,labour_market_state) %>% 
+  summarise(total_LMS=sum(PONDERA)) %>% 
+  ungroup() %>% 
+  left_join(cal_base_agegroup) %>% 
+  mutate(cal_perc=ifelse(total!=0, total_LMS/total, #LMS weighted participation by age group and gender
+                         0)
+        )
+
+list_agegroup<-as.data.frame(table(cal_LMS$agegroup)) %>% 
+  select(-c(Freq)) %>% 
+  t() %>% 
+  as.character() #We make an agegroup list, for the align_table() function
+
+
+align_table<-function(indata,agelist,agevar,varmode,varvalue,gender){
+  
+  outdata<-indata %>% 
+    select(c(period)) %>% 
+    unique() %>% 
+    t() %>% 
+    as.data.frame() %>% 
+    mutate(agevar=NA) %>% 
+    select(c(agevar,everything()))  #This outputs a line with one variable per period, and period number
+     
+  
+  for(j in list_agegroup){ #We loop over age groups, for a given gender, the percentage of people in the studied state, by period
+    age_group<-as.integer(j)
+    
+    temp_df<-indata %>% 
+      subset(CH04==gender & get(varmode)==varvalue & get(agevar)==age_group) %>% 
+      select(c(cal_perc)) %>% 
+      t() %>% 
+      as.data.frame() %>% 
+      mutate(agevar=age_group) %>% 
+      select(c(agevar),everything())
+    
+    outdata<-bind_rows(outdata,temp_df) #We append the age group's participation to the output file
+  }
+  outdata<-outdata %>% 
+    janitor::row_to_names(row_number=1) 
+}
+
+
+list_cal_LMS_male<-list()
+for (i in 1:5){
+list_cal_LMS_male [[i]]<-align_table(cal_LMS,list_agegroup,"agegroup","labour_market_state",i,1)
+}
+
+list_cal_LMS_female<-list()
+for (i in 1:5){
+  list_cal_LMS_female [[i]]<-align_table(cal_LMS,list_agegroup,"agegroup","labour_market_state",i,2)
+}
+
+#We name the output alignment tables
+list_lms<-c("sal","ind","aun","cho","ina")
+list_cal_names<-paste0("cal_",list_lms,"_h")
+list_fem<-paste0("cal_",list_lms,"_f")
+
+list_cal_names<- c(list_cal_names,list_fem) 
+rm(list_lms,list_fem)
+
+df_list_cal_LMS<-c(list_cal_LMS_male,list_cal_LMS_female) %>% 
+  setNames(list_cal_names)
+test<-df_list_cal_LMS$cal_ind_h
+view(test)
+rm(list_cal_LMS_male,list_cal_LMS_female,list_cal_names,i,age_group)
+
+##Marital status ---------
+##Education level --------
 
 #control<-df_EPH_post_2016 %>% #Controls the function works well
 #  select(c(ageconti,agegroup,agegroup_ext)) %>% 
