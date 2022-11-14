@@ -174,40 +174,74 @@ make_5y_agegroup<-function(indata,agevariable){
 
 
 
-
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   make_5y_agegroup("ageconti")
 
 #Alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
-  subset(agegroup!=1 & agegroup!=300 ) %>%
+  subset(ageconti>=16 & ageconti<=69 ) %>% #Use ageconti for subsetting, else age 15 is included
   group_by(period,CH04) %>% 
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
   
 cal_base_agegroup<-df_EPH_post_2016 %>% 
-  subset(agegroup!=1 & agegroup!=300 ) %>%
+  subset(ageconti>=16 & ageconti<=69 ) %>%
   group_by(period,CH04,agegroup) %>% 
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
 cal_base_agegroup_ext<-df_EPH_post_2016 %>% 
-  subset(agegroup!=1 ) %>%
+  subset(ageconti>=16 ) %>%
   group_by(period,CH04,agegroup_ext) %>% 
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
 ##Labour-market state ------
-
 cal_LMS_all_ages<-df_EPH_post_2016 %>% 
-  subset(agegroup!=1 & agegroup!=300 ) %>%
+  subset(ageconti>=16 & ageconti<=69) %>%
   group_by(period,CH04,labour_market_state) %>% 
   summarise(total_LMS=sum(PONDERA)) %>% 
   ungroup() %>% 
   left_join(cal_base) %>% 
   mutate(cal_perc=ifelse(total!=0, total_LMS/total, #LMS weighted participation by age group and gender
                          0)
-  )
+        )
+
+cal_men<- cal_LMS_all_ages %>% 
+  subset(CH04==1) %>% 
+  select(c(labour_market_state,period,cal_perc)) 
+cal_women<- cal_LMS_all_ages %>% 
+  subset(CH04==2) %>% 
+  select(c(labour_market_state,period,cal_perc)) 
+
+LMS_names<-c("wag","ind","inf","une","ina")
+
+table_LMS<-function(indata){
+  
+  list_periods<-cal_LMS_all_ages %>% 
+    select(c(period)) %>% 
+    unique() 
+  
+for (i in 1:5){
+  temp<-indata %>% 
+    subset(labour_market_state==i) %>% 
+    select(-c(labour_market_state))
+  
+  temp_name<-LMS_names[i]
+  
+  row_names<-c("period",temp_name)
+  names(temp)<-row_names
+  
+list_periods<-list_periods %>% 
+  left_join(temp)
+}
+outdata<-list_periods
+}
+
+update_men<-table_LMS(cal_men)
+update_women<-table_LMS(cal_women)
+
+
 
 cal_LMS<-df_EPH_post_2016 %>% 
   subset(agegroup!=1 & agegroup!=300 ) %>%
