@@ -63,11 +63,16 @@ vector_periods<-dl_EPH_post_2016 %>%
                         PP07H), 
            PP07I=ifelse(is.na(PP07I), 0, 
                         PP07I),
+          # contributes=ifelse((PP07H==2 | PP07H==0) &  (PP07I==2 | PP07I==0), FALSE, #Previous error, non-respondents made to contribute
+          #                    TRUE)
            contributes=ifelse(PP07H==1 | PP07I==1, TRUE, #Compulsory or voluntary contributions
-                              FALSE)
+                              FALSE)#,
+         #  contributes=ifelse(PP04A==1, TRUE, #Make public-sector workers contribute to social security, even when they declare otherwise
+          #                    contributes)
       
           )
-  rm(vector_periods)
+
+rm(vector_periods)
   #Run this to control variables run as intended
   #table(df_EPH_post_2016$contributes,df_EPH_post_2016$PP07H)
   #table(df_EPH_post_2016$contributes,df_EPH_post_2016$PP07I)
@@ -77,13 +82,13 @@ vector_periods<-dl_EPH_post_2016 %>%
     select(-c(PP07H,PP07I,CH06,NIVEL_ED))
   
   
-  #We verify independent workers in the EPH don't report social security contributions
-  control<-dl_EPH_post_2016 %>% 
-    subset(ESTADO==1 & (CAT_OCUP==1|CAT_OCUP==2)) 
-  
-  table(control$PP07H,control$PP07I)
-  rm(control)
-  #Since the EPH does not ask independent workers whether they contribute to social security, we identify independent workers of the formal sector following
+  #Run to verify independent workers in the EPH don't report social security contributions
+ # control<-dl_EPH_post_2016 %>% 
+#    subset(ESTADO==1 & (CAT_OCUP==1|CAT_OCUP==2)) 
+#  table(control$PP07H,control$PP07I)
+#  rm(control)
+ 
+   #Since the EPH does not ask independent workers whether they contribute to social security, we identify independent workers of the formal sector following
       #Maurizio, Roxana. 2012. Labour informality in Latin America: the case of Argentina, Chile, Brazil and Peru. Brooks World Poverty Institute Working Paper. 
       #Independent workers that are either in skilled positions (of professional or technical qualification),  in the public sector, 
       #or have 6 or more  employees, are considered to be in the formal sector. 
