@@ -9,6 +9,9 @@ rm(list=ls())
 gc()
 library(tidyverse)
 library(eph)
+library(googlesheets4)
+library(googledrive)
+
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private")
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
@@ -240,11 +243,32 @@ for (i in 1:5){
 list_periods<-list_periods %>% 
   left_join(temp)
 }
-outdata<-list_periods
+outdata<-list_periods %>% 
+  select(-c(period))
 }
-
-update_men<-table_LMS(cal_men)
+#We update the LMS scenarios file with the latest available EPH data
+update_men<-table_LMS(cal_men) 
 update_women<-table_LMS(cal_women)
+
+
+id_LMS_scenario<- drive_get("LMS_scenarios_16_69") 
+range_write(update_men,ss=id_LMS_scenario,range="F173",col_names =FALSE,reformat=FALSE) 
+range_write(update_women,ss=id_LMS_scenario,range="AK173",col_names =FALSE,reformat=FALSE)
+
+#We then fetch the prospective labour-market participation, for the central, pessimistic and optimistic scenario. 
+    #This depends on the percentage input on line 271 across all five labour-market states. Make sure the sum equals 100%.
+names_LMS_proj<-c("trimestre","ano4","sal_central","ind_central","aun_central","cho_central","ina_central",
+                  "sal_low","aun_low","cho_low","ina_low",
+                  "sal_high","aun_high","cho_high","ina_high"
+                  )
+df_LMS_scenario_men<-read_sheet(ss=id_LMS_scenario,range="C196:w271",col_names = FALSE) %>% 
+  select(-c(2,4,5,6,7,8))  #Remove measured proportions of LMS
+names(df_LMS_scenario_men)<-names_LMS_proj
+
+df_LMS_scenario_women<-read_sheet(ss=id_LMS_scenario,range="AL196:BF271",col_names = FALSE) %>% 
+  select(-c(2,4,5,6,7,8))  #Remove measured proportions of LMS
+names(df_LMS_scenario_women)<-names_LMS_proj
+
 
 
 
