@@ -50,87 +50,102 @@ vector_periods<-dl_EPH_post_2016 %>%
   unique() %>% 
   arrange(ANO4,TRIMESTRE) %>% 
   mutate(period=row_number()+51) #Period format used in MISSAR, 52 is the second quarter of 2016.
-
-df_EPH_post_2016<-dl_EPH_post_2016 %>% 
-  left_join(vector_periods) %>% 
-  mutate(formation=ifelse(NIVEL_ED==6, 3, #University degree
-                          ifelse(NIVEL_ED==4 | NIVEL_ED==5, 2, #At least high-school degree
-                                 1)#Did not finish high school, or unknown
-                          ),
-         ageconti=ifelse(CH06==-1, 0, 
-                         CH06),
-         contributes=ifelse(PP07H==1 | PP07I==1, TRUE, #Compulsory or voluntary contributions
-                            FALSE)
-    
-        )
-rm(vector_periods)
-#Run this to control variables run as intended
-#table(df_EPH_post_2016$contributes,df_EPH_post_2016$PP07H)
-#table(df_EPH_post_2016$contributes,df_EPH_post_2016$PP07I)
-#table(df_EPH_post_2016$formation,df_EPH_post_2016$NIVEL_ED)
-df_EPH_post_2016<-df_EPH_post_2016 %>% 
-  select(-c(PP07H,PP07I,CH06,NIVEL_ED))
-
-
-#We verify independent workers in the EPH don't report social security contributions
-control<-dl_EPH_post_2016 %>% 
-  subset(ESTADO==1 & (CAT_OCUP==1|CAT_OCUP==2)) 
-
-table(control$PP07H,control$PP07I)
-rm(control)
-#Since the EPH does not ask independent workers whether they contribute to social security, we identify independent workers of the formal sector following
-    #Maurizio, Roxana. 2012. Labour informality in Latin America: the case of Argentina, Chile, Brazil and Peru. Brooks World Poverty Institute Working Paper. 
-    #Independent workers that are either in skilled positions (of professional or technical qualification),  in the public sector, 
-    #or have 6 or more  employees, are considered to be in the formal sector. 
-df_EPH_post_2016<-df_EPH_post_2016 %>% 
-    mutate(is_indep=ifelse(ESTADO==1 & (CAT_OCUP==1|CAT_OCUP==2),TRUE,
-                           FALSE), #Identify independent workers
-           qualification_char=substr(start=nchar(PP04D_COD),stop=nchar(PP04D_COD),PP04D_COD),#The last digit of PP04D_COD gives the position's qualification level
-           qualif_indep=ifelse(is_indep, 
-                               ifelse(qualification_char!=1 & qualification_char!=2, FALSE, #Independents working in positions with professional or technical qualifications are skilled 
-                                      TRUE),
-                               FALSE
-                               ),
-           contributes=ifelse(is_indep,
-                              ifelse(qualif_indep,TRUE, 
-                                     ifelse(PP04A==1, TRUE, #Independents in the public sector 
-                                            ifelse(PP04C!=99 & PP04C>=6,TRUE,#With 6 or more employee
-                                                   contributes)
-                                            )
-                                     ),
-                              contributes)
-          )
-           
-#control<-df_EPH_post_2016 %>% #Run this to control variables run as intended
-#  subset(is_indep)
-#table(control$contributes,control$PP04A)
-#table(control$contributes,control$qualification_char)
-#table(control$contributes,control$PP04C)
- # 
-
-#We create the labour_market_state variable. For MISSAR V1: 1, formal wage-earner; 
-    #2, formal sector independent worker; 3, informal worker; 4, unemployed; 5, inactive
-df_EPH_post_2016<-df_EPH_post_2016 %>% 
-  select(-c(qualif_indep,qualification_char)) %>% 
-  mutate(labour_market_state=ifelse(ESTADO==2, 4, #Unemployed
-                                    ifelse(ESTADO==1 & CAT_OCUP==3 & contributes, 1, #Wage-earners with soc. sec. contributions
-                                           ifelse(is_indep & contributes, 2, #Formal sector independents
-                                                  ifelse(CAT_OCUP==4 | (ESTADO==1 & !contributes ), 3, #Wage-earners with no soc. sec. contributions and informal sector independents
-                                                         5)#Inactive
-                                                  )
-                                           )
-                                    )
-       )
   
-#Run the following to verify the labour-market state variable was correctly created
-control<-df_EPH_post_2016 %>% 
-  select(c(labour_market_state,ESTADO,CAT_OCUP,contributes,is_indep)) %>% 
-  unique()
-table(control$labour_market_state,control$ESTADO)
-table(control$labour_market_state,control$CAT_OCUP)
-table(control$labour_market_state,control$contributes)
-table(control$labour_market_state,control$is_indep)
-rm(control)
+  df_EPH_post_2016<-dl_EPH_post_2016 %>% 
+    left_join(vector_periods) %>% 
+    mutate(formation=ifelse(NIVEL_ED==6, 3, #University degree
+                            ifelse(NIVEL_ED==4 | NIVEL_ED==5, 2, #At least high-school degree
+                                   1)#Did not finish high school, or unknown
+                            ),
+           ageconti=ifelse(CH06==-1, 0, 
+                           CH06),
+           PP07H=ifelse(is.na(PP07H), 0, #When missing, consider no contributions are made
+                        PP07H), 
+           PP07I=ifelse(is.na(PP07I), 0, 
+                        PP07I),
+           contributes=ifelse(PP07H==1 | PP07I==1, TRUE, #Compulsory or voluntary contributions
+                              FALSE)
+      
+          )
+  rm(vector_periods)
+  #Run this to control variables run as intended
+  #table(df_EPH_post_2016$contributes,df_EPH_post_2016$PP07H)
+  #table(df_EPH_post_2016$contributes,df_EPH_post_2016$PP07I)
+  #table(df_EPH_post_2016$formation,df_EPH_post_2016$NIVEL_ED)
+  
+  df_EPH_post_2016<-df_EPH_post_2016 %>% 
+    select(-c(PP07H,PP07I,CH06,NIVEL_ED))
+  
+  
+  #We verify independent workers in the EPH don't report social security contributions
+  control<-dl_EPH_post_2016 %>% 
+    subset(ESTADO==1 & (CAT_OCUP==1|CAT_OCUP==2)) 
+  
+  table(control$PP07H,control$PP07I)
+  rm(control)
+  #Since the EPH does not ask independent workers whether they contribute to social security, we identify independent workers of the formal sector following
+      #Maurizio, Roxana. 2012. Labour informality in Latin America: the case of Argentina, Chile, Brazil and Peru. Brooks World Poverty Institute Working Paper. 
+      #Independent workers that are either in skilled positions (of professional or technical qualification),  in the public sector, 
+      #or have 6 or more  employees, are considered to be in the formal sector. 
+  df_EPH_post_2016<-df_EPH_post_2016 %>% 
+      mutate(is_indep=ifelse(ESTADO==1 & (CAT_OCUP==1|CAT_OCUP==2),TRUE,
+                             FALSE), #Identify independent workers
+             qualification_char=substr(start=nchar(PP04D_COD),stop=nchar(PP04D_COD),PP04D_COD),#The last digit of PP04D_COD gives the position's qualification level
+             qualif_indep=ifelse(is_indep, 
+                                 ifelse(qualification_char!=1 & qualification_char!=2, FALSE, #Independents working in positions with professional or technical qualifications are skilled 
+                                        TRUE),
+                                 FALSE
+                                 ),
+             contributes=ifelse(is_indep,
+                                ifelse(qualif_indep,TRUE, 
+                                       ifelse(PP04A==1, TRUE, #Independents in the public sector 
+                                              ifelse(PP04C!=99 & PP04C>=6,TRUE,#With 6 or more employee
+                                                     contributes)
+                                              )
+                                       ),
+                                contributes)
+            )
+             
+  #control<-df_EPH_post_2016 %>% #Run this to control variables run as intended
+  #  subset(is_indep)
+  #table(control$contributes,control$PP04A)
+  #table(control$contributes,control$qualification_char)
+  #table(control$contributes,control$PP04C)
+   # 
+  
+  #We create the labour_market_state variable. For MISSAR V1: 1, formal wage-earner; 
+      #2, formal sector independent worker; 3, informal worker; 4, unemployed; 5, inactive
+  df_EPH_post_2016<-df_EPH_post_2016 %>% 
+    select(-c(qualif_indep,qualification_char)) %>% 
+    mutate(labour_market_state=ifelse(ESTADO==2, 4, #Unemployed
+                                      ifelse(ESTADO==1 & CAT_OCUP==3 & contributes, 1, #Wage-earners with soc. sec. contributions
+                                             ifelse(is_indep & contributes, 2, #Formal sector independents
+                                                    ifelse(CAT_OCUP==4 | (ESTADO==1 & !contributes ), 3, #Wage-earners with no soc. sec. contributions and informal sector independents
+                                                           5)#Inactive
+                                                    )
+                                             )
+                                      ),
+           labour_market_state=ifelse(ESTADO==3 | ESTADO==4, 5, #Avoids errors when CAT_OCUP is missing
+                                      labour_market_state)
+         )
+    
+  #Run the following to verify the labour-market state variable was correctly created
+  
+  #control<-df_EPH_post_2016 %>% 
+  #  select(c(labour_market_state,ESTADO,CAT_OCUP,contributes,is_indep)) %>% 
+  #  unique()
+  #table(control$labour_market_state,control$ESTADO)
+  #table(control$labour_market_state,control$CAT_OCUP)
+  #table(control$labour_market_state,control$contributes)
+  #table(control$labour_market_state,control$is_indep)
+  #rm(control)
+  
+  #Run the following to verify each individual has a labour-market state
+  
+  #control<-df_EPH_post_2016 %>% 
+  #  subset(is.na(labour_market_state)) 
+  #head(control)
+  
 
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   select(-c(contributes,is_indep,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
@@ -164,7 +179,12 @@ df_EPH_post_2016<-df_EPH_post_2016 %>%
   make_5y_agegroup("ageconti")
 
 #Alignment tables ------
-
+cal_base<-df_EPH_post_2016 %>% 
+  subset(agegroup!=1 & agegroup!=300 ) %>%
+  group_by(period,CH04) %>% 
+  summarise(total=sum(PONDERA)) %>% 
+  ungroup()
+  
 cal_base_agegroup<-df_EPH_post_2016 %>% 
   subset(agegroup!=1 & agegroup!=300 ) %>%
   group_by(period,CH04,agegroup) %>% 
@@ -179,6 +199,16 @@ cal_base_agegroup_ext<-df_EPH_post_2016 %>%
 
 ##Labour-market state ------
 
+cal_LMS_all_ages<-df_EPH_post_2016 %>% 
+  subset(agegroup!=1 & agegroup!=300 ) %>%
+  group_by(period,CH04,labour_market_state) %>% 
+  summarise(total_LMS=sum(PONDERA)) %>% 
+  ungroup() %>% 
+  left_join(cal_base) %>% 
+  mutate(cal_perc=ifelse(total!=0, total_LMS/total, #LMS weighted participation by age group and gender
+                         0)
+  )
+
 cal_LMS<-df_EPH_post_2016 %>% 
   subset(agegroup!=1 & agegroup!=300 ) %>%
   group_by(period,CH04,agegroup,labour_market_state) %>% 
@@ -188,6 +218,8 @@ cal_LMS<-df_EPH_post_2016 %>%
   mutate(cal_perc=ifelse(total!=0, total_LMS/total, #LMS weighted participation by age group and gender
                          0)
         )
+
+
 
 list_agegroup<-as.data.frame(table(cal_LMS$agegroup)) %>% 
   select(-c(Freq)) %>% 
@@ -244,9 +276,8 @@ rm(list_lms,list_fem)
 
 df_list_cal_LMS<-c(list_cal_LMS_male,list_cal_LMS_female) %>% 
   setNames(list_cal_names)
-test<-df_list_cal_LMS$cal_ind_h
-view(test)
-rm(list_cal_LMS_male,list_cal_LMS_female,list_cal_names,i,age_group)
+
+rm(list_cal_LMS_male,list_cal_LMS_female,list_cal_names,i)
 
 ##Marital status ---------
 ##Education level --------
