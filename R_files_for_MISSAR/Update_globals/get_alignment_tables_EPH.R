@@ -184,7 +184,7 @@ make_5y_agegroup<-function(indata,agevariable){
 
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   make_5y_agegroup("ageconti")
-
+gc()
 #Alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69 ) %>% #Use ageconti for subsetting, else age 15 is included
@@ -204,7 +204,7 @@ cal_base_agegroup_ext<-df_EPH_post_2016 %>%
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
-##Labour-market state ------
+##Update LMS scenarios ------
 cal_LMS_all_ages<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69) %>%
   group_by(period,CH04,labour_market_state) %>% 
@@ -254,6 +254,7 @@ update_women<-table_LMS(cal_women)
 id_LMS_scenario<- drive_get("LMS_scenarios_16_69") 
 range_write(update_men,ss=id_LMS_scenario,range="F173",col_names =FALSE,reformat=FALSE) 
 range_write(update_women,ss=id_LMS_scenario,range="AK173",col_names =FALSE,reformat=FALSE)
+rm(cal_men,cal_women,update_men,update_women,cal_LMS_all_ages)
 
 #We then fetch the prospective labour-market participation, for the central, pessimistic and optimistic scenario. 
     #This depends on the percentage input on line 271 across all five labour-market states. Make sure the sum equals 100%.
@@ -268,12 +269,46 @@ names(df_LMS_scenario_men)<-names_LMS_proj
 df_LMS_scenario_women<-read_sheet(ss=id_LMS_scenario,range="AL196:BF271",col_names = FALSE) %>% 
   select(-c(2,4,5,6,7,8))  #Remove measured proportions of LMS
 names(df_LMS_scenario_women)<-names_LMS_proj
+rm(id_LMS_scenario)
+
+##LMS alignment tables------
+###Projected population structure-----
+
+leg<-"June_2022_legislation/"
+sust<-"Sustainability_LIAM2_output/"
 
 
+id_pop_men<-drive_get(path=paste0(leg,sust),id="active_age_men.csv") #This is LIAM2 output
+id_pop_women<-drive_get(path=paste0(leg,sust),id="active_age_women.csv")
 
+correct_csv<-function(input){
+  input<-input%>%
+    mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
+                                           .x))
+           
+    )
+  
+}
+
+
+if(!file.exists("download_folder")) {
+  dir.create("download_folder")
+}
+setwd("download_folder/")
+
+drive_download(file=paste0(leg,sust,"active_age_men.csv"), overwrite = TRUE)
+drive_download(file=paste0(leg,sust,"active_age_women.csv"), overwrite = TRUE)
+
+df_sim_pop_men<-read_csv("active_age_men.csv")
+df_sim_pop_women<-read_csv("active_age_women.csv")
+
+setwd("../")
+unlink("download_folder",recursive=TRUE)
+
+###Average LMS by agegroup and gender-----
 
 cal_LMS<-df_EPH_post_2016 %>% 
-  subset(agegroup!=1 & agegroup!=300 ) %>%
+  subset(ageconti>=16 & ageconti<=69 ) %>%
   group_by(period,CH04,agegroup,labour_market_state) %>% 
   summarise(total_LMS=sum(PONDERA)) %>% 
   ungroup() %>% 
@@ -282,13 +317,50 @@ cal_LMS<-df_EPH_post_2016 %>%
                          0)
         )
 
-
-
 list_agegroup<-as.data.frame(table(cal_LMS$agegroup)) %>% 
   select(-c(Freq)) %>% 
   t() %>% 
   as.character() #We make an agegroup list, for the align_table() function
 
+#We average, by agegroup and gender, labour-market state participation, from the second quarter of 2016 onward
+cal_average_agegroup_LMS<-cal_LMS %>% 
+  #subset(period>=70)%>% #To average over more recent years, uncomment this line 
+  group_by(CH04,labour_market_state,agegroup) %>% 
+  summarise(mean_LMS=mean(cal_perc)) %>% 
+  ungroup()
+#This shows averaged labour-market participation sums to 1
+control_men<-data.frame(sum_LMS_freq=double(),agegroup=integer())
+for (i in list_agegroup)
+  {
+  only_one_agegroup<-cal_average_agegroup_LMS %>% 
+      subset(CH04==1 & agegroup==i)
+  
+  add_row<-as.data.frame(sum(only_one_agegroup$mean_LMS)) %>% 
+      rename(sum_LMS_freq=1) %>% 
+      mutate(agegroup=as.integer(i))
+  
+  control_men<-bind_rows(control_men,add_row)  
+}
+view(control_men)
+rm(only_one_agegroup,add_row,control_men)
+
+
+control_women<-data.frame(sum_LMS_freq=double(),agegroup=integer())
+for (i in list_agegroup)
+{
+  only_one_agegroup<-cal_average_agegroup_LMS %>% 
+    subset(CH04==2 & agegroup==i)
+  
+  add_row<-as.data.frame(sum(only_one_agegroup$mean_LMS)) %>% 
+    rename(sum_LMS_freq=1) %>% 
+    mutate(agegroup=as.integer(i))
+  
+  control_women<-bind_rows(control_women,add_row)  
+}
+view(control_women)
+rm(only_one_agegroup,add_row,control_women)
+
+### LMS alignment tables, historical-----
 
 align_table<-function(indata,agelist,agevar,varmode,varvalue,gender){
   
