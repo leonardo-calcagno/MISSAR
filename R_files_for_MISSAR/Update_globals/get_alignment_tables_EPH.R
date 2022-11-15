@@ -360,6 +360,70 @@ for (i in list_agegroup)
 view(control_women)
 rm(only_one_agegroup,add_row,control_women)
 
+cal_average_men<-data.frame()
+
+for (i in 1:5){
+  add_row<-cal_average_agegroup_LMS %>% 
+    subset(CH04==1 & labour_market_state==i) %>% 
+    select(-c(CH04,labour_market_state,agegroup)) %>% 
+    t() %>% 
+    as.data.frame()
+  cal_average_men<-bind_rows(cal_average_men,add_row)
+}
+
+cal_average_women<-data.frame()
+
+for (i in 1:5){
+  add_row<-cal_average_agegroup_LMS %>% 
+    subset(CH04==2 & labour_market_state==i) %>% 
+    select(-c(CH04,labour_market_state,agegroup)) %>% 
+    t() %>% 
+    as.data.frame()
+  cal_average_women<-bind_rows(cal_average_women,add_row)
+}
+
+rm(add_row)
+
+names_agegroup<-df_sim_pop_men %>% 
+  select(-c(Period))
+names_agegroup<-names(names_agegroup)
+
+names(cal_average_men)<-names_agegroup
+names(cal_average_women)<-names_agegroup
+#We need to get for each LMS, percentage of age group x as a factor of percentage of age group 35 (equals 100) ONGOING
+
+df_sim_pop_men<-df_sim_pop_men %>% 
+  select(c(1,7,8,9,10,11,12,13,14,15,16,17)) #Keep only active ages
+
+df_sim_pop_women<-df_sim_pop_women %>% 
+  select(c(1,7,8,9,10,11,12,13,14,15,16,17)) #Keep only active ages
+
+
+#Ongoing: this gives LMS totals when applying average LMS participation
+list_periods<-data.frame(49:152) %>% 
+  rename(period=1)
+for(i in names_agegroup){
+  for(j in 1:5){
+  cal_line<-cal_average_men[j,]  
+  sim_pop<-as.data.frame(df_sim_pop_men[[i]]*cal_line[[i]]) 
+  names(sim_pop)<-paste0(i,"_",j)
+  
+  list_periods<-bind_cols(list_periods,sim_pop)
+  }
+}
+names(list_periods)<-c("period",names_agegroup)
+head(list_periods)
+head(df_sim_pop_men)
+
+
+test<-as.data.frame(df_sim_pop_men$`[16;20[`*cal_average_men$`[16;20[`) %>% 
+  rename(`[16;20[`=1)
+test3<-bind_cols(test2,test)
+
+
+
+
+
 ### LMS alignment tables, historical-----
 
 align_table<-function(indata,agelist,agevar,varmode,varvalue,gender){
