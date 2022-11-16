@@ -16,13 +16,14 @@ library(glue)
 library(rlist)
 library(xml2)
 library(rvest)
+library(RSelenium)
 
 gs4_auth() #Connection to google account
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
-setwd("C:/Users/lcalcagno/Documents/Investigaci髇/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci贸n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
@@ -80,7 +81,7 @@ download.file(
 
 rm(correct_CPI_url,alt_CPI_url,CPI_url,current_month_exists,last_month_exists)
 
-df_latest_CPI<-read_excel("latest_CPI.xls",sheet="蚽dices IPC Cobertura Nacional") %>% 
+df_latest_CPI<-read_excel("latest_CPI.xls",sheet="脥ndices IPC Cobertura Nacional") %>% 
   rename(CPI_index_type=1) %>%  #Rename the first column
   subset(CPI_index_type=="Nivel general") %>% 
   mutate(CPI_region=ifelse(row_number(CPI_index_type)==1, "Nacional",
@@ -112,7 +113,7 @@ df_CPI_for_globals<-df_CPI_for_globals %>%
          )
 #Now we update the CPI index in the globals file
 
-range_write(df_CPI_for_globals,ss=id_globals,range="E889",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE) #Son las 3 c閘ulas que hay que cambiar en el drive
+range_write(df_CPI_for_globals,ss=id_globals,range="E889",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE)
 rm(df_CPI_for_globals,df_latest_CPI)
 
 #INDEC wage index ------
@@ -221,7 +222,7 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 start.time=Sys.time()
 
 ##Go to the folder with updated AIF files (see download_all_AIF)
-setwd("C:/Users/lcalcagno/Documents/Investigaci髇/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci贸n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
 getwd()
 ###The only month that does not work is January 2000, it is a weird xml file. You need to open it with 
@@ -530,7 +531,7 @@ head(time.taken)
 
 #On 4 GB Ram laptop, 2 minutes. 
 start.time=Sys.time()
-setwd("C:/Users/lcalcagno/Documents/Investigaci髇/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci贸n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
 
@@ -701,18 +702,71 @@ head(time.taken)
 URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
 
 pg <- read_html(URL)
+rD <- rsDriver(browser="firefox", port=4545L, verbose=F)
+remDr <- rD[["client"]]
+
+remDr$navigate(URL)
+
+
+pasivos <- "Pasivos"
+remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(pasivos))
+
+
+
+Sys.sleep(5) # give the page time to fully load
+html <- remDr$getPageSource()[[1]]
+
+pg<-read_html(html)
 
 list_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 
-test<-detect_excel("https://www.argentina.gob.ar/trabajo/seguridadsocial/bess")
+#To get to next page, you need to clicka button referenced with an xpath. You inspect the element, 
+    #then right click copy, xpath, and copy it there 
+next_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[4]/a" 
+remDr$findElement(using="xpath",value=next_page)$clickElement() #Here you click the next page button
 
-install.packages("RSelenium")
-library(RSelenium)
-startServer()
-rD <- RSelenium::rsDriver() # This might throw an error
+
+
+Sys.sleep(5) # give the page time to fully load
+html <- remDr$getPageSource()[[1]]
+
+pg<-read_html(html)
+
+list_urls_2<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+
+
+remDr$navigate(URL)
+no_contributivo<- "no contributivo"
+remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(no_contributivo))
+
+Sys.sleep(5) # give the page time to fully load
+html <- remDr$getPageSource()[[1]]
+
+pg<-read_html(html)
+
+list_urls_3<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+
+next_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[4]/a" 
+remDr$findElement(using="xpath",value=next_page)$clickElement() #Here you click the next page button
+
+
+Sys.sleep(5) # give the page time to fully load
+html <- remDr$getPageSource()[[1]]
+
+pg<-read_html(html)
+
+list_urls_4<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+
+#If you need to go to previous page
+
+
+previous_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[1]/a"
+remDr$findElement(using="xpath",value=previous_page)$clickElement() #Here you click the next page button
+
+
 #Cleanup -----
 rm(output_name,sheet_name)
-setwd("C:/Users/lcalcagno/Documents/Investigaci髇/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci贸n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 unlink("download_folder",recursive=TRUE)
 rm(list=ls())
