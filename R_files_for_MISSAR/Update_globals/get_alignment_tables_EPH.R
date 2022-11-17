@@ -405,11 +405,6 @@ ratio_men<-ratio_agegroups(cal_average_men)
 ratio_women<-ratio_agegroups(cal_average_women)
 
 
-for (i in 2:ncol(cal_average_men)){
-  cal_average_men<-cal_average_men %>% 
-    mutate(c(i)=c(i)/agegroup_5*100)
-}
-
 
 #Ongoing: this gives LMS totals when applying average LMS participation
 
