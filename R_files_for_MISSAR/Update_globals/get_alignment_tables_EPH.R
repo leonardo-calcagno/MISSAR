@@ -394,7 +394,7 @@ base_agegroup<-indata %>%
   select(c(agegroup_5)) #Age-group 35-39 is the base group
 
 output<-as.data.frame(lapply(indata[,1:ncol(indata)], 
-                           function(x) {x/base_agegroup*100} 
+                           function(x) {x/base_agegroup} 
                           )
                          )
 names(output)<-paste0("agegroup_",1:ncol(indata))
@@ -413,25 +413,52 @@ df_sim_pop_men<-df_sim_pop_men %>%
 
 df_sim_pop_women<-df_sim_pop_women %>% 
   select(c(1,7,8,9,10,11,12,13,14,15,16,17)) #Keep only active ages
-names_agegroup<-df_sim_pop_men %>% 
-  select(-c(Period))
-names_agegroup<-names(names_agegroup)
 
-
-list_periods<-data.frame(49:152) %>% 
+ratio_to_sim_pop<-function(pop_table, alignment_table){
+list_periods<-data.frame(49:152) %>%  
   rename(period=1)
-for(i in names_agegroup){
-  for(j in 1:5){
-  cal_line<-cal_average_men[j,]  
-  sim_pop<-as.data.frame(df_sim_pop_men[[i]]*cal_line[[i]]) 
+
+names_agegroup<-names(pop_table)[-1] #Removes "Period"
+names(alignment_table)<-names_agegroup
+print(names_agegroup)
+for(i in names_agegroup){ #For each age group
+  for(j in 1:5){ #For each labour-market state
+  cal_line<-alignment_table[j,]  
+  sim_pop<-as.data.frame(pop_table[[i]]*cal_line[[i]]) # Multiplies population by the alignment frequency
   names(sim_pop)<-paste0(i,"_",j)
   
   list_periods<-bind_cols(list_periods,sim_pop)
   }
 }
+output<-list_periods
+}
+
+df_pop_to_ratio_men<-ratio_to_sim_pop(df_sim_pop_men,ratio_men)
+df_pop_to_ratio_women<-ratio_to_sim_pop(df_sim_pop_women,ratio_women)
+
+head(list_periods)
+head(df_sim_pop_men)
+
+
+
+
+head(cal_average_men)
+head(df_sim_pop_men)
+list_periods<-data.frame(49:152) %>% 
+  rename(period=1)
+for(i in names_agegroup){
+  for(j in 1:5){
+    cal_line<-cal_average_men[j,]  
+    sim_pop<-as.data.frame(df_sim_pop_men[[i]]*cal_line[[i]]) 
+    names(sim_pop)<-paste0(i,"_",j)
+    
+    list_periods<-bind_cols(list_periods,sim_pop)
+  }
+}
 names(list_periods)<-c("period",names_agegroup)
 head(list_periods)
 head(df_sim_pop_men)
+
 
 
 test<-as.data.frame(df_sim_pop_men$`[16;20[`*cal_average_men$`[16;20[`) %>% 
