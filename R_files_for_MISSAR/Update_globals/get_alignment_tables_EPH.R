@@ -52,7 +52,7 @@ vector_periods<-dl_EPH_post_2016 %>%
   select(c(ANO4,TRIMESTRE)) %>% 
   unique() %>% 
   arrange(ANO4,TRIMESTRE) %>% 
-  mutate(period=row_number()+51) #Period format used in MISSAR, 52 is the second quarter of 2016.
+  mutate(period=row_number()+53) #Period format used in MISSAR, 54 is the second quarter of 2016.
   
   df_EPH_post_2016<-dl_EPH_post_2016 %>% 
     left_join(vector_periods) %>% 
@@ -436,34 +436,32 @@ output<-list_periods
 df_pop_to_ratio_men<-ratio_to_sim_pop(df_sim_pop_men,ratio_men)
 df_pop_to_ratio_women<-ratio_to_sim_pop(df_sim_pop_women,ratio_women)
 
-head(list_periods)
-head(df_sim_pop_men)
+
+#Keep only periods with no measured proportions
+latest_period<-max(cal_base$period)
+
+tot_active_men<-df_sim_pop_men %>% 
+  mutate(tot_active=select(.,c(2):c(12)) %>% 
+           rowSums(na.rm=TRUE)) %>% #Simulated total active-age male population
+  select(c(Period,tot_active)) %>% 
+  subset(Period>latest_period)
+
+tot_active_women<-df_sim_pop_women %>% 
+  mutate(tot_active=select(.,c(2):c(12)) %>% 
+           rowSums(na.rm=TRUE)) %>% 
+  select(c(Period,tot_active)) %>%
+  subset(Period>latest_period)
 
 
+tot_active_men<-tot_active_men 
 
+tot_active_women<-tot_active_women
+rm(first_row)
+head(tot_active_men)
+nrow(df_LMS_scenario_men)
 
-head(cal_average_men)
-head(df_sim_pop_men)
-list_periods<-data.frame(49:152) %>% 
-  rename(period=1)
-for(i in names_agegroup){
-  for(j in 1:5){
-    cal_line<-cal_average_men[j,]  
-    sim_pop<-as.data.frame(df_sim_pop_men[[i]]*cal_line[[i]]) 
-    names(sim_pop)<-paste0(i,"_",j)
-    
-    list_periods<-bind_cols(list_periods,sim_pop)
-  }
-}
-names(list_periods)<-c("period",names_agegroup)
-head(list_periods)
-head(df_sim_pop_men)
+head(df_LMS_scenario_men)
 
-
-
-test<-as.data.frame(df_sim_pop_men$`[16;20[`*cal_average_men$`[16;20[`) %>% 
-  rename(`[16;20[`=1)
-test3<-bind_cols(test2,test)
 
 
 
