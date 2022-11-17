@@ -341,7 +341,7 @@ for (i in list_agegroup)
   
   control_men<-bind_rows(control_men,add_row)  
 }
-view(control_men)
+head(control_men)
 rm(only_one_agegroup,add_row,control_men)
 
 
@@ -357,7 +357,7 @@ for (i in list_agegroup)
   
   control_women<-bind_rows(control_women,add_row)  
 }
-view(control_women)
+head(control_women)
 rm(only_one_agegroup,add_row,control_women)
 
 cal_average_men<-data.frame()
@@ -384,22 +384,45 @@ for (i in 1:5){
 
 rm(add_row)
 
-names_agegroup<-df_sim_pop_men %>% 
-  select(-c(Period))
-names_agegroup<-names(names_agegroup)
-
-names(cal_average_men)<-names_agegroup
-names(cal_average_women)<-names_agegroup
 #We need to get for each LMS, percentage of age group x as a factor of percentage of age group 35 (equals 100) ONGOING
+
+
+ratio_agegroups<-function(indata){
+names(indata)<-paste0("agegroup_",1:ncol(indata))
+
+base_agegroup<-indata %>% 
+  select(c(agegroup_5)) #Age-group 35-39 is the base group
+
+output<-as.data.frame(lapply(indata[,1:ncol(indata)], 
+                           function(x) {x/base_agegroup*100} 
+                          )
+                         )
+names(output)<-paste0("agegroup_",1:ncol(indata))
+output<-output
+
+}
+ratio_men<-ratio_agegroups(cal_average_men)
+ratio_women<-ratio_agegroups(cal_average_women)
+
+
+for (i in 2:ncol(cal_average_men)){
+  cal_average_men<-cal_average_men %>% 
+    mutate(c(i)=c(i)/agegroup_5*100)
+}
+
+
+#Ongoing: this gives LMS totals when applying average LMS participation
 
 df_sim_pop_men<-df_sim_pop_men %>% 
   select(c(1,7,8,9,10,11,12,13,14,15,16,17)) #Keep only active ages
 
 df_sim_pop_women<-df_sim_pop_women %>% 
   select(c(1,7,8,9,10,11,12,13,14,15,16,17)) #Keep only active ages
+names_agegroup<-df_sim_pop_men %>% 
+  select(-c(Period))
+names_agegroup<-names(names_agegroup)
 
 
-#Ongoing: this gives LMS totals when applying average LMS participation
 list_periods<-data.frame(49:152) %>% 
   rename(period=1)
 for(i in names_agegroup){
