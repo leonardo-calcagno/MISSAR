@@ -267,14 +267,18 @@ df_LMS_scenario_men<-read_sheet(ss=id_LMS_scenario,range="C196:w271",col_names =
 names(df_LMS_scenario_men)<-names_LMS_proj
 df_LMS_scenario_men<-df_LMS_scenario_men %>% #Add period number
   mutate(period=row_number()+76) %>% 
-  select(c(period),everything())
+  select(c(period),everything()) %>% 
+  mutate(ind_low=ind_central,  #This is so prosp_align_tables() works
+         ind_high=ind_central)
 
 df_LMS_scenario_women<-read_sheet(ss=id_LMS_scenario,range="AL196:BF271",col_names = FALSE) %>% 
   select(-c(2,4,5,6,7,8))  #Remove measured proportions of LMS
 names(df_LMS_scenario_women)<-names_LMS_proj
 df_LMS_scenario_women<-df_LMS_scenario_women %>% 
   mutate(period=row_number()+76)%>% 
-  select(c(period),everything())
+  select(c(period),everything())%>% 
+  mutate(ind_low=ind_central,  #This is so prosp_align_tables() works
+         ind_high=ind_central)
 
 
 rm(id_LMS_scenario)
