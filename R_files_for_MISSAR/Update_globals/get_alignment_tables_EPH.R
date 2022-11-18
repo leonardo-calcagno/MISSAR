@@ -265,10 +265,18 @@ names_LMS_proj<-c("trimestre","ano4","sal_central","ind_central","aun_central","
 df_LMS_scenario_men<-read_sheet(ss=id_LMS_scenario,range="C196:w271",col_names = FALSE) %>% 
   select(-c(2,4,5,6,7,8))  #Remove measured proportions of LMS
 names(df_LMS_scenario_men)<-names_LMS_proj
+df_LMS_scenario_men<-df_LMS_scenario_men %>% #Add period number
+  mutate(period=row_number()+76) %>% 
+  select(c(period),everything())
 
 df_LMS_scenario_women<-read_sheet(ss=id_LMS_scenario,range="AL196:BF271",col_names = FALSE) %>% 
   select(-c(2,4,5,6,7,8))  #Remove measured proportions of LMS
 names(df_LMS_scenario_women)<-names_LMS_proj
+df_LMS_scenario_women<-df_LMS_scenario_women %>% 
+  mutate(period=row_number()+76)%>% 
+  select(c(period),everything())
+
+
 rm(id_LMS_scenario)
 
 ##LMS alignment tables------
@@ -437,35 +445,70 @@ df_pop_to_ratio_men<-ratio_to_sim_pop(df_sim_pop_men,ratio_men)
 df_pop_to_ratio_women<-ratio_to_sim_pop(df_sim_pop_women,ratio_women)
 
 
-#Keep only periods with no measured proportions
-latest_period<-max(cal_base$period)
+latest_period<-max(cal_base$period) 
 
 tot_active_men<-df_sim_pop_men %>% 
   mutate(tot_active=select(.,c(2):c(12)) %>% 
            rowSums(na.rm=TRUE)) %>% #Simulated total active-age male population
   select(c(Period,tot_active)) %>% 
-  subset(Period>latest_period)
+  subset(Period>latest_period) %>% #Keep only periods with no measured proportions
+  rename(period=Period)
+
 
 tot_active_women<-df_sim_pop_women %>% 
   mutate(tot_active=select(.,c(2):c(12)) %>% 
            rowSums(na.rm=TRUE)) %>% 
   select(c(Period,tot_active)) %>%
-  subset(Period>latest_period)
+  subset(Period>latest_period)%>% #Keep only periods with no measured proportions
+  rename(period=Period)
 
+list_lms<-c("sal","ind","aun","cho","ina")
 
-tot_active_men<-tot_active_men 
+prosp_align_tables<-function(varvalue){
+tot_active_men_LMS<-df_pop_to_ratio_men[,c("period",grep(paste0("_",varvalue),names(df_pop_to_ratio_men),value=TRUE))] %>%  #Keeps population ratios for LMS==1
+  mutate(tot_active_LMS=select(.,c(2:c(12)))
+         %>% rowSums(na.rm=TRUE)) %>% 
+  select(c(period,tot_active_LMS)) %>% 
+  subset(period>latest_period) #Keep only periods with no measured proportions
 
-tot_active_women<-tot_active_women
-rm(first_row)
-head(tot_active_men)
-nrow(df_LMS_scenario_men)
+scenario_LMS_men<-df_LMS_scenario_men %>% 
+  subset(period>latest_period) %>%  #Keep only periods with no measured proportions
+  select(c(period,paste0(list_lms[varvalue],"_central"),paste0(list_lms[varvalue],"_low"),paste0(list_lms[varvalue],"_high")))
 
-head(df_LMS_scenario_men)
+df_35_men<-scenario_LMS_men %>% #Gets for agegroup 35 LMS==i frequency consistent with population projections. 
+                                #You can next deduce LMS participation for other age groups using the ratio df. 
+  left_join(tot_active_men_LMS) %>% 
+  left_join(tot_active_men) %>% 
+  mutate(freq_35_central=get(paste0(list_lms[varvalue],"_central"))*tot_active/tot_active_LMS,
+         freq_35_low=get(paste0(list_lms[varvalue],"_low"))*tot_active/tot_active_LMS,
+         freq_35_high=get(paste0(list_lms[varvalue],"_high"))*tot_active/tot_active_LMS) %>% 
+  select(c(period, freq_35_central,freq_35_low,freq_35_high))
 
+output<-tot_active_men %>% 
+  select(c(period))
+for (j in 1:11){
+  central<-as.data.frame(df_35_men[[2]]*ratio_men[varvalue,j]) 
+  var_name<-paste0(list_lms[varvalue],"_central_",j)
+  names(central)<-var_name
+  
+  low<-as.data.frame(df_35_men[[3]]*ratio_men[varvalue,j])
+  var_name<-paste0(list_lms[varvalue],"_low_",j)
+  names(low)<-var_name
+  
+  high<-as.data.frame(df_35_men[[4]]*ratio_men[varvalue,j])
+  var_name<-paste0(list_lms[varvalue],"_high_",j)
+  names(high)<-var_name
+  
+  output<-bind_cols(output,central,low,high)
+}
+output<-output
+}
 
-
-
-
+df_sal_men<-prosp_align_tables(1)
+df_ind_men<-prosp_align_tables(2)
+df_aun_men<-prosp_align_tables(3)
+df_cho_men<-prosp_align_tables(4)
+df_ina_men<-prosp_align_tables(5)
 
 ### LMS alignment tables, historical-----
 
