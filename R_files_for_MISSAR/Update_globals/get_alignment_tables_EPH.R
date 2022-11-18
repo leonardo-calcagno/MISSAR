@@ -468,39 +468,39 @@ tot_active_women<-df_sim_pop_women %>%
 
 list_lms<-c("sal","ind","aun","cho","ina")
 
-prosp_align_tables<-function(varvalue){
-tot_active_men_LMS<-df_pop_to_ratio_men[,c("period",grep(paste0("_",varvalue),names(df_pop_to_ratio_men),value=TRUE))] %>%  #Keeps population ratios for LMS==1
+prosp_align_tables<-function(pop_to_ratio,scenario,list_names,total_pop,ratio_df,varvalue){
+tot_active_LMS<-pop_to_ratio[,c("period",grep(paste0("_",varvalue),names(pop_to_ratio),value=TRUE))] %>%  #Keeps population ratios for LMS==1
   mutate(tot_active_LMS=select(.,c(2:c(12)))
          %>% rowSums(na.rm=TRUE)) %>% 
   select(c(period,tot_active_LMS)) %>% 
   subset(period>latest_period) #Keep only periods with no measured proportions
 
-scenario_LMS_men<-df_LMS_scenario_men %>% 
+scenario_LMS<-scenario %>% 
   subset(period>latest_period) %>%  #Keep only periods with no measured proportions
-  select(c(period,paste0(list_lms[varvalue],"_central"),paste0(list_lms[varvalue],"_low"),paste0(list_lms[varvalue],"_high")))
+  select(c(period,paste0(list_names[varvalue],"_central"),paste0(list_names[varvalue],"_low"),paste0(list_names[varvalue],"_high")))
 
-df_35_men<-scenario_LMS_men %>% #Gets for agegroup 35 LMS==i frequency consistent with population projections. 
+df_35<-scenario_LMS %>% #Gets for agegroup 35 LMS==i frequency consistent with population projections. 
                                 #You can next deduce LMS participation for other age groups using the ratio df. 
-  left_join(tot_active_men_LMS) %>% 
-  left_join(tot_active_men) %>% 
-  mutate(freq_35_central=get(paste0(list_lms[varvalue],"_central"))*tot_active/tot_active_LMS,
-         freq_35_low=get(paste0(list_lms[varvalue],"_low"))*tot_active/tot_active_LMS,
-         freq_35_high=get(paste0(list_lms[varvalue],"_high"))*tot_active/tot_active_LMS) %>% 
+  left_join(tot_active_LMS) %>% 
+  left_join(total_pop) %>% 
+  mutate(freq_35_central=get(paste0(list_names[varvalue],"_central"))*tot_active/tot_active_LMS,
+         freq_35_low=get(paste0(list_names[varvalue],"_low"))*tot_active/tot_active_LMS,
+         freq_35_high=get(paste0(list_names[varvalue],"_high"))*tot_active/tot_active_LMS) %>% 
   select(c(period, freq_35_central,freq_35_low,freq_35_high))
 
-output<-tot_active_men %>% 
+output<-total_pop %>% 
   select(c(period))
 for (j in 1:11){
-  central<-as.data.frame(df_35_men[[2]]*ratio_men[varvalue,j]) 
-  var_name<-paste0(list_lms[varvalue],"_central_",j)
+  central<-as.data.frame(df_35[[2]]*ratio_df[varvalue,j]) 
+  var_name<-paste0(list_names[varvalue],"_central_",j)
   names(central)<-var_name
   
-  low<-as.data.frame(df_35_men[[3]]*ratio_men[varvalue,j])
-  var_name<-paste0(list_lms[varvalue],"_low_",j)
+  low<-as.data.frame(df_35[[3]]*ratio_df[varvalue,j])
+  var_name<-paste0(list_names[varvalue],"_low_",j)
   names(low)<-var_name
   
-  high<-as.data.frame(df_35_men[[4]]*ratio_men[varvalue,j])
-  var_name<-paste0(list_lms[varvalue],"_high_",j)
+  high<-as.data.frame(df_35[[4]]*ratio_df[varvalue,j])
+  var_name<-paste0(list_names[varvalue],"_high_",j)
   names(high)<-var_name
   
   output<-bind_cols(output,central,low,high)
@@ -508,11 +508,38 @@ for (j in 1:11){
 output<-output
 }
 
-df_sal_men<-prosp_align_tables(1)
-df_ind_men<-prosp_align_tables(2)
-df_aun_men<-prosp_align_tables(3)
-df_cho_men<-prosp_align_tables(4)
-df_ina_men<-prosp_align_tables(5)
+df_sal_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
+                               varvalue=1)
+
+df_ind_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
+                               varvalue=2)
+
+df_aun_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
+                               varvalue=3)
+
+df_cho_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
+                               varvalue=4)
+
+df_ina_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
+                               varvalue=5)
+
+
+
+
+df_sal_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
+                               varvalue=1)
+
+df_ind_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
+                               varvalue=2)
+
+df_aun_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
+                               varvalue=3)
+
+df_cho_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
+                               varvalue=4)
+
+df_ina_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
+                               varvalue=5)
 
 ### LMS alignment tables, historical-----
 
