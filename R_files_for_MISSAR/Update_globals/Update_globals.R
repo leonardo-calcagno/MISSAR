@@ -818,14 +818,34 @@ list_URL<-vector_pasivos %>%
   t() %>% 
   as.character()
   
+df_benefits<-data.frame()
 
-
-for (i in list_URL){
-  download.file(i,destfile=vector_pasivos[[i,4]])
+for (i in 1:nrow(vector_pasivos)){
+  download.file(vector_pasivos[[i,1]],destfile=vector_pasivos[[i,4]],mode="wb",overwrite=TRUE)
+  
+  
+  input<-read_excel(vector_pasivos[[i,4]],sheet="2.3.1")  #Reads the sheet with total pension benefits, contributive and non-contributive
+ 
+  
+  input<-input[complete.cases(input[,2:(ncol(input)-1)]),] %>% #Keeps only rows with no missing values
+    select(-c(ncol(input))) %>% 
+    janitor::row_to_names(row_number=1) %>% 
+    janitor::clean_names()
+  
+  input<-input[nrow(input),]
+  input<-input %>% 
+    mutate(across(everything(),~as.integer(.x)), #We put variables as integer
+    ) %>% 
+    select(c(2),c(4)) %>% 
+    mutate(year=vector_pasivos[[i,2]],
+           quarter=vector_pasivos[[i,3]]) %>% 
+    select(c(year,quarter,everything()))
+  
+  df_benefits<-df_benefits %>% 
+    bind_rows(input)
 }
-
-
-
+rm(input,pg,vector_pasivos,vector_pasivos_2)
+  
 
 remDr$navigate(URL)
 no_contributivo<- "no contributivo"
