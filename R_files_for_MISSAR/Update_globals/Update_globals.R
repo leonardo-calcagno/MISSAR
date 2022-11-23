@@ -701,7 +701,8 @@ head(time.taken)
 
 URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
 
-pg <- read_html(URL)
+
+prefix<-"https://www.argentina.gob.ar"
 rD <- rsDriver(browser="firefox", port=4545L, verbose=F)
 remDr <- rD[["client"]]
 
@@ -712,28 +713,139 @@ pasivos <- "Pasivos"
 remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(pasivos))
 
 
-
-Sys.sleep(5) # give the page time to fully load
+Sys.sleep(3) # give the page time to fully load
 html <- remDr$getPageSource()[[1]]
 
 pg<-read_html(html)
 
-list_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+
+vector_pasivos<-vector_urls %>% 
+  rename(URL=1) %>% 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess",URL)& grepl("pasivos",URL) ) 
+
+head(vector_pasivos)
+rm(vector_urls,pg)
 
 #To get to next page, you need to clicka button referenced with an xpath. You inspect the element, 
     #then right click copy, xpath, and copy it there 
 next_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[4]/a" 
 remDr$findElement(using="xpath",value=next_page)$clickElement() #Here you click the next page button
 
-
-
-Sys.sleep(5) # give the page time to fully load
+Sys.sleep(3) # give the page time to fully load
 html <- remDr$getPageSource()[[1]]
 
 pg<-read_html(html)
 
-list_urls_2<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 
+
+vector_pasivos_2<-vector_urls %>% 
+  rename(URL=1) %>% 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess",URL)& grepl("pasivos",URL) ) 
+
+vector_pasivos<-vector_pasivos %>% 
+  bind_rows(vector_pasivos_2) %>% 
+  unique() %>% 
+  mutate(full_URL=paste0(prefix,URL)
+         )
+
+vector_pasivos<-vector_pasivos %>% 
+  mutate(year=9999,  
+         actual_year=year,
+        quarter="not_present",
+        actual_quarter=quarter
+        )
+
+list_quarters<-c("03","06","09","12")
+
+current_year<-Sys.Date() %>% 
+  substr(start=1,stop=4) %>% 
+  as.integer()
+
+
+#URLs change, as often excels are updated, and that date appears in the URL as well; it throws off grepl. So we give priority to strings 
+    #in the YYYYQQ or YYYY_QQ format
+
+for (i in 2020:current_year) #Excels start in 2020, pdfs are available from 2011
+{
+  for (j in list_quarters)
+  {
+    vector_pasivos<-vector_pasivos %>% 
+      mutate(year_quarter=paste0(i,j), 
+             year_quarter_2=paste0(i,"_",j), 
+             quarter=ifelse(grepl(j, URL), j, 
+                                   quarter),
+             year=ifelse(grepl(i, URL), i, 
+                                year),
+             actual_quarter=ifelse(grepl(year_quarter,URL),j, 
+                            ifelse(grepl(year_quarter_2,URL),j,
+                                   actual_quarter
+                                   )
+                           ),
+             actual_year=ifelse(grepl(year_quarter,URL),i, 
+                         ifelse(grepl(year_quarter_2,URL),i,
+                                actual_year
+                                )
+                        )
+             ) %>% 
+      select(-c(year_quarter,year_quarter_2))
+     }
+}
+
+vector_pasivos<-vector_pasivos %>% 
+  mutate(quarter=ifelse(actual_quarter=="not_present", quarter, 
+                        actual_quarter), 
+         year=ifelse(actual_year==9999, year, 
+                     actual_year)
+         ) %>% 
+  select(-c(actual_quarter,actual_year,URL))
+
+#if(!file.exists("download_folder")) {
+#  dir.create("download_folder")
+#}
+#setwd("download_folder/")
+
+
+vector_pasivos<-vector_pasivos %>% 
+  arrange(year,quarter) %>% 
+  mutate(destfile=paste0("pasivos_",year,"_",quarter,".xlsx"))
+
+head(vector_pasivos)
+
+list_URL<-vector_pasivos %>% 
+  select(c(full_URL)) %>% 
+  t() %>% 
+  as.character()
+  
+df_benefits<-data.frame()
+
+for (i in 1:nrow(vector_pasivos)){
+  download.file(vector_pasivos[[i,1]],destfile=vector_pasivos[[i,4]],mode="wb",overwrite=TRUE)
+  
+  
+  input<-read_excel(vector_pasivos[[i,4]],sheet="2.3.1")  #Reads the sheet with total pension benefits, contributive and non-contributive
+ 
+  
+  input<-input[complete.cases(input[,2:(ncol(input)-1)]),] %>% #Keeps only rows with no missing values
+    select(-c(ncol(input))) %>% 
+    janitor::row_to_names(row_number=1) %>% 
+    janitor::clean_names()
+  
+  input<-input[nrow(input),]
+  input<-input %>% 
+    mutate(across(everything(),~as.integer(.x)), #We put variables as integer
+    ) %>% 
+    select(c(2),c(4)) %>% 
+    mutate(year=vector_pasivos[[i,2]],
+           quarter=vector_pasivos[[i,3]]) %>% 
+    select(c(year,quarter,everything()))
+  
+  df_benefits<-df_benefits %>% 
+    bind_rows(input)
+}
+rm(input,pg,vector_pasivos,vector_pasivos_2)
+  
 
 remDr$navigate(URL)
 no_contributivo<- "no contributivo"
