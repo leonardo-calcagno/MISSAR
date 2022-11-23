@@ -3,15 +3,15 @@
   #and proportion of students
   #We take data from the Permanent Household Survey (EPH) post 2016.
 
-
 # Packages -----------------
 rm(list=ls())
 gc()
 library(tidyverse)
 library(eph)
+library(readr)
 library(googlesheets4)
 library(googledrive)
-
+library(vroom)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private")
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
@@ -615,9 +615,91 @@ for (i in 1:10){
 }
 
 
-control<-df_list_cal_LMS_central[[6]]
-view(control)
+#CSV tables-----
+setwd("../../")
+setwd("LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations")
 
+list_csv_files <- as.data.frame(list.files(pattern="*.csv")) %>% 
+  rename(file_name=1) %>% 
+  subset(grepl("central|low|high",file_name))
+
+
+test<-list()
+test2<-list()
+
+
+start.time=Sys.time()
+
+
+for (i in 1:1){
+  test[[i]]<-read_csv(list_csv_files[i,1])  
+}
+
+end.time=Sys.time()
+time.taken=end.time-start.time
+head(time.taken)
+
+start.time=Sys.time()
+
+for (i in 1:1){
+  test2[[i]]<-vroom(list_csv_files[i,1])  
+}
+
+end.time=Sys.time()
+time.taken=end.time-start.time
+head(time.taken)
+
+first_line<-data.frame(1:151) %>% 
+  t() %>% 
+  as.data.frame() 
+names(first_line)<-names(control)
+
+first_line<-first_line %>% 
+  mutate(across(everything(),~.x==NA),
+         agegroup="agegroup",
+         period="period"
+         )
+
+test<-control
+
+df_list_cal_LMS_central[[]]
+
+head(control)
+list_csv_files
+
+cal_aun_f_central_p.csv
+
+
+control<-test[[1]] 
+control2<-test2[[1]]
+
+for (i in 1:30){
+  test[[i]]<-read_csv(list_csv_files[i,1])
+}
+df<-read_csv(list_csv_files[1,1])
+head(df)
+
+test<-sapply(list_csv_files,read_csv(),simplify=TRUE)
+test<-read_csv(list_csv_files,id="file_name")
+
+test<-list()
+list_csv_files[3]
+
+for (i in 1:30){
+  test[[i]]<-read.csv(list_csv_files[i])
+}
+lapply(list_csv_files,read.csv())
+
+df2 <- readr::read_csv(list_csv_files, id = "file_name")
+
+
+
+walk(csv_files$id, 
+     ~ drive_download(as_id(.x)))
+
+getwd()
+cal_aun_f_central_p <- read_csv("~/Investigación/MISSAR_private/LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations/cal_aun_f_central_p.csv")
+View(cal_aun_f_central_p)
 
 #We name the output alignment tables
 list_lms<-c("sal","ind","aun","cho","ina")
@@ -631,18 +713,6 @@ df_list_cal_LMS<-c(list_cal_LMS_male,list_cal_LMS_female) %>%
   setNames(list_cal_names)
 
 
-
-
-test<-df_sal_men[,c("period",grep("_central",names(df_sal_men),value=TRUE))] %>% 
-  t() %>% 
-  as.data.frame() %>% 
-  janitor::row_to_names(1) #Works! Now try to put it in function and merge with align_table() SEGUIR AQUI
-head(test)
-
-test3<-test2 %>% 
-  bind_cols(test)
-head(test3
-     )
 
 
 
