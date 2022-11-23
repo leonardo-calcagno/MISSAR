@@ -510,6 +510,11 @@ output<-output
 
 df_sal_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
                                varvalue=1)
+test<-df_sal_men[,c("period",grep("_central",names(df_sal_men),value=TRUE))] %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  janitor::row_to_names(1) #Works! Now try to put it in function and merge with align_table() SEGUIR AQUI
+
 
 df_ind_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
                                varvalue=2)
@@ -592,9 +597,8 @@ rm(list_lms,list_fem)
 
 df_list_cal_LMS<-c(list_cal_LMS_male,list_cal_LMS_female) %>% 
   setNames(list_cal_names)
-
+test2<-df_list_cal_LMS$cal_sal_h
 rm(list_cal_LMS_male,list_cal_LMS_female,list_cal_names,i)
-
 ##Marital status ---------
 ##Education level --------
 
