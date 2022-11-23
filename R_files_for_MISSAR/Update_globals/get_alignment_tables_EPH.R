@@ -185,7 +185,7 @@ make_5y_agegroup<-function(indata,agevariable){
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   make_5y_agegroup("ageconti")
 gc()
-#Alignment tables ------
+#Base alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69 ) %>% #Use ageconti for subsetting, else age 15 is included
   group_by(period,CH04) %>% 
@@ -204,7 +204,64 @@ cal_base_agegroup_ext<-df_EPH_post_2016 %>%
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
-##Update LMS scenarios ------
+#Hist. LMS tables-----
+
+align_table<-function(indata,agelist,agevar,varmode,varvalue,gender){
+  
+  outdata<-indata %>% 
+    select(c(period)) %>% 
+    unique() %>% 
+    t() %>% 
+    as.data.frame() %>% 
+    mutate(agevar=NA) %>% 
+    select(c(agevar,everything()))  #This outputs a line with one variable per period, and period number
+  
+  
+  for(j in list_agegroup){ #We loop over age groups, for a given gender, the percentage of people in the studied state, by period
+    age_group<-as.integer(j)
+    
+    temp_df<-indata %>% 
+      subset(CH04==gender & get(varmode)==varvalue & get(agevar)==age_group) %>% 
+      select(c(cal_perc)) %>% 
+      t() %>% 
+      as.data.frame() %>% 
+      mutate(agevar=age_group) %>% 
+      select(c(agevar),everything())
+    
+    outdata<-bind_rows(outdata,temp_df) #We append the age group's participation to the output file
+  }
+  outdata<-outdata %>% 
+    janitor::row_to_names(row_number=1) 
+}
+
+
+list_cal_LMS_male<-list()
+for (i in 1:5){
+  list_cal_LMS_male [[i]]<-align_table(cal_LMS,list_agegroup,"agegroup","labour_market_state",i,1)
+}
+
+list_cal_LMS_female<-list()
+for (i in 1:5){
+  list_cal_LMS_female [[i]]<-align_table(cal_LMS,list_agegroup,"agegroup","labour_market_state",i,2)
+}
+
+#We name the output alignment tables
+list_lms<-c("sal","ind","aun","cho","ina")
+list_cal_names<-paste0("cal_",list_lms,"_h")
+list_fem<-paste0("cal_",list_lms,"_f")
+
+list_cal_names<- c(list_cal_names,list_fem) 
+rm(list_lms,list_fem)
+
+df_list_cal_LMS<-c(list_cal_LMS_male,list_cal_LMS_female) %>% 
+  setNames(list_cal_names)
+
+rm(list_cal_LMS_male,list_cal_LMS_female,list_cal_names,i)
+##Marital status
+##Education level 
+
+
+#LMS scenarios ------
 cal_LMS_all_ages<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69) %>%
   group_by(period,CH04,labour_market_state) %>% 
@@ -246,16 +303,17 @@ list_periods<-list_periods %>%
 outdata<-list_periods %>% 
   select(-c(period))
 }
+##Update LMS data----
 #We update the LMS scenarios file with the latest available EPH data
 update_men<-table_LMS(cal_men) 
 update_women<-table_LMS(cal_women)
-
 
 id_LMS_scenario<- drive_get("LMS_scenarios_16_69") 
 range_write(update_men,ss=id_LMS_scenario,range="F173",col_names =FALSE,reformat=FALSE) 
 range_write(update_women,ss=id_LMS_scenario,range="AK173",col_names =FALSE,reformat=FALSE)
 rm(cal_men,cal_women,update_men,update_women,cal_LMS_all_ages)
 
+##New LMS scenarios-----
 #We then fetch the prospective labour-market participation, for the central, pessimistic and optimistic scenario. 
     #This depends on the percentage input on line 271 across all five labour-market states. Make sure the sum equals 100%.
 names_LMS_proj<-c("trimestre","ano4","sal_central","ind_central","aun_central","cho_central","ina_central",
@@ -283,8 +341,8 @@ df_LMS_scenario_women<-df_LMS_scenario_women %>%
 
 rm(id_LMS_scenario)
 
-##LMS alignment tables------
-###Projected population structure-----
+#Prosp. LMS tables------
+##Projected population structure-----
 
 leg<-"June_2022_legislation/"
 sust<-"Sustainability_LIAM2_output/"
@@ -293,14 +351,14 @@ sust<-"Sustainability_LIAM2_output/"
 id_pop_men<-drive_get(path=paste0(leg,sust),id="active_age_men.csv") #This is LIAM2 output
 id_pop_women<-drive_get(path=paste0(leg,sust),id="active_age_women.csv")
 
-correct_csv<-function(input){
-  input<-input%>%
-    mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
-                                           .x))
-           
-    )
-  
-}
+#correct_csv<-function(input){
+#  input<-input%>%
+#    mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
+#                                           .x))
+#           
+#    )
+#  
+#}
 
 
 if(!file.exists("download_folder")) {
@@ -317,8 +375,8 @@ df_sim_pop_women<-read_csv("active_age_women.csv")
 setwd("../")
 unlink("download_folder",recursive=TRUE)
 
-###Average LMS by agegroup and gender-----
-
+##Average LMS-----
+#Average LMS by agegroup and gender
 cal_LMS<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69 ) %>%
   group_by(period,CH04,agegroup,labour_market_state) %>% 
@@ -395,9 +453,8 @@ for (i in 1:5){
 }
 
 rm(add_row)
-
+##Ratio [35-40[----
 #We need to get for each LMS, percentage of age group x as a factor of percentage of age group 35 (equals 100) ONGOING
-
 
 ratio_agegroups<-function(indata){
 names(indata)<-paste0("agegroup_",1:ncol(indata))
@@ -416,9 +473,7 @@ output<-output
 ratio_men<-ratio_agegroups(cal_average_men)
 ratio_women<-ratio_agegroups(cal_average_women)
 
-
-
-#Ongoing: this gives LMS totals when applying average LMS participation
+#This gives LMS totals when applying average LMS participation
 
 df_sim_pop_men<-df_sim_pop_men %>% 
   select(c(1,7,8,9,10,11,12,13,14,15,16,17)) #Keep only active ages
@@ -448,7 +503,7 @@ output<-list_periods
 df_pop_to_ratio_men<-ratio_to_sim_pop(df_sim_pop_men,ratio_men)
 df_pop_to_ratio_women<-ratio_to_sim_pop(df_sim_pop_women,ratio_women)
 
-
+##Prosp. alignment tables-----
 latest_period<-max(cal_base$period) 
 
 tot_active_men<-df_sim_pop_men %>% 
@@ -467,6 +522,11 @@ tot_active_women<-df_sim_pop_women %>%
   rename(period=Period)
 
 list_lms<-c("sal","ind","aun","cho","ina")
+
+#This function outputs the projected LMS participation by gender and age-group in a LIAM2 compatible format, 
+    #up to the fourth quarter of 2040 (period 152).
+#The age-group specific percentages are adjusted so that the  16-69 LMS participation rates are consistent with 
+    #the scenario at an aggregate level. 
 
 prosp_align_tables<-function(pop_to_ratio,scenario,list_names,total_pop,ratio_df,varvalue){
 tot_active_LMS<-pop_to_ratio[,c("period",grep(paste0("_",varvalue),names(pop_to_ratio),value=TRUE))] %>%  #Keeps population ratios for LMS==1
@@ -508,84 +568,56 @@ for (j in 1:11){
 output<-output
 }
 
-df_sal_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
-                               varvalue=1)
-test<-df_sal_men[,c("period",grep("_central",names(df_sal_men),value=TRUE))] %>% 
+list_prosp_cal_LMS_male<-list()
+list_prosp_cal_LMS_female<-list()
+
+for (i in 1:5){
+  list_prosp_cal_LMS_male [[i]]<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
+                                                    varvalue=i)
+  list_prosp_cal_LMS_female [[i]]<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
+                                                    varvalue=i)
+  }
+
+
+get_prosp_LMS<-function(indata,scenario){
+only_scenario<-indata[,c("period",grep(paste0("_",scenario),names(indata),value=TRUE))] %>% 
   t() %>% 
   as.data.frame() %>% 
   janitor::row_to_names(1) #Works! Now try to put it in function and merge with align_table() SEGUIR AQUI
 
+}
+list_central_LMS_male<-lapply(list_prosp_cal_LMS_male,get_prosp_LMS,scenario="central")
+list_low_LMS_male<-lapply(list_prosp_cal_LMS_male,get_prosp_LMS,scenario="low")
+list_high_LMS_male<-lapply(list_prosp_cal_LMS_male,get_prosp_LMS,scenario="high")
 
-df_ind_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
-                               varvalue=2)
+list_central_LMS_female<-lapply(list_prosp_cal_LMS_female,get_prosp_LMS,scenario="central")
+list_low_LMS_female<-lapply(list_prosp_cal_LMS_female,get_prosp_LMS,scenario="low")
+list_high_LMS_female<-lapply(list_prosp_cal_LMS_female,get_prosp_LMS,scenario="high")
 
-df_aun_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
-                               varvalue=3)
+df_list_prosp_LMS_central<-c(list_central_LMS_male,list_central_LMS_female)
+df_list_prosp_LMS_low<-c(list_low_LMS_male,list_low_LMS_female)
+df_list_prosp_LMS_high<-c(list_high_LMS_male,list_high_LMS_female)
+rm(list_prosp_cal_LMS_female,list_prosp_cal_LMS_male,
+   list_central_LMS_female,list_central_LMS_male,list_low_LMS_female,list_low_LMS_male,list_high_LMS_female,list_high_LMS_male)
 
-df_cho_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
-                               varvalue=4)
-
-df_ina_men<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_men,scenario=df_LMS_scenario_men,list_names=list_lms,total_pop=tot_active_men,ratio_df=ratio_men,
-                               varvalue=5)
-
-
-
-
-df_sal_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
-                               varvalue=1)
-
-df_ind_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
-                               varvalue=2)
-
-df_aun_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
-                               varvalue=3)
-
-df_cho_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
-                               varvalue=4)
-
-df_ina_women<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
-                               varvalue=5)
-
-### LMS alignment tables, historical-----
-
-align_table<-function(indata,agelist,agevar,varmode,varvalue,gender){
+df_list_cal_LMS_central<-list()
+df_list_cal_LMS_low<-list()
+df_list_cal_LMS_high<-list()
+for (i in 1:10){
+  df_list_cal_LMS_central[[i]]<-df_list_cal_LMS[[i]] %>% 
+    bind_cols(df_list_prosp_LMS_central[[i]])
   
-  outdata<-indata %>% 
-    select(c(period)) %>% 
-    unique() %>% 
-    t() %>% 
-    as.data.frame() %>% 
-    mutate(agevar=NA) %>% 
-    select(c(agevar,everything()))  #This outputs a line with one variable per period, and period number
-     
+  df_list_cal_LMS_low[[i]]<-df_list_cal_LMS[[i]] %>% 
+    bind_cols(df_list_prosp_LMS_low[[i]])
   
-  for(j in list_agegroup){ #We loop over age groups, for a given gender, the percentage of people in the studied state, by period
-    age_group<-as.integer(j)
-    
-    temp_df<-indata %>% 
-      subset(CH04==gender & get(varmode)==varvalue & get(agevar)==age_group) %>% 
-      select(c(cal_perc)) %>% 
-      t() %>% 
-      as.data.frame() %>% 
-      mutate(agevar=age_group) %>% 
-      select(c(agevar),everything())
-    
-    outdata<-bind_rows(outdata,temp_df) #We append the age group's participation to the output file
-  }
-  outdata<-outdata %>% 
-    janitor::row_to_names(row_number=1) 
+  df_list_cal_LMS_high[[i]]<-df_list_cal_LMS[[i]] %>% 
+    bind_cols(df_list_prosp_LMS_high[[i]])
 }
 
 
-list_cal_LMS_male<-list()
-for (i in 1:5){
-list_cal_LMS_male [[i]]<-align_table(cal_LMS,list_agegroup,"agegroup","labour_market_state",i,1)
-}
+control<-df_list_cal_LMS_central[[6]]
+view(control)
 
-list_cal_LMS_female<-list()
-for (i in 1:5){
-  list_cal_LMS_female [[i]]<-align_table(cal_LMS,list_agegroup,"agegroup","labour_market_state",i,2)
-}
 
 #We name the output alignment tables
 list_lms<-c("sal","ind","aun","cho","ina")
@@ -597,17 +629,23 @@ rm(list_lms,list_fem)
 
 df_list_cal_LMS<-c(list_cal_LMS_male,list_cal_LMS_female) %>% 
   setNames(list_cal_names)
-test2<-df_list_cal_LMS$cal_sal_h
-rm(list_cal_LMS_male,list_cal_LMS_female,list_cal_names,i)
-##Marital status ---------
-##Education level --------
 
-#control<-df_EPH_post_2016 %>% #Controls the function works well
-#  select(c(ageconti,agegroup,agegroup_ext)) %>% 
-#  unique() %>% 
-#  arrange(ageconti)
-#view(control)
-#rm(control)
+
+
+
+test<-df_sal_men[,c("period",grep("_central",names(df_sal_men),value=TRUE))] %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  janitor::row_to_names(1) #Works! Now try to put it in function and merge with align_table() SEGUIR AQUI
+head(test)
+
+test3<-test2 %>% 
+  bind_cols(test)
+head(test3
+     )
+
+
+
 
 #Descriptive statistics ----
 
