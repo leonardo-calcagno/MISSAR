@@ -194,25 +194,25 @@ gc()
 
 
 cal_base<-df_EPH_2003_2015 %>% 
-  subset(ageconti>=16 & ageconti<=69 ) %>% #Use ageconti for subsetting, else age 15 is included
+  subset(ageconti>=16 & ageconti<=69 & CH04!=0) %>% #Use ageconti for subsetting, else age 15 is included
   group_by(period,CH04) %>% 
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
 cal_base_agegroup<-df_EPH_2003_2015 %>% 
-  subset(ageconti>=16 & ageconti<=69 ) %>%
+  subset(ageconti>=16 & ageconti<=69  & CH04!=0) %>%
   group_by(period,CH04,agegroup) %>% 
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
 cal_base_agegroup_ext<-df_EPH_2003_2015 %>% 
-  subset(ageconti>=16 ) %>%
+  subset(ageconti>=16  & CH04!=0) %>%
   group_by(period,CH04,agegroup_ext) %>% 
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
 cal_base_age<-df_EPH_2003_2015 %>% 
-  subset(ageconti>=16 & ageconti<=29 ) %>%
+  subset(ageconti>=16 & ageconti<=29 & CH04!=0 ) %>%
   group_by(period,CH04,ageconti) %>% 
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
@@ -345,15 +345,39 @@ rm(list_agegroup,vars_to_import)
 
 
 id_alignment_folder<- drive_get("Alignment_tables_update") 
+
+stu_names<-c("stu_men_03_15","stu_wom_03_15")
+             
 LMS_names<-c("wag","ind","inf","une","ina")
+mar_names<-c("uni","mar")
 
 men<-paste0(LMS_names,"_men_","03_15")
 women<-paste0(LMS_names,"_wom_","03_15")
-list_names<-c(men,women)
-rm(LMS_names,men,women)
+LMS_names<-c(men,women)
 
+men<-paste0(mar_names,"_men_","03_15")
+women<-paste0(mar_names,"_wom_","03_15")
+mar_names<-c(men,women)
+rm(men,women)
+
+#Run if the files had already been uploaded
+#for (i in 1:10){
+#  drive_trash(LMS_names[i]) 
+#}         
 for (i in 1:10){
-  gs4_create(name=list_names[i],sheets=df_list_cal_LMS_03_15[i])
-  drive_mv(file=list_names[i],path=id_alignment_folder)
+  gs4_create(name=LMS_names[i],sheets=df_list_cal_LMS_03_15[i])
+  drive_mv(file=LMS_names[i],path=id_alignment_folder)
 }
 
+
+for (i in 1:4){
+  gs4_create(name=mar_names[i],sheets=df_list_cal_mar_03_15[i])
+  drive_mv(file=mar_names[i],path=id_alignment_folder)
+}
+
+for (i in 1:2){
+  gs4_create(name=stu_names[i],sheets=df_list_cal_stu_03_15[i])
+  drive_mv(file=stu_names[i],path=id_alignment_folder)
+}
+rm(i)
+rm(list=ls(pattern="*_names"))
