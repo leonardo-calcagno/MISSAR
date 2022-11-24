@@ -74,8 +74,8 @@ df_EPH_2003_2015<-dl_EPH_2003_2015 %>%
   #                    TRUE)
   contributes=ifelse(PP07H==1 | PP07I==1, TRUE, #Compulsory or voluntary contributions
                      FALSE),
-  student=ifelse(CAT_INAC==3, TRUE, 
-                 FALSE)
+  student=ifelse(CAT_INAC==3, 1, 
+                 0)
   #  contributes=ifelse(PP04A==1, TRUE, #Make public-sector workers contribute to social security, even when they declare otherwise
   #                    contributes)
   
@@ -217,10 +217,10 @@ cal_base_age<-df_EPH_2003_2015 %>%
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
-#Hist. LMS tables-----
+#Alignment tables 2003-2015-----
 
 
-cal_LMS<-df_EPH_2003_2015 %>% 
+cal_LMS<-df_EPH_2003_2015 %>% #Labour-market state
   subset(ageconti>=16 & ageconti<=69  & CH04!=0) %>%
   group_by(period,CH04,agegroup,labour_market_state) %>% 
   summarise(total_LMS=sum(PONDERA)) %>% 
@@ -230,9 +230,9 @@ cal_LMS<-df_EPH_2003_2015 %>%
                          0)
   )
 
-cal_mar<-df_EPH_2003_2015 %>% 
+cal_mar<-df_EPH_2003_2015 %>%  #Marital status
   subset(ageconti>=16 & !is.na(CH07) & CH04!=0) %>%
-  group_by(period,CH04,agegroup,CH07) %>% 
+  group_by(period,CH04,agegroup_ext,CH07) %>% 
   summarise(total_mar=sum(PONDERA)) %>% 
   ungroup() %>% 
   left_join(cal_base_agegroup_ext) %>% 
@@ -249,8 +249,9 @@ cal_stu<-df_EPH_2003_2015 %>%
   mutate(cal_perc=ifelse(total!=0, total_stu/total, #LMS weighted participation by age group and gender
                          0)
   )
+rm(cal_base,cal_base_age,cal_base_agegroup,cal_base_agegroup_ext)
 gc()
-
+head(cal_stu)
 align_table<-function(indata,agevar,varmode,varvalue,gender){
   
 age_list<-indata %>% 
@@ -298,6 +299,27 @@ for (i in 1:5){
   list_cal_LMS_female [[i]]<-align_table(cal_LMS,"agegroup","labour_market_state",i,2)
 }
 
+
+list_cal_mar_male<-list() #We only care about common-law (1) and married (2) people
+for (i in 1:2){
+  list_cal_mar_male [[i]]<-align_table(cal_mar,"agegroup_ext","CH07",i,1)
+}
+
+list_cal_mar_female<-list()
+for (i in 1:2){
+  list_cal_mar_female [[i]]<-align_table(cal_mar,"agegroup_ext","CH07",i,2)
+}
+
+
+list_cal_student<-list() #We put together alignment for male and female students
+for (i in 1:2){
+  list_cal_student [[i]]<-align_table(cal_stu,"ageconti","student",1,i)
+}
+
+
+
+
+
 #We name the output alignment tables
 #list_lms<-c("sal","ind","aun","cho","ina")
 #list_cal_names<-paste0("cal_",list_lms,"_h")
@@ -306,13 +328,16 @@ for (i in 1:5){
 #list_cal_names<- c(list_cal_names,list_fem) 
 #rm(list_lms,list_fem)
 
-df_list_cal_LMS_03_15<-c(list_cal_LMS_male,list_cal_LMS_female) %>% 
-  setNames(list_cal_names)
+df_list_cal_LMS_03_15<-c(list_cal_LMS_male,list_cal_LMS_female) #%>% 
+ # setNames(list_cal_names)
 
-rm(list_cal_LMS_male,list_cal_LMS_female,list_cal_names,i)
+df_list_cal_mar_03_15<-c(list_cal_mar_male,list_cal_mar_female)
+df_list_cal_stu_03_15<-list_cal_student
+
+rm(list=ls(pattern="^list_"))
+rm(i,j)
 rm(list=ls(pattern="^cal_"))
 rm(list_agegroup,vars_to_import)
-
 #Drive export------
 #It is possible to use df_list_cal_LMS_03_15 directly in the get_alignment_tables_EPH file. It would however
     #mean every time you update alignment tables, you would need to launch this file. To avoid this, we rather
