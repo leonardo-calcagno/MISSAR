@@ -23,6 +23,7 @@ vars_to_import<-c("PONDERA", #Weighting
                  "COMPONENTE",#Individual id
                  "ESTADO", #Labour-market situation
                  "CAT_OCUP",#Occupation category
+                 "CAT_INAC",#Inactivity category
                  "NIVEL_ED", #Education level
                 # "CH03", #Kinship to family head
                  "CH04", #Gender
