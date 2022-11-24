@@ -4,14 +4,12 @@
   #We take data from the Permanent Household Survey (EPH) post 2016.
 
 # Packages -----------------
-rm(list=ls())
 gc()
 library(tidyverse)
 library(eph)
 library(readr)
 library(googlesheets4)
 library(googledrive)
-library(vroom)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private")
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
@@ -35,7 +33,22 @@ vars_to_import<-c("PONDERA", #Weighting
                  "PP04C" #Total workers in workplace
                  )
 gc()
+
+#Takes 6 minutes to download everything
+#start.time=Sys.time()
+#options(warn=1)#Set your warning level to 1; else, any missing quarter will cause an error and stop the download.
+#dl_EPH_2003_2015<-get_microdata(year=2003:2015, #Years
+#                                trimester=1:4, #Quarters
+#                                type="individual", #Individual base
+#                                vars=vars_to_import)
+
+#table(dl_EPH_2003_2015$ANO4,dl_EPH_2003_2015$TRIMESTRE) #Shows which periods were downloaded
+#end.time=Sys.time()
+#time.taken=end.time-start.time
+#head(time.taken)
+
 start.time=Sys.time()
+
 #Takes 1 minute to download everything
 options(warn=1)#Set your warning level to 1; else, any missing quarter will cause an error and stop the download.
 dl_EPH_post_2016<-get_microdata(year=2016:2022, #Years
@@ -205,6 +218,21 @@ cal_base_agegroup_ext<-df_EPH_post_2016 %>%
   ungroup()
 
 #Hist. LMS tables-----
+cal_LMS<-df_EPH_post_2016 %>% 
+  subset(ageconti>=16 & ageconti<=69 ) %>%
+  group_by(period,CH04,agegroup,labour_market_state) %>% 
+  summarise(total_LMS=sum(PONDERA)) %>% 
+  ungroup() %>% 
+  left_join(cal_base_agegroup) %>% 
+  mutate(cal_perc=ifelse(total!=0, total_LMS/total, #LMS weighted participation by age group and gender
+                         0)
+  )
+
+list_agegroup<-as.data.frame(table(cal_LMS$agegroup)) %>% 
+  select(-c(Freq)) %>% 
+  t() %>% 
+  as.character() #We make an agegroup list, for the align_table() function
+
 
 align_table<-function(indata,agelist,agevar,varmode,varvalue,gender){
   
@@ -307,6 +335,7 @@ outdata<-list_periods %>%
 #We update the LMS scenarios file with the latest available EPH data
 update_men<-table_LMS(cal_men) 
 update_women<-table_LMS(cal_women)
+rm(LMS_names)
 
 id_LMS_scenario<- drive_get("LMS_scenarios_16_69") 
 range_write(update_men,ss=id_LMS_scenario,range="F173",col_names =FALSE,reformat=FALSE) 
@@ -339,7 +368,7 @@ df_LMS_scenario_women<-df_LMS_scenario_women %>%
          ind_high=ind_central)
 
 
-rm(id_LMS_scenario)
+rm(id_LMS_scenario,names_LMS_proj)
 
 #Prosp. LMS tables------
 ##Projected population structure-----
@@ -368,6 +397,7 @@ setwd("download_folder/")
 
 drive_download(file=paste0(leg,sust,"active_age_men.csv"), overwrite = TRUE)
 drive_download(file=paste0(leg,sust,"active_age_women.csv"), overwrite = TRUE)
+rm(leg,sust)
 
 df_sim_pop_men<-read_csv("active_age_men.csv")
 df_sim_pop_women<-read_csv("active_age_women.csv")
@@ -377,20 +407,6 @@ unlink("download_folder",recursive=TRUE)
 
 ##Average LMS-----
 #Average LMS by agegroup and gender
-cal_LMS<-df_EPH_post_2016 %>% 
-  subset(ageconti>=16 & ageconti<=69 ) %>%
-  group_by(period,CH04,agegroup,labour_market_state) %>% 
-  summarise(total_LMS=sum(PONDERA)) %>% 
-  ungroup() %>% 
-  left_join(cal_base_agegroup) %>% 
-  mutate(cal_perc=ifelse(total!=0, total_LMS/total, #LMS weighted participation by age group and gender
-                         0)
-        )
-
-list_agegroup<-as.data.frame(table(cal_LMS$agegroup)) %>% 
-  select(-c(Freq)) %>% 
-  t() %>% 
-  as.character() #We make an agegroup list, for the align_table() function
 
 #We average, by agegroup and gender, labour-market state participation, from the second quarter of 2016 onward
 cal_average_agegroup_LMS<-cal_LMS %>% 
@@ -503,6 +519,7 @@ output<-list_periods
 df_pop_to_ratio_men<-ratio_to_sim_pop(df_sim_pop_men,ratio_men)
 df_pop_to_ratio_women<-ratio_to_sim_pop(df_sim_pop_women,ratio_women)
 
+
 ##Prosp. alignment tables-----
 latest_period<-max(cal_base$period) 
 
@@ -521,6 +538,7 @@ tot_active_women<-df_sim_pop_women %>%
   subset(Period>latest_period)%>% #Keep only periods with no measured proportions
   rename(period=Period)
 
+rm(df_sim_pop_men,df_sim_pop_women)
 list_lms<-c("sal","ind","aun","cho","ina")
 
 #This function outputs the projected LMS participation by gender and age-group in a LIAM2 compatible format, 
@@ -538,6 +556,7 @@ tot_active_LMS<-pop_to_ratio[,c("period",grep(paste0("_",varvalue),names(pop_to_
 scenario_LMS<-scenario %>% 
   subset(period>latest_period) %>%  #Keep only periods with no measured proportions
   select(c(period,paste0(list_names[varvalue],"_central"),paste0(list_names[varvalue],"_low"),paste0(list_names[varvalue],"_high")))
+rm(latest_period)
 
 df_35<-scenario_LMS %>% #Gets for agegroup 35 LMS==i frequency consistent with population projections. 
                                 #You can next deduce LMS participation for other age groups using the ratio df. 
@@ -577,7 +596,8 @@ for (i in 1:5){
   list_prosp_cal_LMS_female [[i]]<-prosp_align_tables(pop_to_ratio=df_pop_to_ratio_women,scenario=df_LMS_scenario_women,list_names=list_lms,total_pop=tot_active_women,ratio_df=ratio_women,
                                                     varvalue=i)
   }
-
+rm(ratio_men,df_pop_to_ratio_men,tot_active_men,df_LMS_scenario_men,
+   ratio_women,df_pop_to_ratio_women,tot_active_women,df_LMS_scenario_women)
 
 get_prosp_LMS<-function(indata,scenario){
 only_scenario<-indata[,c("period",grep(paste0("_",scenario),names(indata),value=TRUE))] %>% 
@@ -614,6 +634,13 @@ for (i in 1:10){
     bind_cols(df_list_prosp_LMS_high[[i]])
 }
 
+rm(list=ls(pattern="^list_"))
+rm(list=ls(pattern="^cal_"))
+rm(list=ls(pattern="^df_list_prosp_"))
+rm(df_list_cal_LMS,i)
+
+
+#rm(list=setdiff(ls(),pattern="^df_list"))
 
 #CSV tables-----
 setwd("../../")
@@ -648,6 +675,7 @@ for (i in 1:1){
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
+rm(start.time,end.time,time.taken)
 
 first_line<-data.frame(1:151) %>% 
   t() %>% 
