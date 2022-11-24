@@ -518,7 +518,7 @@ mean_stu_women<-post_2016_mean(cal_stu,"ageconti","student",1,2)
 
 rm(cal_LMS,cal_mar,cal_stu)
 ##Ratio [35-40[----
-#We need to get for each LMS, percentage of age group x as a factor of percentage of age group 35 (equals 100) ONGOING
+#We need to get for each LMS, percentage of age group x as a factor of percentage of age group 35 (equals 100) 
 
 ratio_agegroups<-function(indata){
 names(indata)<-paste0("agegroup_",1:ncol(indata))
@@ -534,8 +534,8 @@ names(output)<-paste0("agegroup_",1:ncol(indata))
 output<-output
 
 }
-ratio_men<-ratio_agegroups(cal_average_men)
-ratio_women<-ratio_agegroups(cal_average_women)
+ratio_men<-ratio_agegroups(mean_LMS_men)
+ratio_women<-ratio_agegroups(mean_LMS_women)
 
 #This gives LMS totals when applying average LMS participation
 
@@ -604,7 +604,7 @@ tot_active_LMS<-pop_to_ratio[,c("period",grep(paste0("_",varvalue),names(pop_to_
 scenario_LMS<-scenario %>% 
   subset(period>latest_period) %>%  #Keep only periods with no measured proportions
   select(c(period,paste0(list_names[varvalue],"_central"),paste0(list_names[varvalue],"_low"),paste0(list_names[varvalue],"_high")))
-rm(latest_period)
+
 
 df_35<-scenario_LMS %>% #Gets for agegroup 35 LMS==i frequency consistent with population projections. 
                                 #You can next deduce LMS participation for other age groups using the ratio df. 
@@ -685,12 +685,30 @@ for (i in 1:10){
 rm(list=ls(pattern="^list_"))
 rm(list=ls(pattern="^cal_"))
 rm(list=ls(pattern="^df_list_prosp_"))
-rm(df_list_cal_LMS,i)
+rm(df_list_cal_LMS,i,latest_period)
+rm(mean_LMS_men,mean_LMS_women)
 
 
 #rm(list=setdiff(ls(),pattern="^df_list"))
 
-#CSV tables-----
+#CSV tables ----
+#Get 2003-2015 tables
+id_alignment_folder<- drive_get("Alignment_tables_update") 
+dl_list<-drive_ls(path=id_alignment_folder) %>% 
+  subset(grepl("*03_15",name))
+
+sheet_id<-drive_get(id=dl_list[[1,2]])
+df_list_03_15<-list()
+
+for (i in 1:nrow(dl_list)){
+  sheet_id<-drive_get(id=dl_list[[i,2]])
+ df_list_03_15[[i]]<- read_sheet(ss=sheet_id) %>% 
+   setNames(dl_list[[i,1]])
+ #Ver cómo guardar los nombres de los objetos SEGUIR AQUI 
+}
+
+
+#OLD CSV tables-
 setwd("../../")
 setwd("LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations")
 
