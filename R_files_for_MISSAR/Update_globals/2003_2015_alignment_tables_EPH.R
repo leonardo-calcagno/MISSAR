@@ -49,7 +49,7 @@ table(dl_EPH_2003_2015$ANO4,dl_EPH_2003_2015$TRIMESTRE) #Shows which periods wer
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
-rm(start.time,end.time,time.taken)
+rm(start.time,end.time,time.taken,vars_to_import)
 
 #Variables of interest -----
 vector_periods<-dl_EPH_2003_2015 %>% 
@@ -251,7 +251,6 @@ cal_stu<-df_EPH_2003_2015 %>%
   )
 rm(cal_base,cal_base_age,cal_base_agegroup,cal_base_agegroup_ext)
 gc()
-head(cal_stu)
 align_table<-function(indata,agevar,varmode,varvalue,gender){
   
 age_list<-indata %>% 
@@ -335,7 +334,7 @@ df_list_cal_mar_03_15<-c(list_cal_mar_male,list_cal_mar_female)
 df_list_cal_stu_03_15<-list_cal_student
 
 rm(list=ls(pattern="^list_"))
-rm(i,j)
+rm(i)
 rm(list=ls(pattern="^cal_"))
 rm(list_agegroup,vars_to_import)
 #Drive export------

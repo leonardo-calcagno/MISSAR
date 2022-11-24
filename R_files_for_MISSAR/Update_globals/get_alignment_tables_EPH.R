@@ -51,10 +51,10 @@ gc()
 #head(time.taken)
 
 start.time=Sys.time()
-
+year<-substr(start=1,stop=4,Sys.Date())
 #Takes 1 minute to download everything
 options(warn=1)#Set your warning level to 1; else, any missing quarter will cause an error and stop the download.
-dl_EPH_post_2016<-get_microdata(year=2016:2022, #Years
+dl_EPH_post_2016<-get_microdata(year=2016:year, #Years
                         trimester=1:4, #Quarters
                         type="individual", #Individual base
                         vars=vars_to_import)
@@ -63,6 +63,7 @@ table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Shows which periods wer
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
+rm(start.time,end.time,time.taken,year,vars_to_import)
 #Variables of interest -----
 vector_periods<-dl_EPH_post_2016 %>% 
   select(c(ANO4,TRIMESTRE)) %>% 
@@ -85,7 +86,9 @@ vector_periods<-dl_EPH_post_2016 %>%
           # contributes=ifelse((PP07H==2 | PP07H==0) &  (PP07I==2 | PP07I==0), FALSE, #Previous error, non-respondents made to contribute
           #                    TRUE)
            contributes=ifelse(PP07H==1 | PP07I==1, TRUE, #Compulsory or voluntary contributions
-                              FALSE)#,
+                              FALSE),
+           student=ifelse(CAT_INAC==3, 1, 
+                         0)
          #  contributes=ifelse(PP04A==1, TRUE, #Make public-sector workers contribute to social security, even when they declare otherwise
           #                    contributes)
       
@@ -98,7 +101,7 @@ rm(vector_periods)
   #table(df_EPH_post_2016$formation,df_EPH_post_2016$NIVEL_ED)
   
   df_EPH_post_2016<-df_EPH_post_2016 %>% 
-    select(-c(PP07H,PP07I,CH06,NIVEL_ED))
+    select(-c(PP07H,PP07I,CH06,NIVEL_ED,CAT_INAC))
   
   
   #Run to verify independent workers in the EPH don't report social security contributions
@@ -203,7 +206,7 @@ df_EPH_post_2016<-df_EPH_post_2016 %>%
 gc()
 #Base alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
-  subset(ageconti>=16 & ageconti<=69 ) %>% #Use ageconti for subsetting, else age 15 is included
+  subset(ageconti>=16 & ageconti<=69) %>% #Use ageconti for subsetting, else age 15 is included
   group_by(period,CH04) %>% 
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
@@ -220,7 +223,14 @@ cal_base_agegroup_ext<-df_EPH_post_2016 %>%
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
-#Hist. LMS tables-----
+
+cal_base_age<-df_EPH_post_2016 %>% 
+  subset(ageconti>=16 & ageconti<=29 ) %>%
+  group_by(period,CH04,ageconti) %>% 
+  summarise(total=sum(PONDERA)) %>% 
+  ungroup()
+
+#Hist. align tables-----
 cal_LMS<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69 ) %>%
   group_by(period,CH04,agegroup,labour_market_state) %>% 
@@ -231,13 +241,37 @@ cal_LMS<-df_EPH_post_2016 %>%
                          0)
   )
 
-list_agegroup<-as.data.frame(table(cal_LMS$agegroup)) %>% 
-  select(-c(Freq)) %>% 
-  t() %>% 
-  as.character() #We make an agegroup list, for the align_table() function
 
+cal_mar<-df_EPH_post_2016 %>%  #Marital status
+  subset(ageconti>=16 & !is.na(CH07) & CH04!=0) %>%
+  group_by(period,CH04,agegroup_ext,CH07) %>% 
+  summarise(total_mar=sum(PONDERA)) %>% 
+  ungroup() %>% 
+  left_join(cal_base_agegroup_ext) %>% 
+  mutate(cal_perc=ifelse(total!=0, total_mar/total, #LMS weighted participation by age group and gender
+                         0)
+  )
 
-align_table<-function(indata,agelist,agevar,varmode,varvalue,gender){
+cal_stu<-df_EPH_post_2016 %>% 
+  subset(ageconti>=16 & ageconti<=29) %>%
+  group_by(period,CH04,ageconti,student) %>% 
+  summarise(total_stu=sum(PONDERA)) %>% 
+  ungroup() %>% 
+  left_join(cal_base_age) %>% 
+  mutate(cal_perc=ifelse(total!=0, total_stu/total, #LMS weighted participation by age group and gender
+                         0)
+  )
+rm(cal_base,cal_base_age,cal_base_agegroup,cal_base_agegroup_ext)
+
+align_table<-function(indata,agevar,varmode,varvalue,gender){
+  
+  age_list<-indata %>% 
+    select(c(agevar)) %>% 
+    unique() %>% 
+    t() %>% 
+    as.character() #We make an agegroup list, for the align_table() function
+  
+  
   
   outdata<-indata %>% 
     select(c(period)) %>% 
@@ -248,7 +282,7 @@ align_table<-function(indata,agelist,agevar,varmode,varvalue,gender){
     select(c(agevar,everything()))  #This outputs a line with one variable per period, and period number
   
   
-  for(j in list_agegroup){ #We loop over age groups, for a given gender, the percentage of people in the studied state, by period
+  for(j in age_list){ #We loop over age groups, for a given gender, the percentage of people in the studied state, by period
     age_group<-as.integer(j)
     
     temp_df<-indata %>% 
@@ -266,31 +300,54 @@ align_table<-function(indata,agelist,agevar,varmode,varvalue,gender){
 }
 
 
+
 list_cal_LMS_male<-list()
 for (i in 1:5){
-  list_cal_LMS_male [[i]]<-align_table(cal_LMS,list_agegroup,"agegroup","labour_market_state",i,1)
+  list_cal_LMS_male [[i]]<-align_table(cal_LMS,"agegroup","labour_market_state",i,1)
 }
 
 list_cal_LMS_female<-list()
 for (i in 1:5){
-  list_cal_LMS_female [[i]]<-align_table(cal_LMS,list_agegroup,"agegroup","labour_market_state",i,2)
+  list_cal_LMS_female [[i]]<-align_table(cal_LMS,"agegroup","labour_market_state",i,2)
 }
 
+
+list_cal_mar_male<-list() #We only care about common-law (1) and married (2) people
+for (i in 1:2){
+  list_cal_mar_male [[i]]<-align_table(cal_mar,"agegroup_ext","CH07",i,1)
+}
+
+list_cal_mar_female<-list()
+for (i in 1:2){
+  list_cal_mar_female [[i]]<-align_table(cal_mar,"agegroup_ext","CH07",i,2)
+}
+
+
+list_cal_student<-list() #We put together alignment for male and female students
+for (i in 1:2){
+  list_cal_student [[i]]<-align_table(cal_stu,"ageconti","student",1,i)
+}
+
+
+
+
 #We name the output alignment tables
-list_lms<-c("sal","ind","aun","cho","ina")
-list_cal_names<-paste0("cal_",list_lms,"_h")
-list_fem<-paste0("cal_",list_lms,"_f")
+#list_lms<-c("sal","ind","aun","cho","ina")
+#list_cal_names<-paste0("cal_",list_lms,"_h")
+#list_fem<-paste0("cal_",list_lms,"_f")
 
-list_cal_names<- c(list_cal_names,list_fem) 
-rm(list_lms,list_fem)
+#list_cal_names<- c(list_cal_names,list_fem) 
+#rm(list_lms,list_fem)
 
-df_list_cal_LMS<-c(list_cal_LMS_male,list_cal_LMS_female) %>% 
-  setNames(list_cal_names)
+df_list_cal_LMS<-c(list_cal_LMS_male,list_cal_LMS_female) #%>% 
+# setNames(list_cal_names)
 
-rm(list_cal_LMS_male,list_cal_LMS_female,list_cal_names,i)
-##Marital status
-##Education level 
+df_list_cal_mar<-c(list_cal_mar_male,list_cal_mar_female)
+df_list_cal_stu<-list_cal_student
 
+rm(list=ls(pattern="^list_"))
+rm(i)
+rm(list=ls(pattern="^cal_"))
 
 #LMS scenarios ------
 cal_LMS_all_ages<-df_EPH_post_2016 %>% 
