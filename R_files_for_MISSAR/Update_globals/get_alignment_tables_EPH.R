@@ -261,7 +261,6 @@ cal_stu<-df_EPH_post_2016 %>%
   mutate(cal_perc=ifelse(total!=0, total_stu/total, #LMS weighted participation by age group and gender
                          0)
   )
-rm(cal_base,cal_base_age,cal_base_agegroup,cal_base_agegroup_ext)
 
 align_table<-function(indata,agevar,varmode,varvalue,gender){
   
@@ -347,7 +346,7 @@ df_list_cal_stu<-list_cal_student
 
 rm(list=ls(pattern="^list_"))
 rm(i)
-rm(list=ls(pattern="^cal_"))
+#rm(list=ls(pattern="^cal_"))
 
 #LMS scenarios ------
 cal_LMS_all_ages<-df_EPH_post_2016 %>% 
@@ -466,69 +465,55 @@ setwd("../")
 unlink("download_folder",recursive=TRUE)
 
 ##Average LMS-----
-#Average LMS by agegroup and gender
+#Average LMS by agevar and gender
+post_2016_mean<-function(indata,agevar,varmode,varvalue,gender){
+  
+  
+  #We average, by agevar and gender, labour-market state participation, from the second quarter of 2016 onward
+  cal_average_agevar<-indata %>% 
+    #subset(period>=70)%>% #To average over more recent years, uncomment this line 
+    group_by(CH04,get(varmode),get(agevar)) %>% 
+    summarise(mean_var=mean(cal_perc)) %>% 
+    ungroup()
+  names(cal_average_agevar)<-c("CH04",varmode,agevar,"mean_var")
+  
+  output<-cal_average_agevar
 
-#We average, by agegroup and gender, labour-market state participation, from the second quarter of 2016 onward
-cal_average_agegroup_LMS<-cal_LMS %>% 
-  #subset(period>=70)%>% #To average over more recent years, uncomment this line 
-  group_by(CH04,labour_market_state,agegroup) %>% 
-  summarise(mean_LMS=mean(cal_perc)) %>% 
-  ungroup()
-#This shows averaged labour-market participation sums to 1
-control_men<-data.frame(sum_LMS_freq=double(),agegroup=integer())
-for (i in list_agegroup)
+
+  
+  list_agevar<-indata %>% 
+    select(c(agevar)) %>% 
+    unique() %>% 
+    t() %>% 
+    as.character() #We make an agegroup list, for the align_table() function
+
+  #This shows averaged labour-market participation sums to 1
+  control<-data.frame(sum_freq=double(),agevar=integer())
+  for (i in list_agevar)
   {
-  only_one_agegroup<-cal_average_agegroup_LMS %>% 
-      subset(CH04==1 & agegroup==i)
-  
-  add_row<-as.data.frame(sum(only_one_agegroup$mean_LMS)) %>% 
-      rename(sum_LMS_freq=1) %>% 
-      mutate(agegroup=as.integer(i))
-  
-  control_men<-bind_rows(control_men,add_row)  
+    only_one_agevar<-cal_average_agevar%>% 
+      subset(CH04==gender & get(agevar)==i)
+    
+    add_row<-as.data.frame(sum(only_one_agevar$mean_var)) %>% 
+      rename(sum_freq=1) %>% 
+      mutate(agevar=as.integer(i))
+    
+    control<-bind_rows(control,add_row)  
+  }
+  output<-data.frame()
+  for (i in 1:varvalue){
+    add_row<-cal_average_agevar %>% 
+      subset(CH04==gender & get(varmode)==i) %>% 
+      select(-c(CH04,varmode,agevar)) %>% 
+      t() %>% 
+      as.data.frame()
+    output<-bind_rows(output,add_row)
+  }
+  output<-output
 }
-head(control_men)
-rm(only_one_agegroup,add_row,control_men)
+mean_LMS_men<-post_2016_mean(cal_LMS,"agegroup","labour_market_state",5,1) #previously cal_average_men
+mean_LMS_women<-post_2016_mean(cal_LMS,"agegroup","labour_market_state",5,2) #previously cal_average_women
 
-
-control_women<-data.frame(sum_LMS_freq=double(),agegroup=integer())
-for (i in list_agegroup)
-{
-  only_one_agegroup<-cal_average_agegroup_LMS %>% 
-    subset(CH04==2 & agegroup==i)
-  
-  add_row<-as.data.frame(sum(only_one_agegroup$mean_LMS)) %>% 
-    rename(sum_LMS_freq=1) %>% 
-    mutate(agegroup=as.integer(i))
-  
-  control_women<-bind_rows(control_women,add_row)  
-}
-head(control_women)
-rm(only_one_agegroup,add_row,control_women)
-
-cal_average_men<-data.frame()
-
-for (i in 1:5){
-  add_row<-cal_average_agegroup_LMS %>% 
-    subset(CH04==1 & labour_market_state==i) %>% 
-    select(-c(CH04,labour_market_state,agegroup)) %>% 
-    t() %>% 
-    as.data.frame()
-  cal_average_men<-bind_rows(cal_average_men,add_row)
-}
-
-cal_average_women<-data.frame()
-
-for (i in 1:5){
-  add_row<-cal_average_agegroup_LMS %>% 
-    subset(CH04==2 & labour_market_state==i) %>% 
-    select(-c(CH04,labour_market_state,agegroup)) %>% 
-    t() %>% 
-    as.data.frame()
-  cal_average_women<-bind_rows(cal_average_women,add_row)
-}
-
-rm(add_row)
 ##Ratio [35-40[----
 #We need to get for each LMS, percentage of age group x as a factor of percentage of age group 35 (equals 100) ONGOING
 
