@@ -435,10 +435,6 @@ rm(id_LMS_scenario,names_LMS_proj)
 leg<-"June_2022_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 
-
-id_pop_men<-drive_get(path=paste0(leg,sust),id="active_age_men.csv") #This is LIAM2 output
-id_pop_women<-drive_get(path=paste0(leg,sust),id="active_age_women.csv")
-
 #correct_csv<-function(input){
 #  input<-input%>%
 #    mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
@@ -468,7 +464,6 @@ unlink("download_folder",recursive=TRUE)
 #Average LMS by agevar and gender
 post_2016_mean<-function(indata,agevar,varmode,varvalue,gender){
   
-  
   #We average, by agevar and gender, labour-market state participation, from the second quarter of 2016 onward
   cal_average_agevar<-indata %>% 
     #subset(period>=70)%>% #To average over more recent years, uncomment this line 
@@ -479,14 +474,12 @@ post_2016_mean<-function(indata,agevar,varmode,varvalue,gender){
   
   output<-cal_average_agevar
 
-
-  
   list_agevar<-indata %>% 
     select(c(agevar)) %>% 
     unique() %>% 
     t() %>% 
     as.character() #We make an agegroup list, for the align_table() function
-
+print(list_agevar)
   #This shows averaged labour-market participation sums to 1
   control<-data.frame(sum_freq=double(),agevar=integer())
   for (i in list_agevar)
@@ -509,11 +502,21 @@ post_2016_mean<-function(indata,agevar,varmode,varvalue,gender){
       as.data.frame()
     output<-bind_rows(output,add_row)
   }
+  
+  output_name<-paste0("_",list_agevar)
+  names(output)<-output_name
   output<-output
 }
 mean_LMS_men<-post_2016_mean(cal_LMS,"agegroup","labour_market_state",5,1) #previously cal_average_men
 mean_LMS_women<-post_2016_mean(cal_LMS,"agegroup","labour_market_state",5,2) #previously cal_average_women
 
+mean_mar_men<-post_2016_mean(cal_mar,"agegroup_ext","CH07",2,1) #previously cal_average_men
+mean_mar_women<-post_2016_mean(cal_mar,"agegroup_ext","CH07",2,2) #previously cal_average_women
+
+mean_stu_men<-post_2016_mean(cal_stu,"ageconti","student",1,1)
+mean_stu_women<-post_2016_mean(cal_stu,"ageconti","student",1,2)
+
+rm(cal_LMS,cal_mar,cal_stu)
 ##Ratio [35-40[----
 #We need to get for each LMS, percentage of age group x as a factor of percentage of age group 35 (equals 100) ONGOING
 
