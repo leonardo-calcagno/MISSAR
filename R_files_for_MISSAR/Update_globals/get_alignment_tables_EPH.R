@@ -4,6 +4,7 @@
   #We take data from the Permanent Household Survey (EPH) post 2016.
 
 # Packages -----------------
+rm(list=ls())
 gc()
 library(tidyverse)
 library(eph)
@@ -13,6 +14,7 @@ library(googledrive)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private")
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
+closeAllConnections() #Else, you risk the "all connections are in use" error.
 vars_to_import<-c("PONDERA", #Weighting
                  "TRIMESTRE", #Quarter
                  "ANO4", #Year
