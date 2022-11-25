@@ -708,7 +708,7 @@ remDr <- rD[["client"]]
 
 remDr$navigate(URL)
 
-
+##Retirement benefits ------
 pasivos <- "Pasivos"
 remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(pasivos))
 
@@ -844,7 +844,7 @@ for (i in 1:nrow(vector_pasivos)){
   dl_benefits<-dl_benefits %>% 
     bind_rows(input)
 }
-rm(input,pg,vector_pasivos,vector_pasivos_2)
+rm(input,pg,vector_pasivos,vector_pasivos_2,vector_urls)
   
 
 #The fourth quarter value is actually a yearly average, we correct this. 
@@ -917,31 +917,74 @@ for(i in 1:(original_ncols-1)){
 output<-indata
 }
 
-test<-months_from_quarters(df_benefits)
+df_benefits<-months_from_quarters(df_benefits)
 
-rm(original_ncols,full_year,list_quarters)
+rm(list_quarters,i,j)
 
+##Non-contributive benefits ------
 remDr$navigate(URL)
 no_contributivo<- "no contributivo"
 remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(no_contributivo))
 
-Sys.sleep(5) # give the page time to fully load
+Sys.sleep(3) # give the page time to fully load
 html <- remDr$getPageSource()[[1]]
 
 pg<-read_html(html)
 
-list_urls_3<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+
+
+
+vector_PNC<-vector_urls %>% 
+  rename(URL=1) %>% 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess",URL)& grepl("pnc",URL) ) 
+
+head(vector_PNC)
+rm(vector_urls,pg)
+
+
+rm(input,pg,vector_pasivos,vector_pasivos_2,vector_urls)
 
 next_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[4]/a" 
 remDr$findElement(using="xpath",value=next_page)$clickElement() #Here you click the next page button
 
 
-Sys.sleep(5) # give the page time to fully load
+Sys.sleep(3) # give the page time to fully load
 html <- remDr$getPageSource()[[1]]
 
 pg<-read_html(html)
 
-list_urls_4<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+
+vector_PNC_2<-vector_urls %>% 
+  rename(URL=1) %>% 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess",URL)& grepl("pnc",URL) ) 
+
+rm(vector_urls,pg)
+
+#May be best to make a function here, ONGOING
+
+
+vector_PNC<-vector_PNC %>% 
+  bind_rows(vector_PNC_2) %>% 
+  unique() %>% 
+  mutate(full_URL=paste0(prefix,URL)
+  )
+
+vector_PNC<-vector_PNC %>% 
+  mutate(year=9999,  
+         actual_year=year,
+         quarter="not_present",
+         actual_quarter=quarter
+  )
+
+list_quarters<-c("03","06","09","12")
+
+current_year<-Sys.Date() %>% 
+  substr(start=1,stop=4) %>% 
+  as.integer()
+
+
 
 #If you need to go to previous page
 
