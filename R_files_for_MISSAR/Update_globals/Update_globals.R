@@ -698,7 +698,7 @@ head(time.taken)
 
 
 #ANSES benefits-----
-
+setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
 URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
 
 
@@ -846,6 +846,48 @@ for (i in 1:nrow(vector_pasivos)){
 }
 rm(input,pg,vector_pasivos,vector_pasivos_2)
   
+head(df_benefits)
+#The fourth quarter value is actually a yearly average, we correct this. 
+get_4q_value<-function(indata, ano4){
+  
+indata<-indata %>% 
+  subset(year==ano4) %>% 
+  select(-c(year)) %>% 
+  t() %>%
+  as.data.frame()%>%  
+  janitor::row_to_names(row_number=1) %>% 
+  janitor::clean_names() %>% 
+  mutate(across(everything(),~as.integer(.x)) #We put variables as integer
+        )
+
+total_quarters<-ncol(indata)
+if (total_quarters==4){
+  indata<-indata %>% 
+    mutate(corr_12=4*x12-x09-x06-x03, #The fourth quarter value is actually a yearly average, we correct this. 
+           x12=corr_12) %>% 
+    select(-c(corr_12))
+}else{
+  indata<-indata
+}
+
+quarters<-c(3*1:total_quarters)
+quarters<-paste0("_q",quarters)
+indata_names<-c(paste0("y_",ano4,quarters))
+names(indata)<-indata_names
+output<-indata
+}
+
+df_list_ben<-list()
+year<-as.integer(substr(start=1,stop=4,Sys.Date()))
+
+for (i in 2020:year){
+  index<-i-2019
+  df_list_ben[[index]]<-get_4q_value(df_benefits,i)
+}
+
+test<-bind_cols(df_list_ben)
+rm(df_list_ben)
+
 
 remDr$navigate(URL)
 no_contributivo<- "no contributivo"
