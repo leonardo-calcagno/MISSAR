@@ -818,7 +818,7 @@ list_URL<-vector_pasivos %>%
   t() %>% 
   as.character()
   
-df_benefits<-data.frame()
+dl_benefits<-data.frame()
 
 for (i in 1:nrow(vector_pasivos)){
   download.file(vector_pasivos[[i,1]],destfile=vector_pasivos[[i,4]],mode="wb",overwrite=TRUE)
@@ -841,12 +841,12 @@ for (i in 1:nrow(vector_pasivos)){
            quarter=vector_pasivos[[i,3]]) %>% 
     select(c(year,quarter,everything()))
   
-  df_benefits<-df_benefits %>% 
+  dl_benefits<-dl_benefits %>% 
     bind_rows(input)
 }
 rm(input,pg,vector_pasivos,vector_pasivos_2)
   
-head(df_benefits)
+
 #The fourth quarter value is actually a yearly average, we correct this. 
 get_4q_value<-function(indata, ano4){
   
@@ -882,38 +882,44 @@ year<-as.integer(substr(start=1,stop=4,Sys.Date()))
 
 for (i in 2020:year){
   index<-i-2019
-  df_list_ben[[index]]<-get_4q_value(df_benefits,i)
+  df_list_ben[[index]]<-get_4q_value(dl_benefits,i)
 }
 
-test<-bind_cols(df_list_ben)
+df_benefits<-bind_cols(df_list_ben)
 rm(df_list_ben)
 
-original_ncols<-ncol(test)
+months_from_quarters<-function(indata){
 
-for(i in 1:(ncol(test)-1)){
+original_ncols<-ncol(indata)
+
+for(i in 1:(ncol(indata)-1)){
   
-  store_names<-names(test)
-  test<-test %>% 
-    mutate(first_month=test[,i]*2/3+test[,i+1]*1/3,
-           second_month=test[,i]*1/3+test[,i+1]*2/3
+  store_names<-names(indata)
+  indata<-indata %>% 
+    mutate(first_month=indata[,i]*2/3+indata[,i+1]*1/3,
+           second_month=indata[,i]*1/3+indata[,i+1]*2/3
           ) 
   
-  names(test)<-c(store_names,paste0("first_month",i),paste0("second_month",i))
+  names(indata)<-c(store_names,paste0("first_month",i),paste0("second_month",i))
  
  
 }
-head(test)
+head(indata)
 for(i in 1:(original_ncols-1)){
    if(i==1){
-    test<-test %>% 
+     indata<-indata %>% 
       select(c(1),c(original_ncols+1),c(original_ncols+2),everything())  
   }else{
-  test<-test %>% 
-    select(all_of(c(1:(3*(i-1)))),c(original_ncols+i*2-1),c(original_ncols+2*i),everything())
+    indata<-indata %>% 
+    select(all_of(c(1:(1+3*(i-1)))),c(original_ncols+i*2-1),c(original_ncols+2*i),everything())
   }
 }
-head(test)
+output<-indata
+}
 
+test<-months_from_quarters(df_benefits)
+
+rm(original_ncols,full_year,list_quarters)
 
 remDr$navigate(URL)
 no_contributivo<- "no contributivo"
