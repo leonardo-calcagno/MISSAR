@@ -888,6 +888,32 @@ for (i in 2020:year){
 test<-bind_cols(df_list_ben)
 rm(df_list_ben)
 
+original_ncols<-ncol(test)
+
+for(i in 1:(ncol(test)-1)){
+  
+  store_names<-names(test)
+  test<-test %>% 
+    mutate(first_month=test[,i]*2/3+test[,i+1]*1/3,
+           second_month=test[,i]*1/3+test[,i+1]*2/3
+          ) 
+  
+  names(test)<-c(store_names,paste0("first_month",i),paste0("second_month",i))
+ 
+ 
+}
+head(test)
+for(i in 1:(original_ncols-1)){
+   if(i==1){
+    test<-test %>% 
+      select(c(1),c(original_ncols+1),c(original_ncols+2),everything())  
+  }else{
+  test<-test %>% 
+    select(all_of(c(1:(3*(i-1)))),c(original_ncols+i*2-1),c(original_ncols+2*i),everything())
+  }
+}
+head(test)
+
 
 remDr$navigate(URL)
 no_contributivo<- "no contributivo"
