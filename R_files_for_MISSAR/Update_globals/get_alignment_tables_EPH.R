@@ -728,7 +728,9 @@ df_uni_women<-get_prosp_non_LMS(df_list=df_list_cal_mar,index_number=3,mean_data
 df_mar_women<-get_prosp_non_LMS(df_list=df_list_cal_mar,index_number=4,mean_data=mean_mar_women,varmode=2)
 df_stu_men<-get_prosp_non_LMS(df_list=df_list_cal_stu,index_number=1,mean_data=mean_stu_men,varmode=1)#1, student
 df_stu_women<-get_prosp_non_LMS(df_list=df_list_cal_stu,index_number=2,mean_data=mean_stu_women,varmode=1)
+df_list_mar_stu<-list(df_stu_women,df_stu_men,df_mar_women,df_uni_women,df_mar_men,df_uni_men)
 
+rm(df_stu_women,df_stu_men,df_mar_women,df_uni_women,df_mar_men,df_uni_men)
 rm(df_list_cal_mar,df_list_cal_stu)
 rm(list=ls(pattern="*mean_"))
 #CSV tables ----
@@ -736,8 +738,6 @@ rm(list=ls(pattern="*mean_"))
 id_alignment_folder<- drive_get("Alignment_tables_update") 
 dl_list<-drive_ls(path=id_alignment_folder) %>% 
   subset(grepl("*03_15",name))
-
-#sheet_id<-drive_get(id=dl_list[[1,2]])
 df_list_03_15<-list()
 gc()
 for (i in 1:nrow(dl_list)){
@@ -749,11 +749,62 @@ for (i in 1:nrow(dl_list)){
 get_names<-t(dl_list[,1])
 names(df_list_03_15)<-get_names
 rm(i,sheet_id)
+#This gives us an ordered list of alignment datasets: from female students to male registered wage-earners. 
+    #We can then make a new list concatenating these 2003-2015 datasets with post-2016 prospective datasets
+
+
+df_list_prosp_central<-c(df_list_mar_stu,df_list_cal_LMS_central[10:1])
+df_list_prosp_low<-c(df_list_mar_stu,df_list_cal_LMS_low[10:1])
+df_list_prosp_high<-c(df_list_mar_stu,df_list_cal_LMS_high[10:1])
+
+correct_names<-c("agegroup",paste0("period_",54:152))
+
+df_list_cal_central<-list()
+df_list_cal_low<-list()
+df_list_cal_high<-list()
+for (i in 1:16){
+  
+names(df_list_prosp_central[[i]])<-correct_names
+df_list_prosp_central[[i]]<-df_list_prosp_central[[i]] %>% 
+  select(-c(agegroup))
+
+names(df_list_prosp_low[[i]])<-correct_names
+df_list_prosp_low[[i]]<-df_list_prosp_low[[i]] %>% 
+  select(-c(agegroup))
+
+names(df_list_prosp_high[[i]])<-correct_names
+df_list_prosp_high[[i]]<-df_list_prosp_high[[i]] %>% 
+  select(-c(agegroup))
+
+  df_list_cal_central[[i]]<-df_list_03_15[[i]] %>% 
+    bind_cols(df_list_prosp_central[[i]]) %>% 
+    mutate(period_51=period_50*3/4 + period_54*1/4,
+           period_52=period_50*2/4 + period_54*2/4,
+           period_53=period_50*1/4 + period_54*3/4) %>%  #Extrapolate missing q3 2015 - q1 2016
+    select(c(agegroup,period_3:period_50,period_51:period_53,everything())) #Put extrapolated quarters in correct place
+  
+  df_list_cal_low[[i]]<-df_list_03_15[[i]] %>% 
+    bind_cols(df_list_prosp_low[[i]]) %>% 
+    mutate(period_51=period_50*3/4 + period_54*1/4,
+           period_52=period_50*2/4 + period_54*2/4,
+           period_53=period_50*1/4 + period_54*3/4) %>%  #Extrapolate missing q3 2015 - q1 2016
+    select(c(agegroup,period_3:period_50,period_51:period_53,everything())) #Put extrapolated quarters in correct place
+  
+  
+  df_list_cal_high[[i]]<-df_list_03_15[[i]] %>% 
+    bind_cols(df_list_prosp_high[[i]]) %>% 
+    mutate(period_51=period_50*3/4 + period_54*1/4,
+           period_52=period_50*2/4 + period_54*2/4,
+           period_53=period_50*1/4 + period_54*3/4) %>%  #Extrapolate missing q3 2015 - q1 2016
+    select(c(agegroup,period_3:period_50,period_51:period_53,everything())) #Put extrapolated quarters in correct place
+  
+}
+
+
 
 
 
 ##Post-2016  names----
-get_names_LMS<-
 
 #OLD CSV tables-
 setwd("../../")
