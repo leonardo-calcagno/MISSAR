@@ -688,8 +688,48 @@ rm(list=ls(pattern="^df_list_prosp_"))
 rm(df_list_cal_LMS,i,latest_period)
 rm(mean_LMS_men,mean_LMS_women)
 
+#Student and marital status tables-----
+get_prosp_non_LMS<-function(df_list,index_number,mean_data,varmode){
 
-#rm(list=setdiff(ls(),pattern="^df_list"))
+mean_data<-mean_data %>% #Get a vector for only one gender and marital-education status
+  t() %>% 
+  as.data.frame() %>% 
+  mutate(period=row_number()) %>% 
+  select(c(varmode)) %>% 
+  rename(mean_var=1) 
+
+
+projected_periods<-ncol(df_list[[index_number]])+52 #Total projected periods
+
+prosp_values<-mean_data %>% 
+  cbind(replicate(152-(projected_periods)-1,mean_data$mean_var)) #Copy mean values for all projected periods
+
+names_prosp_values<-c(projected_periods+1:(152-projected_periods))
+names(prosp_values)<-names_prosp_values #Rename the duplicated columns
+
+output<-df_list[[index_number]] %>% #Bind with measured values
+  cbind(prosp_values) 
+blank<-data.frame()
+for (i in 1:nrow(mean_data)){
+  add_row<-output[i,] %>% 
+    replace(is.na(.),mean_data[i,1]) #Replace missing values by the age group's average
+  
+  blank<-blank %>% 
+    bind_rows(add_row)
+}
+output<-blank
+
+}
+#This gives measured marital status and education proportions in the EPH post 2016, and a projection up to period 152 
+    #(fourth quarter of 2040) equal to the post-2016 average.
+df_uni_men<-get_prosp_non_LMS(df_list=df_list_cal_mar,index_number=1,mean_data=mean_mar_men,varmode=1)#1, common-law union
+df_mar_men<-get_prosp_non_LMS(df_list=df_list_cal_mar,index_number=2,mean_data=mean_mar_men,varmode=2)#2, married
+df_uni_women<-get_prosp_non_LMS(df_list=df_list_cal_mar,index_number=3,mean_data=mean_mar_women,varmode=1)
+df_mar_women<-get_prosp_non_LMS(df_list=df_list_cal_mar,index_number=4,mean_data=mean_mar_women,varmode=2)
+df_stu_men<-get_prosp_non_LMS(df_list=df_list_cal_stu,index_number=1,mean_data=mean_stu_men,varmode=1)#1, student
+df_stu_women<-get_prosp_non_LMS(df_list=df_list_cal_stu,index_number=2,mean_data=mean_stu_women,varmode=1)
+
+rm(df_list_cal_mar,df_list_cal_stu)
 
 #CSV tables ----
 #Get 2003-2015 tables
