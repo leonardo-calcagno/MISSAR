@@ -346,9 +346,7 @@ for (i in 1:2){
 #list_cal_names<- c(list_cal_names,list_fem) 
 #rm(list_lms,list_fem)
 
-df_list_cal_LMS_03_15<-c(list_cal_LMS_male,list_cal_LMS_female) #%>% 
- # setNames(list_cal_names)
-
+df_list_cal_LMS_03_15<-c(list_cal_LMS_male,list_cal_LMS_female) 
 df_list_cal_mar_03_15<-c(list_cal_mar_male,list_cal_mar_female)
 df_list_cal_stu_03_15<-list_cal_student
 
@@ -362,18 +360,20 @@ rm(list=ls(pattern="^cal_"))
 
 
 id_alignment_folder<- drive_get("Alignment_tables_update") 
+##Define names -----
+#We want data sets to be ordered, and have the 03_15 suffix
 
-stu_names<-c("stu_men_03_15","stu_wom_03_15")
+stu_names<-c("15_stu_men_03_15","16_stu_wom_03_15")
              
 LMS_names<-c("wag","ind","inf","une","ina")
 mar_names<-c("uni","mar")
 
-men<-paste0(LMS_names,"_men_","03_15")
-women<-paste0(LMS_names,"_wom_","03_15")
+men<-paste0(1:5,"_",LMS_names,"_men_","03_15")
+women<-paste0(6:10,"_",LMS_names,"_wom_","03_15")
 LMS_names<-c(men,women)
 
-men<-paste0(mar_names,"_men_","03_15")
-women<-paste0(mar_names,"_wom_","03_15")
+men<-paste0(11:12,"_",mar_names,"_men_","03_15")
+women<-paste0(13:14,"_",mar_names,"_wom_","03_15")
 mar_names<-c(men,women)
 rm(men,women)
 
