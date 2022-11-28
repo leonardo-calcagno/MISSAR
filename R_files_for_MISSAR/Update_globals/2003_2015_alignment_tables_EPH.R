@@ -336,7 +336,6 @@ df_list_cal_stu_03_15<-list_cal_student
 rm(list=ls(pattern="^list_"))
 rm(i)
 rm(list=ls(pattern="^cal_"))
-rm(list_agegroup,vars_to_import)
 #Drive export------
 #It is possible to use df_list_cal_LMS_03_15 directly in the get_alignment_tables_EPH file. It would however
     #mean every time you update alignment tables, you would need to launch this file. To avoid this, we rather

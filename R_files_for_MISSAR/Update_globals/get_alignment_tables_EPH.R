@@ -737,16 +737,20 @@ id_alignment_folder<- drive_get("Alignment_tables_update")
 dl_list<-drive_ls(path=id_alignment_folder) %>% 
   subset(grepl("*03_15",name))
 
-sheet_id<-drive_get(id=dl_list[[1,2]])
+#sheet_id<-drive_get(id=dl_list[[1,2]])
 df_list_03_15<-list()
-
+gc()
 for (i in 1:nrow(dl_list)){
+  get_name<-c(dl_list[[i,1]])
   sheet_id<-drive_get(id=dl_list[[i,2]])
- df_list_03_15[[i]]<- read_sheet(ss=sheet_id) %>% 
-   setNames(dl_list[[i,1]])
+ df_list_03_15[[i]]<- read_sheet(ss=sheet_id) 
+ 
+ 
  #Ver cómo guardar los nombres de los objetos SEGUIR AQUI 
 }
-
+get_names<-t(dl_list[,1])
+names(df_list_03_15)<-get_names
+rm(get_names,i)
 
 #OLD CSV tables-
 setwd("../../")
