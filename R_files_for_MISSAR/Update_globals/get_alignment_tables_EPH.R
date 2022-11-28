@@ -781,29 +781,45 @@ df_list_prosp_high[[i]]<-df_list_prosp_high[[i]] %>%
     mutate(period_51=period_50*3/4 + period_54*1/4,
            period_52=period_50*2/4 + period_54*2/4,
            period_53=period_50*1/4 + period_54*3/4) %>%  #Extrapolate missing q3 2015 - q1 2016
-    select(c(agegroup,period_3:period_50,period_51:period_53,everything())) #Put extrapolated quarters in correct place
+    select(c(agegroup,period_3:period_50,period_51:period_53,everything())) %>%  #Put extrapolated quarters in correct place
+    replace(is.na(.),0)
   
   df_list_cal_low[[i]]<-df_list_03_15[[i]] %>% 
     bind_cols(df_list_prosp_low[[i]]) %>% 
     mutate(period_51=period_50*3/4 + period_54*1/4,
            period_52=period_50*2/4 + period_54*2/4,
            period_53=period_50*1/4 + period_54*3/4) %>%  #Extrapolate missing q3 2015 - q1 2016
-    select(c(agegroup,period_3:period_50,period_51:period_53,everything())) #Put extrapolated quarters in correct place
-  
+    select(c(agegroup,period_3:period_50,period_51:period_53,everything()))%>%  #Put extrapolated quarters in correct place
+    replace(is.na(.),0)
   
   df_list_cal_high[[i]]<-df_list_03_15[[i]] %>% 
     bind_cols(df_list_prosp_high[[i]]) %>% 
     mutate(period_51=period_50*3/4 + period_54*1/4,
            period_52=period_50*2/4 + period_54*2/4,
            period_53=period_50*1/4 + period_54*3/4) %>%  #Extrapolate missing q3 2015 - q1 2016
-    select(c(agegroup,period_3:period_50,period_51:period_53,everything())) #Put extrapolated quarters in correct place
-  
+    select(c(agegroup,period_3:period_50,period_51:period_53,everything())) %>%  #Put extrapolated quarters in correct place
+    replace(is.na(.),0)
 }
 
+rm(df_list_prosp_central,df_list_prosp_low,df_list_prosp_high,df_list_03_15,dl_list,get_names,i,correct_names)
+rm(df_list_cal_LMS_central,df_list_cal_LMS_low,df_list_cal_LMS_high,df_list_mar_stu)
 
+#Include the following in the previous loop, to get alignment csv files; and also export them with the correct names 
+    #and in the LIAM2 code folders. SEGUIR AQUI 
+period_row<-as.data.frame(t(data.frame(NA,3:152)))
+period_row<-period_row[2,]
+period_row<-period_row %>% 
+  mutate(agegroup=NA) %>% 
+  select(c(agegroup,everything()))
 
+correct_names<-c("agegroup",paste0("period_",3:152))
 
+names(period_row)<-correct_names 
+test<-period_row %>% 
+  bind_rows(df_list_cal_central[[2]])
+view(test)
 
+write.csv(test,"first_test.csv")
 ##Post-2016  names----
 
 #OLD CSV tables-
