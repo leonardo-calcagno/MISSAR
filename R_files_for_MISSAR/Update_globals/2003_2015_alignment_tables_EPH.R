@@ -251,7 +251,7 @@ cal_stu<-df_EPH_2003_2015 %>%
   )
 rm(cal_base,cal_base_age,cal_base_agegroup,cal_base_agegroup_ext)
 gc()
-align_table<-function(indata,agevar,varmode,varvalue,gender){
+align_table_03_15<-function(indata,agevar,varmode,varvalue,gender){
   
 age_list<-indata %>% 
   select(c(agevar)) %>% 
@@ -284,35 +284,54 @@ age_list<-indata %>%
     outdata<-bind_rows(outdata,temp_df) #We append the age group's participation to the output file
   }
   outdata<-outdata %>% 
-    janitor::row_to_names(row_number=1) 
+    janitor::row_to_names(row_number=1)
+  
+  
+  outdata<-outdata%>% 
+    janitor::clean_names() %>% 
+    mutate(q3_2007=(x18+x19)/2#2007 third quarter data is missing, we extrapolate it
+    ) %>% 
+    select(c(na,x3:x18,q3_2007,everything()#We put third quarter 2007 data in its correct place
+             )
+           )
+  
+  correct_names<-c("agegroup",paste0("period_",3:50)) #Rename variables
+  names(outdata)<-correct_names
+  
+  outdata<-outdata
 }
+
+
+
 
 
 list_cal_LMS_male<-list()
 for (i in 1:5){
-  list_cal_LMS_male [[i]]<-align_table(cal_LMS,"agegroup","labour_market_state",i,1)
+  list_cal_LMS_male [[i]]<-align_table_03_15(cal_LMS,"agegroup","labour_market_state",i,1)
 }
+
+
 
 list_cal_LMS_female<-list()
 for (i in 1:5){
-  list_cal_LMS_female [[i]]<-align_table(cal_LMS,"agegroup","labour_market_state",i,2)
+  list_cal_LMS_female [[i]]<-align_table_03_15(cal_LMS,"agegroup","labour_market_state",i,2)
 }
 
 
 list_cal_mar_male<-list() #We only care about common-law (1) and married (2) people
 for (i in 1:2){
-  list_cal_mar_male [[i]]<-align_table(cal_mar,"agegroup_ext","CH07",i,1)
+  list_cal_mar_male [[i]]<-align_table_03_15(cal_mar,"agegroup_ext","CH07",i,1)
 }
 
 list_cal_mar_female<-list()
 for (i in 1:2){
-  list_cal_mar_female [[i]]<-align_table(cal_mar,"agegroup_ext","CH07",i,2)
+  list_cal_mar_female [[i]]<-align_table_03_15(cal_mar,"agegroup_ext","CH07",i,2)
 }
 
 
 list_cal_student<-list() #We put together alignment for male and female students
 for (i in 1:2){
-  list_cal_student [[i]]<-align_table(cal_stu,"ageconti","student",1,i)
+  list_cal_student [[i]]<-align_table_03_15(cal_stu,"ageconti","student",1,i)
 }
 
 

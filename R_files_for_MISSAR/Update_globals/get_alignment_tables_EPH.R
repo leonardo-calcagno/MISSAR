@@ -730,9 +730,9 @@ df_stu_men<-get_prosp_non_LMS(df_list=df_list_cal_stu,index_number=1,mean_data=m
 df_stu_women<-get_prosp_non_LMS(df_list=df_list_cal_stu,index_number=2,mean_data=mean_stu_women,varmode=1)
 
 rm(df_list_cal_mar,df_list_cal_stu)
-
+rm(list=ls(pattern="*mean_"))
 #CSV tables ----
-#Get 2003-2015 tables
+##Get 2003-2015 tables ----
 id_alignment_folder<- drive_get("Alignment_tables_update") 
 dl_list<-drive_ls(path=id_alignment_folder) %>% 
   subset(grepl("*03_15",name))
@@ -745,12 +745,15 @@ for (i in 1:nrow(dl_list)){
   sheet_id<-drive_get(id=dl_list[[i,2]])
  df_list_03_15[[i]]<- read_sheet(ss=sheet_id) 
  
- 
- #Ver cómo guardar los nombres de los objetos SEGUIR AQUI 
 }
 get_names<-t(dl_list[,1])
 names(df_list_03_15)<-get_names
-rm(get_names,i)
+rm(i,sheet_id)
+
+
+
+##Post-2016  names----
+get_names_LMS<-
 
 #OLD CSV tables-
 setwd("../../")
