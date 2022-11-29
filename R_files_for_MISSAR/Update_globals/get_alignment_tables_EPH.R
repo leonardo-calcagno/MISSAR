@@ -754,7 +754,7 @@ names(df_list_03_15)<-get_names
 rm(i,sheet_id,get_name)
 #This gives us an ordered list of alignment datasets: from  male registered wage-earners to female students  
     #We can then make a new list concatenating these 2003-2015 datasets with post-2016 prospective datasets
-
+##Post-2016 tables merge--------
 
 df_list_prosp_central<-c(df_list_cal_LMS_central,df_list_mar_stu)
 df_list_prosp_low<-c(df_list_cal_LMS_low,df_list_mar_stu)
@@ -774,6 +774,12 @@ period_row<-period_row %>%
 
 correct_names_row<-c("agegroup",paste0("period_",3:152))
 names(period_row)<-correct_names_row
+first_row<-data.frame(matrix(NA,nrow=1,ncol=151)
+                      )
+names(first_row)<-correct_names_row
+first_row<-first_row %>% 
+  mutate(agegroup="agegroup",
+         period_3="period")
 rm(correct_names_row)
 
 
@@ -801,9 +807,6 @@ df_list_prosp_high[[i]]<-df_list_prosp_high[[i]] %>%
   df_list_cal_central[[i]]<-period_row %>% 
     bind_rows(df_list_cal_central[[i]])
     
- 
-    
-  
   df_list_cal_low[[i]]<-df_list_03_15[[i]] %>% 
     bind_cols(df_list_prosp_low[[i]]) %>% 
     mutate(period_51=period_50*3/4 + period_54*1/4,
@@ -828,144 +831,40 @@ df_list_prosp_high[[i]]<-df_list_prosp_high[[i]] %>%
 names_LMS<-c("sal","ind","aun","cho","ina")
 men<-paste0("cal_",names_LMS,"_h_","central","_p")
 women<-paste0("cal_",names_LMS,"_f_","central","_p")
-csv_names<-c(men,women,"cal_civ_1_m_p","cal_civ_2_m_p","cal_civ_1_f_p","cal_civ_2_f_p","cal_est_m_p","cal_est_f_p")
+csv_names_central<-c(men,women,"cal_civ_1_m_p","cal_civ_2_m_p","cal_civ_1_f_p","cal_civ_2_f_p","cal_est_m_p","cal_est_f_p")
 
 df_list_cal_central<-df_list_cal_central %>% 
-  setNames(csv_names)
+  setNames(csv_names_central)
 
 men<-paste0("cal_",names_LMS,"_h_","high","_p")
 women<-paste0("cal_",names_LMS,"_f_","high","_p")
-csv_names<-c(men,women)
+csv_names_high<-c(men,women)
 df_list_cal_high<-df_list_cal_high[1:10] %>%  #Marital status and student proportions are economic scenario independent. 
-  setNames(csv_names)
+  setNames(csv_names_high)
 
 
 men<-paste0("cal_",names_LMS,"_h_","low","_p")
 women<-paste0("cal_",names_LMS,"_f_","low","_p")
-csv_names<-c(men,women)
+csv_names_low<-c(men,women)
 df_list_cal_low<-df_list_cal_low[1:10] %>%  #Marital status and student proportions are economic scenario independent. 
-  setNames(csv_names)
+  setNames(csv_names_low)
 
-
+##CSV export -------
 
 setwd("../../") #Go up to the parent folder of LIAM2_commented_code
 folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
 setwd(folder_eot_leg)
 getwd()
 
-
-rm(df_list_prosp_central,df_list_prosp_low,df_list_prosp_high,df_list_03_15,dl_list,get_names,i,correct_names)
-rm(df_list_cal_LMS_central,df_list_cal_LMS_low,df_list_cal_LMS_high,df_list_mar_stu)
-
-#Include the following in the previous loop, to get alignment csv files; and also export them with the correct names 
-    #and in the LIAM2 code folders. SEGUIR AQUI 
-
-
-
-
-write.csv(test,"first_test.csv")
-##Post-2016  names----
-
-#OLD CSV tables-
-setwd("../../")
-setwd("LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations")
-
-list_csv_files <- as.data.frame(list.files(pattern="*.csv")) %>% 
-  rename(file_name=1) %>% 
-  subset(grepl("central|low|high",file_name))
-
-
-test<-list()
-test2<-list()
-
-
-start.time=Sys.time()
-
-
-for (i in 1:1){
-  test[[i]]<-read_csv(list_csv_files[i,1])  
+export_csv<-function(names_file,df_list,total_files){
+  for (i in 1:total_files){
+write_csv(first_row,paste0(names_file[i],".csv"),na="",col_names=FALSE)  
+write_csv(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col_names=FALSE)
+                          }
 }
-
-end.time=Sys.time()
-time.taken=end.time-start.time
-head(time.taken)
-
-start.time=Sys.time()
-
-for (i in 1:1){
-  test2[[i]]<-vroom(list_csv_files[i,1])  
-}
-
-end.time=Sys.time()
-time.taken=end.time-start.time
-head(time.taken)
-rm(start.time,end.time,time.taken)
-
-first_line<-data.frame(1:151) %>% 
-  t() %>% 
-  as.data.frame() 
-names(first_line)<-names(control)
-
-first_line<-first_line %>% 
-  mutate(across(everything(),~.x==NA),
-         agegroup="agegroup",
-         period="period"
-         )
-
-test<-control
-
-df_list_cal_LMS_central[[]]
-
-head(control)
-list_csv_files
-
-cal_aun_f_central_p.csv
-
-
-control<-test[[1]] 
-control2<-test2[[1]]
-
-for (i in 1:30){
-  test[[i]]<-read_csv(list_csv_files[i,1])
-}
-df<-read_csv(list_csv_files[1,1])
-head(df)
-
-test<-sapply(list_csv_files,read_csv(),simplify=TRUE)
-test<-read_csv(list_csv_files,id="file_name")
-
-test<-list()
-list_csv_files[3]
-
-for (i in 1:30){
-  test[[i]]<-read.csv(list_csv_files[i])
-}
-lapply(list_csv_files,read.csv())
-
-df2 <- readr::read_csv(list_csv_files, id = "file_name")
-
-
-
-walk(csv_files$id, 
-     ~ drive_download(as_id(.x)))
-
-getwd()
-cal_aun_f_central_p <- read_csv("~/Investigación/MISSAR_private/LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations/cal_aun_f_central_p.csv")
-View(cal_aun_f_central_p)
-
-#We name the output alignment tables
-list_lms<-c("sal","ind","aun","cho","ina")
-list_cal_names<-paste0("cal_",list_lms,"_h")
-list_fem<-paste0("cal_",list_lms,"_f")
-
-list_cal_names<- c(list_cal_names,list_fem) 
-rm(list_lms,list_fem)
-
-df_list_cal_LMS<-c(list_cal_LMS_male,list_cal_LMS_female) %>% 
-  setNames(list_cal_names)
-
-
-
+export_csv(names_file=csv_names_low,df_list=df_list_cal_low,total_files=10)
+export_csv(names_file=csv_names_central,df_list=df_list_cal_central,total_files=16)
+export_csv(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
 
 
 
