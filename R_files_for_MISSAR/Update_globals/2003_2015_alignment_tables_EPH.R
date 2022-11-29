@@ -45,7 +45,20 @@ dl_EPH_2003_2015<-get_microdata(year=2003:2015, #Years
                                 type="individual", #Individual base
                                 vars=vars_to_import)
 
-table(dl_EPH_2003_2015$ANO4,dl_EPH_2003_2015$TRIMESTRE) #Shows which periods were downloaded
+table(dl_EPH_2003_2015$ANO4,dl_EPH_2003_2015$TRIMESTRE) #Shows which periods were downloaded. There should 
+    #be everything from the third quarter of 2003 to the second quarter of 2015, except the third quarter of 2007, 
+    #which is missing because of a strike. Sometimes the third quarter of 2012 is not downloaded, in which case 
+    #run the code below: 
+
+
+#dl_2012_q3<-get_microdata(year=2012, 
+#                          trimester=3,
+  #                        type="individual",
+  #                        vars=vars_to_import)
+
+#dl_EPH_2003_2015<-dl_EPH_2003_2015 %>% 
+ # bind_cols(dl_2012_q3)
+#table(dl_EPH_2003_2015$ANO4,dl_EPH_2003_2015$TRIMESTRE) 
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
@@ -295,6 +308,7 @@ age_list<-indata %>%
              )
            )
   
+  
   correct_names<-c("agegroup",paste0("period_",3:50)) #Rename variables
   names(outdata)<-correct_names
   
@@ -309,6 +323,8 @@ list_cal_LMS_male<-list()
 for (i in 1:5){
   list_cal_LMS_male [[i]]<-align_table_03_15(cal_LMS,"agegroup","labour_market_state",i,1)
 }
+#If the names() step throws an error, it's because not all quarters were properly downloaded. Go back 
+    #to line 43 and re-download the missing quarter(s)
 
 
 
@@ -366,11 +382,12 @@ id_alignment_folder<- drive_get("Alignment_tables_update")
 stu_names<-c("15_stu_men_03_15","16_stu_wom_03_15")
              
 LMS_names<-c("wag","ind","inf","une","ina")
+LMS_names_short<-c("wag","ind","inf","une")
 mar_names<-c("uni","mar")
 
-men<-paste0(1:5,"_",LMS_names,"_men_","03_15")
-women<-paste0(6:10,"_",LMS_names,"_wom_","03_15")
-LMS_names<-c(men,women)
+men<-paste0("0",1:5,"_",LMS_names,"_men_","03_15") #We add a 0 to allow sorting dataframes by name in R.
+women<-paste0("0",6:9,"_",LMS_names_short,"_wom_","03_15")
+LMS_names<-c(men,women,"10_ina_wom_03_15")
 
 men<-paste0(11:12,"_",mar_names,"_men_","03_15")
 women<-paste0(13:14,"_",mar_names,"_wom_","03_15")
