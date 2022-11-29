@@ -59,7 +59,8 @@ dl_EPH_post_2016<-get_microdata(year=2016:year, #Years
                         type="individual", #Individual base
                         vars=vars_to_import)
 
-table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Shows which periods were downloaded
+table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Shows which periods were downloaded.
+    #Sometimes some quarters are not properly downloaded, be sure to verify this before going any further.
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
@@ -728,7 +729,7 @@ df_uni_women<-get_prosp_non_LMS(df_list=df_list_cal_mar,index_number=3,mean_data
 df_mar_women<-get_prosp_non_LMS(df_list=df_list_cal_mar,index_number=4,mean_data=mean_mar_women,varmode=2)
 df_stu_men<-get_prosp_non_LMS(df_list=df_list_cal_stu,index_number=1,mean_data=mean_stu_men,varmode=1)#1, student
 df_stu_women<-get_prosp_non_LMS(df_list=df_list_cal_stu,index_number=2,mean_data=mean_stu_women,varmode=1)
-df_list_mar_stu<-list(df_stu_women,df_stu_men,df_mar_women,df_uni_women,df_mar_men,df_uni_men)
+df_list_mar_stu<-list(df_uni_men,df_mar_men,df_uni_women,df_mar_women,df_stu_men,df_stu_women)
 
 rm(df_stu_women,df_stu_men,df_mar_women,df_uni_women,df_mar_men,df_uni_men)
 rm(df_list_cal_mar,df_list_cal_stu)
@@ -737,9 +738,11 @@ rm(list=ls(pattern="*mean_"))
 ##Get 2003-2015 tables ----
 id_alignment_folder<- drive_get("Alignment_tables_update") 
 dl_list<-drive_ls(path=id_alignment_folder) %>% 
-  subset(grepl("*03_15",name))
+  subset(grepl("*03_15",name)) %>% 
+  arrange(name) #Ordered download list, 2003-2015 alignment data. 
 df_list_03_15<-list()
 gc()
+
 for (i in 1:nrow(dl_list)){
   get_name<-c(dl_list[[i,1]])
   sheet_id<-drive_get(id=dl_list[[i,2]])
@@ -748,20 +751,32 @@ for (i in 1:nrow(dl_list)){
 }
 get_names<-t(dl_list[,1])
 names(df_list_03_15)<-get_names
-rm(i,sheet_id)
-#This gives us an ordered list of alignment datasets: from female students to male registered wage-earners. 
+rm(i,sheet_id,get_name)
+#This gives us an ordered list of alignment datasets: from  male registered wage-earners to female students  
     #We can then make a new list concatenating these 2003-2015 datasets with post-2016 prospective datasets
 
 
-df_list_prosp_central<-c(df_list_mar_stu,df_list_cal_LMS_central[10:1])
-df_list_prosp_low<-c(df_list_mar_stu,df_list_cal_LMS_low[10:1])
-df_list_prosp_high<-c(df_list_mar_stu,df_list_cal_LMS_high[10:1])
+df_list_prosp_central<-c(df_list_cal_LMS_central,df_list_mar_stu)
+df_list_prosp_low<-c(df_list_cal_LMS_low,df_list_mar_stu)
+df_list_prosp_high<-c(df_list_cal_LMS_high,df_list_mar_stu)
 
 correct_names<-c("agegroup",paste0("period_",54:152))
 
 df_list_cal_central<-list()
 df_list_cal_low<-list()
 df_list_cal_high<-list()
+
+period_row<-as.data.frame(t(data.frame(NA,3:152)))
+period_row<-period_row[2,]
+period_row<-period_row %>% 
+  mutate(agegroup=NA) %>% 
+  select(c(agegroup,everything()))
+
+correct_names_row<-c("agegroup",paste0("period_",3:152))
+names(period_row)<-correct_names_row
+rm(correct_names_row)
+
+
 for (i in 1:16){
   
 names(df_list_prosp_central[[i]])<-correct_names
@@ -783,6 +798,11 @@ df_list_prosp_high[[i]]<-df_list_prosp_high[[i]] %>%
            period_53=period_50*1/4 + period_54*3/4) %>%  #Extrapolate missing q3 2015 - q1 2016
     select(c(agegroup,period_3:period_50,period_51:period_53,everything())) %>%  #Put extrapolated quarters in correct place
     replace(is.na(.),0)
+  df_list_cal_central[[i]]<-period_row %>% 
+    bind_rows(df_list_cal_central[[i]])
+    
+ 
+    
   
   df_list_cal_low[[i]]<-df_list_03_15[[i]] %>% 
     bind_cols(df_list_prosp_low[[i]]) %>% 
@@ -791,6 +811,8 @@ df_list_prosp_high[[i]]<-df_list_prosp_high[[i]] %>%
            period_53=period_50*1/4 + period_54*3/4) %>%  #Extrapolate missing q3 2015 - q1 2016
     select(c(agegroup,period_3:period_50,period_51:period_53,everything()))%>%  #Put extrapolated quarters in correct place
     replace(is.na(.),0)
+  df_list_cal_low[[i]]<-period_row %>% 
+    bind_rows(df_list_cal_low[[i]])
   
   df_list_cal_high[[i]]<-df_list_03_15[[i]] %>% 
     bind_cols(df_list_prosp_high[[i]]) %>% 
@@ -799,25 +821,47 @@ df_list_prosp_high[[i]]<-df_list_prosp_high[[i]] %>%
            period_53=period_50*1/4 + period_54*3/4) %>%  #Extrapolate missing q3 2015 - q1 2016
     select(c(agegroup,period_3:period_50,period_51:period_53,everything())) %>%  #Put extrapolated quarters in correct place
     replace(is.na(.),0)
+  df_list_cal_high[[i]]<-period_row %>% 
+    bind_rows(df_list_cal_high[[i]])
 }
+
+names_LMS<-c("sal","ind","aun","cho","ina")
+men<-paste0("cal_",names_LMS,"_h_","central","_p")
+women<-paste0("cal_",names_LMS,"_f_","central","_p")
+csv_names<-c(men,women,"cal_civ_1_m_p","cal_civ_2_m_p","cal_civ_1_f_p","cal_civ_2_f_p","cal_est_m_p","cal_est_f_p")
+
+df_list_cal_central<-df_list_cal_central %>% 
+  setNames(csv_names)
+
+men<-paste0("cal_",names_LMS,"_h_","high","_p")
+women<-paste0("cal_",names_LMS,"_f_","high","_p")
+csv_names<-c(men,women)
+df_list_cal_high<-df_list_cal_high[1:10] %>%  #Marital status and student proportions are economic scenario independent. 
+  setNames(csv_names)
+
+
+men<-paste0("cal_",names_LMS,"_h_","low","_p")
+women<-paste0("cal_",names_LMS,"_f_","low","_p")
+csv_names<-c(men,women)
+df_list_cal_low<-df_list_cal_low[1:10] %>%  #Marital status and student proportions are economic scenario independent. 
+  setNames(csv_names)
+
+
+
+setwd("../../") #Go up to the parent folder of LIAM2_commented_code
+folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
+setwd(folder_eot_leg)
+getwd()
+
 
 rm(df_list_prosp_central,df_list_prosp_low,df_list_prosp_high,df_list_03_15,dl_list,get_names,i,correct_names)
 rm(df_list_cal_LMS_central,df_list_cal_LMS_low,df_list_cal_LMS_high,df_list_mar_stu)
 
 #Include the following in the previous loop, to get alignment csv files; and also export them with the correct names 
     #and in the LIAM2 code folders. SEGUIR AQUI 
-period_row<-as.data.frame(t(data.frame(NA,3:152)))
-period_row<-period_row[2,]
-period_row<-period_row %>% 
-  mutate(agegroup=NA) %>% 
-  select(c(agegroup,everything()))
 
-correct_names<-c("agegroup",paste0("period_",3:152))
 
-names(period_row)<-correct_names 
-test<-period_row %>% 
-  bind_rows(df_list_cal_central[[2]])
-view(test)
+
 
 write.csv(test,"first_test.csv")
 ##Post-2016  names----
