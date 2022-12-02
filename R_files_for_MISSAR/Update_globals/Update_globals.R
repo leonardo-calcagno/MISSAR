@@ -32,6 +32,7 @@ if(!file.exists("download_folder")) {
 setwd("download_folder/")
 
 #Inflation figures -----
+##Find correct URL-----
 #We automate the URL for downloading the latest inflation figures: for figures of a given month (say, January), the URL is 
     #named after the following month (here, February).
 date<-Sys.Date()
@@ -55,7 +56,7 @@ CPI_url <- paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",month,
 alt_CPI_url<- if (month=="01") {paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",lag_month,"_",lag_year,".xls")
 } else {paste0("https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_",lag_month,"_",year,".xls")
 }
-rm(date,year,month,day,lag_year,lag_month)
+rm(date,year,month,lag_year,lag_month)
 
 urlFileExist <- function(url){ #Source: https://stackoverflow.com/questions/60318926/how-to-check-if-file-exists-in-the-url-before-use-download-file-in-r
   HTTP_STATUS_OK <- 200
@@ -66,9 +67,26 @@ urlFileExist <- function(url){ #Source: https://stackoverflow.com/questions/6031
 
 current_month_exists<-urlFileExist(CPI_url)$exists
 last_month_exists<-urlFileExist(alt_CPI_url)$exists
+#The INDEC usually creates the future URL a couple of days before releasing the CPI index, so the URL might exist even though the downloaded
+    #excel file is wrong. We run this function to verify the downloaded file is correct. Returns FALSE when the URL does not exist.
+is_excel<-function(url){
+  get_file<-try(download.file(url,destfile="verify.xls",mode="wb"),silent=FALSE,outFile="")
+  open_file<-try(read_excel("verify.xls"),silent=FALSE,outFile="")
+  is_file_correct<-if("try-error" %in% class(open_file)) {FALSE}
+  else{TRUE}
+  is_file_correct<-is_file_correct
+}
 
-correct_CPI_url<- if(current_month_exists==TRUE){CPI_url
-}else if(last_month_exists==TRUE) {alt_CPI_url
+#fake_URL<-"VerifyFakeUrl"
+#should_be_false<-is_excel(fake_URL)
+
+current_month_is_excel<-is_excel(CPI_url)
+unlink("verify.xls",recursive=TRUE)
+last_month_is_excel<-is_excel(alt_CPI_url)
+unlink("verify.xls",recursive=TRUE)
+
+correct_CPI_url<- if(current_month_exists==TRUE & current_month_is_excel==TRUE){CPI_url
+}else if(last_month_exists==TRUE & last_month_is_excel==TRUE) {alt_CPI_url
 } else {"ERROR"
 }
 
@@ -80,7 +98,7 @@ download.file(
 )
 
 rm(correct_CPI_url,alt_CPI_url,CPI_url,current_month_exists,last_month_exists)
-
+##Update sheet----
 df_latest_CPI<-read_excel("latest_CPI.xls",sheet="Índices IPC Cobertura Nacional") %>% 
   rename(CPI_index_type=1) %>%  #Rename the first column
   subset(CPI_index_type=="Nivel general") %>% 
@@ -703,9 +721,10 @@ URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
 
 
 prefix<-"https://www.argentina.gob.ar"
+
+
 rD <- rsDriver(browser="firefox", port=4545L, verbose=F)
 remDr <- rD[["client"]]
-
 remDr$navigate(URL)
 
 ##Retirement benefits ------
