@@ -190,6 +190,7 @@ format codusu $42.;
 format mas_500 $42.; 
 format pp09c_esp $100.; 
 format pp09a_esp $100.; 
+format imputa best.; 
 
 decindr_num=input (decindr, best.); drop decindr; rename decindr_num=decindr; 
 adecindr_num=input (adecindr, best.); drop adecindr; rename adecindr_num=adecindr; 
@@ -220,12 +221,154 @@ gdeccfr_num=input (gdeccfr, best.); drop gdeccfr; rename gdeccfr_num=gdeccfr;
 pdeccfr_num=input (pdeccfr, best.); drop pdeccfr; rename pdeccfr_num=pdeccfr;
 
 /*The CH05 date of birth variable is clearly broken  for the third quarter 2020, both in csv and txt files, so we drop it*/
-if ano4=2020 & trimestre=3 then do; 
-		drop ch05; 
-	end;
+if ano4=2020 & trimestre=3 
+	then drop ch05; 
 run; 
 
 %mend; 
+
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,2,xls);
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,3,xls);
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,4,xls);
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,1,xls);
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,2,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,3,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,4,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,1,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,2,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,3,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,4,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,1,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,2,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,3,xls); 
+ /*Beware: due to a formatting error in the original CSV, you must change the format of the CH05 value, in Excel, to DD/MM/YYYY before 
+ 		importing this fourth quarter of 2019 data file. For an unknown reason, if you fail to do so, you end up with wrong date 
+ 		variables. */
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,4,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,1,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,2,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,3,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,4,xlsx); 
+ 
+ /*%import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2021\,21,1,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2021\,21,2,xlsx); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2021\,21,3,xls); 
+ %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2021\,21,4,xlsx); */
+ /*CH05 is, again, working horribly. For now, we drop the variable for the second quarter of 2021. Issue pending.*/
+ PROC IMPORT OUT=leo.ephc_2021_t03
+            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2021\usu_individual_t321.xls"
+            DBMS=xls REPLACE;
+RUN;
+ PROC IMPORT OUT=leo.ephc_2021_t04
+            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2021\usu_individual_t421.xlsx"
+            DBMS=xlsx REPLACE;
+RUN;
+
+ /*CH05 is, again, working horribly. For now, we drop the variable for the second quarter of 2021. Issue pending.*/
+ PROC IMPORT OUT=leo.ephc_2021_t02
+            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2021\usu_individual_t221.xlsx"
+            DBMS=xlsx REPLACE;
+RUN;
+
+
+ /*For the first quarter of 2021, they decided to put all missing values as "NA", which messes with variable formats. You thus have to first 
+ 		replace NA in the starting dataset with a missing value. We then export the dataset and reimport it.  */
+dm 'odsresults; clear'; 
+dm 'clear log'; 
+ PROC IMPORT OUT=leo.ephc_2021_t01
+            DATAFILE="H:\Leonardo_orléans\EPH_base\EPH_2021\usu_individual_t121.xlsx"
+            DBMS=xlsx REPLACE;
+RUN;
+ %Macro get_rid_of_NA (ds) ;
+     data &ds. (drop=_i);
+          set &ds. ;
+          array A_VarChar[*] _CHARACTER_ ; 
+          do _i=1 to dim( A_VarChar ) ;
+          	If A_VarChar (_i)="NA" then A_VarChar (_i)="";
+     	  End ;
+   run ;
+%Mend ;
+%get_rid_of_NA(leo.ephc_2021_t01); 
+
+
+
+data leo.ephc_2021_t01; 
+set leo.ephc_2021_t01; 
+CH05_num=input(ch05,DDMMYY10.);
+format ch05_num DDMMYY10.;  
+drop CH05; rename CH05_num=CH05;
+run; 
+
+/*We adapt a macro taken from the official SAS website to convert all compatible character variables to numeric*/
+
+ %macro convert_all_to_num(ds,truechar,output); 
+/* PROC CONTENTS is used to create an output data set called VARS to list all */
+/* variable names and their type from the &ds. data set.                      */                                                          
+
+proc contents data=&ds. out=vars(keep=name type) noprint;
+run; 
+ 
+/* A DATA step is used to subset the VARS data set to keep only the character  */
+/* variables and exclude the one ID character variable.  A new list of numeric */ 
+/* variable names is created from the character variable name with a "_n"      */
+/* appended to the end of each name.                                           */                                                        
+
+data vars;                                                
+   set vars;                                                 
+   if type=2 &truechar.;                               
+   newname=trim(left(name))||"_n"; 
+run;                                                                              
+
+/* The macro system option SYMBOLGEN is set to be able to see what the macro */
+/* variables resolved to in the SAS log.                                     */                                                       
+
+options symbolgen;                                        
+
+/* PROC SQL is used to create three macro variables with the INTO clause.  One   */
+/* macro variable named C_list will contain a list of each character variable    */
+/* separated by a blank space.  The next macro variable named N_list will        */
+/* contain a list of each new numeric variable separated by a blank space.  The  */
+/* last macro variable named Renam_list will contain a list of each new numeric  */
+/* variable and each character variable separated by an equal sign to be used in */ 
+/* the RENAME statement.                                                         */                                                        
+
+proc sql noprint;                                         
+   select trim(left(name)), trim(left(newname)),             
+          trim(left(newname))||'='||trim(left(name))         
+          into :c_list separated by ' ', :n_list separated by ' ',  
+          :renam_list separated by ' '                         
+          from vars;                                                
+quit;                                                                                                               
+ 
+/* The DATA step is used to convert the numeric values to character.  An ARRAY  */
+/* statement is used for the list of character variables and another ARRAY for  */
+/* the list of numeric variables.  A DO loop is used to process each variable   */
+/* to convert the value from character to numeric with the INPUT function.  The */
+/* DROP statement is used to prevent the character variables from being written */
+/* to the output data set, and the RENAME statement is used to rename the new   */
+/* numeric variable names back to the original character variable names.        */                                                        
+
+data &output.;                                               
+   set &ds.;                                                 
+   array ch(*) $ &c_list;                                    
+   array nu(*) &n_list;                                      
+   do i = 1 to dim(ch);                                      
+      nu(i)=input(ch(i),8.);                                  
+   end;                                                      
+   drop i &c_list;                                           
+   rename &renam_list;                                                                                      
+run;            
+
+%mend; 
+dm 'clear log'; 
+
+dm 'odsresults; clear'; 
+
+%convert_all_to_num(leo.ephc_2021_t01, and name ne'CODUSU' and name ne 'PP09A_ESP' and name ne 'PP09B_ESP' and name ne 'PP09C_ESP' and name ne 'CH15_COD' and name ne 'CH16_COD' and name ne 'MAS_500',leo.ephc_2021_t01); 
+
+%convert_all_to_num(leo.ephc_2021_t03, and name ne'CODUSU' and name ne 'PP09A_ESP' and name ne 'PP09B_ESP' and name ne 'PP09C_ESP' and name ne 'CH15_COD' and name ne 'CH16_COD' and name ne 'MAS_500',leo.ephc_2021_t03); 
+
+%convert_all_to_num(leo.ephc_2021_t04, and name ne'CODUSU' and name ne 'PP09A_ESP' and name ne 'PP09B_ESP' and name ne 'PP09C_ESP' and name ne 'CH15_COD' and name ne 'CH16_COD' and name ne 'MAS_500',leo.ephc_2021_t04); 
 
 data leo.ephc_2020_t03; 
 set leo.ephc_2020_t03; 
@@ -449,27 +592,9 @@ run;
 proc print data=leo.ephc_2019_t04 (obs=10); run; 
 format ch05 DDMMYYN10.; 
 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,2,xls);
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,3,xls);
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2016\,16,4,xls);
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,1,xls);
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,2,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,3,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2017\,17,4,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,1,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,2,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,3,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2018\,18,4,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,1,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,2,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,3,xls); 
- /*Beware: due to a formatting error in the original CSV, you must change the format of the CH05 value, in Excel, to DD/MM/YYYY before 
- 		importing this fourth quarter of 2019 data file. For an unknown reason, if you fail to do so, you end up with wrong date 
- 		variables. */
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2019\,19,4,xls); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,1,xlsx); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,2,xlsx); 
- %import_ephc_post_2016(H:\Leonardo_orléans\EPH_base\EPH_2020\,20,3,xlsx); 
+
+
+
  /*The second quarter of 2018 has format problems with the date of birth variable ch05. We correct them here. Before that, we 
  		corrected the csv file, putting as missing all the entries where the date of birth was 01/01/1900 (roughly 4800).*/
 data leo.ephc_2018_t02; 
@@ -495,58 +620,69 @@ set leo.ephc_2019_t01;
 	rename ch05_date=ch05; 
 run; 
 
-proc print data=leo.ephc_2019_t04 (obs=10); 
-run; 
-
 
 DATA leo.new_eph_2016; 
  set leo.ephc_2016_t02- leo.ephc_2016_t04; 
- person=catx(',',codusu,nro_hogar,componente);
+ person=cats(codusu,nro_hogar,componente);
  run; 
 DATA leo.new_eph_2017; 
  set leo.ephc_2017_t01- leo.ephc_2017_t04; 
- person=catx(',',codusu,nro_hogar,componente);
+ person=cats(codusu,nro_hogar,componente);
  run; 
 
 DATA leo.new_eph_2018; 
  set leo.ephc_2018_t01- leo.ephc_2018_t04; 
- person=catx(',',codusu,nro_hogar,componente);
+ person=cats(codusu,nro_hogar,componente);
  run; 
  data leo.new_eph_2019; 
  set leo.ephc_2019_t01-leo.ephc_2019_t04; 
- person=catx(',',codusu,nro_hogar,componente);
+ person=cats(codusu,nro_hogar,componente);
  run; 
  data leo.new_eph_2020; 
- set leo.ephc_2020_t01-leo.ephc_2020_t03; 
- person=catx(',',codusu,nro_hogar,componente); 
+ set leo.ephc_2020_t01-leo.ephc_2020_t04; 
+ person=cats(codusu,nro_hogar,componente); 
  run; 
-data leo.new_eph_2016_2020; 
-set leo.new_eph_2016-leo.new_eph_2020; 
+ %macro drop_incompatible(indata); 
+data &indata.; 
+set &indata.; 
+drop CH15_COD CH16_COD; 
+run; 
+ %mend; 
+%drop_incompatible(leo.ephc_2021_t01); 
+%drop_incompatible(leo.ephc_2021_t02); 
+%drop_incompatible(leo.ephc_2021_t03); 
+%drop_incompatible(leo.ephc_2021_t04); 
+ data leo.new_eph_2021; 
+ set leo.ephc_2021_t01-leo.ephc_2021_t04; 
+ person=cats(codusu,nro_hogar,componente); 
+ run; 
+data leo.new_eph_2016_2021; 
+set leo.new_eph_2016-leo.new_eph_2021; 
 drop apparition; 
 run; 
 
  /*Here we quickly count how many times an individual appears in the base, as a descriptive statistic.*/
- proc sort data=leo.new_eph_2016_2020; 
+ proc sort data=leo.new_eph_2016_2021; 
  by person; 
  run;
- data leo.new_eph_2016_2020; 
-set leo.new_eph_2016_2020; 
+ data leo.new_eph_2016_2021; 
+set leo.new_eph_2016_2021; 
 by person ;  
 if first.person  then apparition=1; 
 else apparition+1;
 run;
 /*Due to the pandemic, the second quarter of 2020 survey had trouble in reaching new households. This is why there are fewer households
-		that are first interviewed in the second quarter of 2020 EPHc wave.*/
+		that are first interviewed in the second quarter of 2020 EPHc wave.
 		
 proc freq data=leo.new_eph_2016_2020; 
 table apparition*trimestre;
 where ano4=2020; 
-run; 
-data leo.new_eph_2016_2020;
+run; */
+data leo.new_eph_2016_2021;
 length contributes_vol $20.; 
 length contributes_comp $20.;
 length contributes $20.;
- set leo.new_eph_2016_2020;
+ set leo.new_eph_2016_2021;
  if ano4=2016 & trimestre=2 then period=52; 
  if ano4=2016 & trimestre=3 then period=53; 
 if ano4=2016 & trimestre=4 then period=54; 
@@ -564,7 +700,12 @@ if ano4=2019 & trimestre=3 then period=65;
 if ano4=2019 & trimestre=4 then period=66; 
 if ano4=2020 & trimestre=1 then period=67; 
 if ano4=2020 & trimestre=2 then period=68; 
-if ano4=2020 & trimestre=3 then period=69; 
+if ano4=2020 & trimestre=3 then period=69;
+if ano4=2020 & trimestre=4 then period=70;
+if ano4=2021 & trimestre=1 then period=71;  
+if ano4=2021 & trimestre=2 then period=72;  
+if ano4=2021 & trimestre=3 then period=73;  
+if ano4=2021 & trimestre=4 then period=74;  
 
 if nivel_ed=6 then formation="3"; 
 if nivel_ed=4 | nivel_ed=5 then formation="2"; 
@@ -580,24 +721,29 @@ if pp07i=2 or pp07i=0  then contributes_vol="False";
 run; 
 
 data leo.new_eph_2016; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2016; 
 run; 
 data leo.new_eph_2017; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2017; 
 run; 
 data leo.new_eph_2018; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2018; 
 run; 
 data leo.new_eph_2019; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2019; 
 run; 
 data leo.new_eph_2020; 
-set leo.new_eph_2016_2020; 
+set leo.new_eph_2016_2021; 
 	where ano4=2020; 
+run; 
+
+data leo.new_eph_2021; 
+set leo.new_eph_2016_2021; 
+	where ano4=2021; 
 run; 
 
 
@@ -663,7 +809,8 @@ run;
 %indep_endo_2016(leo.new_eph_2018,leo.eph_formatted_2018);
 %indep_endo_2016(leo.new_eph_2019,leo.eph_formatted_2019);
 %indep_endo_2016(leo.new_eph_2020,leo.eph_formatted_2020);
-%indep_endo_2016(leo.new_eph_2016_2020,leo.eph_formatted_2016_2020);
+%indep_endo_2016(leo.new_eph_2021,leo.eph_formatted_2021);
+%indep_endo_2016(leo.new_eph_2016_2021,leo.eph_formatted_2016_2021);
 /*Next, we format other variables, trying to be consistent with what we did for the 2003-2015 period.*/
 data leo.eph_formatted_2016; 
 set leo.eph_formatted_2016; 
@@ -955,9 +1102,69 @@ if (ageconti>64 and ageconti<70) then agegroup=65;
 if ageconti>69 then agegroup=300;
  run; 
 
+ 
 
-data leo.eph_formatted_2016_2020; 
-set leo.eph_formatted_2016_2020; 
+data leo.eph_formatted_2021; 
+set leo.eph_formatted_2021; 
+
+household=cats(codusu,nro_hogar);
+ id=cats(codusu,nro_hogar,componente); 
+ if ch03=01 then hhstate=1; 
+ if ch03=02 then hhstate=2;
+ if ch03=03 then hhstate=3; 
+ if ch03=04 then hhstate=4; 
+ if ch03=05 then hhstate=5; 
+ if ch03=06 then hhstate=6; 
+ if ch03=07 then hhstate=7; 
+ if ch03=08 then hhstate=8; 
+ if ch03=09 then hhstate=9; 
+ if ch03=10 then hhstate=10;  
+ if ch07=1 then marital_status=1; 
+ if ch07=2 then marital_status=2; 
+ if ch07=3 then marital_status=3; 
+ if ch07=4 then marital_status=4; 
+ if ch07=5 then marital_status=5;
+ if ch06=-1 then ch06=0;
+ 
+if ageconti=-1 then ageconti=0; 
+if (ageconti>=-1 and ageconti<16) then agegroup_ext=1;
+if (ageconti>15 and ageconti<20) then agegroup_ext=16;
+if (ageconti>19 and ageconti<25) then agegroup_ext=20;
+if (ageconti>24 and ageconti<30) then agegroup_ext=25;
+if (ageconti>29 and ageconti<35) then agegroup_ext=30;
+if (ageconti>34 and ageconti<40) then agegroup_ext=35;
+if (ageconti>39 and ageconti<45) then agegroup_ext=40;
+if (ageconti>44 and ageconti<50) then agegroup_ext=45;
+if (ageconti>49 and ageconti<55) then agegroup_ext=50;
+if (ageconti>54 and ageconti<60) then agegroup_ext=55;
+if (ageconti>59 and ageconti<65) then agegroup_ext=60;
+if (ageconti>64 and ageconti<70) then agegroup_ext=65;
+if (ageconti>69 and ageconti<75) then agegroup_ext=70;
+if (ageconti>74 and ageconti<80) then agegroup_ext=75;
+if (ageconti>79 and ageconti<85) then agegroup_ext=80;
+if (ageconti>84 and ageconti<90) then agegroup_ext=85;
+if (ageconti>89 and ageconti<95) then agegroup_ext=90;
+if ageconti>94 then agegroup_ext=95;
+
+
+if (ageconti>=-1 and ageconti<16) then agegroup=1;
+if (ageconti>15 and ageconti<20) then agegroup=16;
+if (ageconti>19 and ageconti<25) then agegroup=20;
+if (ageconti>24 and ageconti<30) then agegroup=25;
+if (ageconti>29 and ageconti<35) then agegroup=30;
+if (ageconti>34 and ageconti<40) then agegroup=35;
+if (ageconti>39 and ageconti<45) then agegroup=40;
+if (ageconti>44 and ageconti<50) then agegroup=45;
+if (ageconti>49 and ageconti<55) then agegroup=50;
+if (ageconti>54 and ageconti<60) then agegroup=55;
+if (ageconti>59 and ageconti<65) then agegroup=60;
+if (ageconti>64 and ageconti<70) then agegroup=65;
+if ageconti>69 then agegroup=300;
+ run; 
+
+
+data leo.eph_formatted_2016_2021; 
+set leo.eph_formatted_2016_2021; 
 
 household=cats(codusu,nro_hogar);
  id=cats(codusu,nro_hogar,componente);  
@@ -1012,24 +1219,8 @@ if (ageconti>59 and ageconti<65) then agegroup=60;
 if (ageconti>64 and ageconti<70) then agegroup=65;
 if ageconti>69 then agegroup=300;
 run; 
-/* Temporary computation of labour-market state by period, not for the MISSAR model. Consider deleting in the future.
-proc freq data=leo.eph_formatted_2016_2020; 
-weight pondera; 
-where ageconti>=16 & ageconti<70; 
-table labour_market_state*period;
-run; 
+/*Still need to update ailgnment tables for second quarter 2021*/
 
-proc freq data=leo.eph_formatted_2016_2020; 
-weight pondera; 
-where ageconti>=16 & ageconti<70 & labour_market_state^=5; 
-table labour_market_state*period;
-run; 
-
-proc freq data=leo.eph_formatted_2016_2020; 
-weight pondera; 
-where ageconti>=16 & ageconti<70 & labour_market_state^=5 & labour_market_state^=4 & (cat_ocup=3|cat_ocup=4); 
-table labour_market_state*period;
-run; */
 dm 'odsresults; clear'; 
 dm 'clear log'; 
 /*********************************************************************************************************************************/
@@ -1125,6 +1316,32 @@ weight pondera;
 where ( (ch04=1) & (period=69) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
 table labour_market_state*agegroup /noprint outpct out=lms_69; 
 run; 
+proc freq data=leo.eph_formatted_2020; 
+weight pondera; 
+where ( (ch04=1) & (period=70) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_70; 
+run; 
+
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=71) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_71; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=72) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_72; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=73) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_73; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=74) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_74; 
+run; 
 data lms_52; set lms_52; period=54; percent_col=pct_col/100; run;
 data lms_53; set lms_53; period=55; percent_col=pct_col/100; run;
 data lms_54; set lms_54; period=56; percent_col=pct_col/100; run;
@@ -1143,6 +1360,11 @@ data lms_66; set lms_66; period=68; percent_col=pct_col/100; run;
 data lms_67; set lms_67; period=69; percent_col=pct_col/100; run; 
 data lms_68; set lms_68; period=70; percent_col=pct_col/100; run; 
 data lms_69; set lms_69; period=71; percent_col=pct_col/100; run; 
+data lms_70; set lms_70; period=72; percent_col=pct_col/100; run; 
+data lms_71; set lms_71; period=73; percent_col=pct_col/100; run; 
+data lms_72; set lms_72; period=74; percent_col=pct_col/100; run; 
+data lms_73; set lms_73; period=75; percent_col=pct_col/100; run; 
+data lms_74; set lms_74; period=76; percent_col=pct_col/100; run; 
 
 
 data lms_52; set lms_52; keep percent_col labour_market_state agegroup period; run; 
@@ -1163,8 +1385,13 @@ data lms_66; set lms_66; keep percent_col labour_market_state agegroup period; r
 data lms_67; set lms_67; keep percent_col labour_market_state agegroup period; run;
 data lms_68; set lms_68; keep percent_col labour_market_state agegroup period; run;
 data lms_69; set lms_69; keep percent_col labour_market_state agegroup period; run;
+data lms_70; set lms_70; keep percent_col labour_market_state agegroup period; run;
+data lms_71; set lms_71; keep percent_col labour_market_state agegroup period; run;
+data lms_72; set lms_72; keep percent_col labour_market_state agegroup period; run;
+data lms_73; set lms_73; keep percent_col labour_market_state agegroup period; run;
+data lms_74; set lms_74; keep percent_col labour_market_state agegroup period; run;
 data lms_men_base; 
-set lms_52-lms_69; run; 
+set lms_52-lms_74; run; 
 /*We then only take from the base the different labour market states and transpose them, to put the labour-market proportions by gender in
 		a format readable by LIAM2.*/
 data wage_earners_men;
@@ -1268,30 +1495,30 @@ proc print data=transp_informal_men; run;
 proc print data=transp_unemployed_men; run; 
 proc print data=transp_inactive_men; run; 
 data leo.cal_post_2016_wag_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_wage_earners_men;
 if missing(agegroup) then delete; 
 run; 
 data leo.cal_post_2016_ind_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_formal_indep_men;
 if missing(agegroup) then delete;
 run; 
 
 data leo.cal_post_2016_inf_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_informal_men;
 if missing(agegroup) then delete;
 run; 
 
 data leo.cal_post_2016_une_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_unemployed_men;
 if missing(agegroup) then delete;
 run; 
 
 data leo.cal_post_2016_ina_men; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_inactive_men;
 if missing(agegroup) then delete;
 run; 
@@ -1405,6 +1632,32 @@ weight pondera;
 where ( (ch04=2) & (period=69) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
 table labour_market_state*agegroup /noprint outpct out=lms_69; 
 run; 
+proc freq data=leo.eph_formatted_2020; 
+weight pondera; 
+where ( (ch04=2) & (period=70) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_70; 
+run; 
+
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=71) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_71; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=72) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_72; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=73) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_73; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=74) & (65>=agegroup>=16) & (formation^="3" | (formation="3" & agegroup^=16))) ;
+table labour_market_state*agegroup /noprint outpct out=lms_74; 
+run; 
 data lms_52; set lms_52; period=54; percent_col=pct_col/100; run;
 data lms_53; set lms_53; period=55; percent_col=pct_col/100; run;
 data lms_54; set lms_54; period=56; percent_col=pct_col/100; run;
@@ -1423,6 +1676,11 @@ data lms_66; set lms_66; period=68; percent_col=pct_col/100; run;
 data lms_67; set lms_67; period=69; percent_col=pct_col/100; run;
 data lms_68; set lms_68; period=70; percent_col=pct_col/100; run;
 data lms_69; set lms_69; period=71; percent_col=pct_col/100; run;
+data lms_70; set lms_70; period=72; percent_col=pct_col/100; run;
+data lms_71; set lms_71; period=73; percent_col=pct_col/100; run;
+data lms_72; set lms_72; period=74; percent_col=pct_col/100; run;
+data lms_73; set lms_73; period=75; percent_col=pct_col/100; run;
+data lms_74; set lms_74; period=76; percent_col=pct_col/100; run;
 
 data lms_52; set lms_52; keep percent_col labour_market_state agegroup period; run; 
 data lms_53; set lms_53; keep percent_col labour_market_state agegroup period; run; 
@@ -1442,8 +1700,13 @@ data lms_66; set lms_66; keep percent_col labour_market_state agegroup period; r
 data lms_67; set lms_67; keep percent_col labour_market_state agegroup period; run;
 data lms_68; set lms_68; keep percent_col labour_market_state agegroup period; run;
 data lms_69; set lms_69; keep percent_col labour_market_state agegroup period; run;
+data lms_70; set lms_70; keep percent_col labour_market_state agegroup period; run;
+data lms_71; set lms_71; keep percent_col labour_market_state agegroup period; run;
+data lms_72; set lms_72; keep percent_col labour_market_state agegroup period; run;
+data lms_73; set lms_73; keep percent_col labour_market_state agegroup period; run;
+data lms_74; set lms_74; keep percent_col labour_market_state agegroup period; run;
 data lms_wom_base; 
-set lms_52-lms_69; run; 
+set lms_52-lms_74; run; 
 /*We then only take from the base the different labour market states and transpose them, to put the labour-market proportions by gender in
 		a format readable by LIAM2.*/
 data wage_earners_wom;
@@ -1541,30 +1804,30 @@ set transp_inactive_wom ;
 drop _name_ _label_ ; 
 RUN; 
 data leo.cal_post_2016_wag_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_wage_earners_wom;
 if missing(agegroup) then delete; 
 run; 
 data leo.cal_post_2016_ind_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_formal_indep_wom;
 if missing(agegroup) then delete;
 run; 
 
 data leo.cal_post_2016_inf_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_informal_wom;
 if missing(agegroup) then delete;
 run; 
 
 data leo.cal_post_2016_une_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_unemployed_wom;
 if missing(agegroup) then delete;
 run; 
 
 data leo.cal_post_2016_ina_wom; 
-retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_inactive_wom;
 if missing(agegroup) then delete;
 run; 
@@ -1639,6 +1902,8 @@ run;
 
 data &indata._b; 
 set &indata.; 
+Rename _72=x992;
+Rename _71=x993;
 Rename _70=x994;
 Rename _69=x995;
 Rename _68=x996;
@@ -1658,7 +1923,7 @@ Rename _55=x1009;
 Rename _54=x1010;
 run;
 data &indata._b; 
-retain &variable. x994 x995 x996 x997 x998 x999 x1000 x1001 x1002 x1003 x1004 x1005 x1006 x1007 x1008 x1009 x1010 ; 
+retain &variable. x992 x993 x994 x995 x996 x997 x998 x999 x1000 x1001 x1002 x1003 x1004 x1005 x1006 x1007 x1008 x1009 x1010 ; 
 set &indata._b; 
 run; 
 %mend; 
@@ -1767,8 +2032,16 @@ if missing(is_student) then student="False";
 if is_student=1 then student="True"; 
 if is_student=0 then student="False"; 
 drop is_student; run;
-data leo.eph_formatted_2016_2020; 
-set leo.eph_formatted_2016_2020; 
+data leo.eph_formatted_2021; 
+set leo.eph_formatted_2021; 
+if cat_inac=3 then is_student=1;
+if cat_inac=1 |cat_inac=2|cat_inac=4|cat_inac=5|cat_inac=6|cat_inac=7|missing(cat_inac) then is_student=0; 
+if missing(is_student) then student="False"; 
+if is_student=1 then student="True"; 
+if is_student=0 then student="False"; 
+drop is_student; run;
+data leo.eph_formatted_2016_2021; 
+set leo.eph_formatted_2016_2021; 
 if cat_inac=3 then is_student=1;
 if cat_inac=1 |cat_inac=2|cat_inac=4|cat_inac=5|cat_inac=6|cat_inac=7|missing(cat_inac) then is_student=0; 
 if missing(is_student) then student="False"; 
@@ -1865,6 +2138,31 @@ weight pondera;
 where ( (ch04=1) & (period=69)& (agegroup=16|agegroup=20|agegroup=25));
 table student*ch06 / noprint outpct out=student_69; 
 run; 
+proc freq data=leo.eph_formatted_2020; 
+weight pondera; 
+where ( (ch04=1) & (period=70)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_70; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=71)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_71; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=72)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_72; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=73)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_73; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=74)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_74; 
+run; 
 data student_52; set student_52; period=54; percent_col=pct_col/100; run; 
 data student_53; set student_53; period=55; percent_col=pct_col/100; run; 
 data student_54; set student_54; period=56; percent_col=pct_col/100; run; 
@@ -1883,6 +2181,11 @@ data student_66; set student_66; period=68; percent_col=pct_col/100; run;
 data student_67; set student_67; period=69; percent_col=pct_col/100; run; 
 data student_68; set student_68; period=70; percent_col=pct_col/100; run; 
 data student_69; set student_69; period=71; percent_col=pct_col/100; run; 
+data student_70; set student_70; period=72; percent_col=pct_col/100; run; 
+data student_71; set student_71; period=73; percent_col=pct_col/100; run; 
+data student_72; set student_72; period=74; percent_col=pct_col/100; run; 
+data student_73; set student_73; period=75; percent_col=pct_col/100; run; 
+data student_74; set student_74; period=76; percent_col=pct_col/100; run; 
 
 data student_52; set student_52; keep percent_col student ch06 period; run; 
 data student_53; set student_53; keep percent_col student ch06 period; run; 
@@ -1902,8 +2205,13 @@ data student_66; set student_66; keep percent_col student ch06 period; run;
 data student_67; set student_67; keep percent_col student ch06 period; run; 
 data student_68; set student_68; keep percent_col student ch06 period; run; 
 data student_69; set student_69; keep percent_col student ch06 period; run; 
+data student_70; set student_70; keep percent_col student ch06 period; run; 
+data student_71; set student_71; keep percent_col student ch06 period; run; 
+data student_72; set student_72; keep percent_col student ch06 period; run; 
+data student_73; set student_73; keep percent_col student ch06 period; run; 
+data student_74; set student_74; keep percent_col student ch06 period; run; 
 data student_men_base; 
-set student_52-student_69; run; 
+set student_52-student_74; run; 
 
 /*We then only take from the base the different labour market states and transpose them, to put the labour-market proportions by gender in
 		a format readable by LIAM2.*/
@@ -1928,7 +2236,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_stu_men; 
-retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_student_men;
 rename ch06=age; 
 run; 
@@ -2025,6 +2333,31 @@ weight pondera;
 where ( (ch04=2) & (period=69)& (agegroup=16|agegroup=20|agegroup=25));
 table student*ch06 / noprint outpct out=student_69; 
 run; 
+proc freq data=leo.eph_formatted_2020; 
+weight pondera; 
+where ( (ch04=2) & (period=70)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_70; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=71)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_71; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=72)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_72; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=73)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_73; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=74)& (agegroup=16|agegroup=20|agegroup=25));
+table student*ch06 / noprint outpct out=student_74; 
+run; 
 data student_52; set student_52; period=54; percent_col=pct_col/100; run; 
 data student_53; set student_53; period=55; percent_col=pct_col/100; run; 
 data student_54; set student_54; period=56; percent_col=pct_col/100; run; 
@@ -2043,6 +2376,11 @@ data student_66; set student_66; period=68; percent_col=pct_col/100; run;
 data student_67; set student_67; period=69; percent_col=pct_col/100; run; 
 data student_68; set student_68; period=70; percent_col=pct_col/100; run; 
 data student_69; set student_69; period=71; percent_col=pct_col/100; run; 
+data student_70; set student_70; period=72; percent_col=pct_col/100; run; 
+data student_71; set student_71; period=73; percent_col=pct_col/100; run; 
+data student_72; set student_72; period=74; percent_col=pct_col/100; run; 
+data student_73; set student_73; period=75; percent_col=pct_col/100; run; 
+data student_74; set student_74; period=76; percent_col=pct_col/100; run; 
 
 data student_52; set student_52; keep percent_col student ch06 period; run; 
 data student_53; set student_53; keep percent_col student ch06 period; run; 
@@ -2062,8 +2400,14 @@ data student_66; set student_66; keep percent_col student ch06 period; run;
 data student_67; set student_67; keep percent_col student ch06 period; run; 
 data student_68; set student_68; keep percent_col student ch06 period; run; 
 data student_69; set student_69; keep percent_col student ch06 period; run; 
+data student_70; set student_70; keep percent_col student ch06 period; run; 
+data student_71; set student_71; keep percent_col student ch06 period; run; 
+data student_72; set student_72; keep percent_col student ch06 period; run; 
+data student_73; set student_73; keep percent_col student ch06 period; run; 
+data student_74; set student_74; keep percent_col student ch06 period; run;
+
 data student_wom_base; 
-set student_52-student_69; run; 
+set student_52-student_74; run; 
 
 /*We then only take from the base the different labour market states and transpose them, to put the labour-market proportions by gender in
 		a format readable by LIAM2.*/
@@ -2088,7 +2432,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_stu_wom; 
-retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _72 _73 _74 _75 _76;
 set transp_student_wom;
 rename ch06=age; 
 run; 
@@ -2197,6 +2541,31 @@ weight pondera;
 where ( (ch04=1) & (period=69)& (agegroup=16|agegroup=20|agegroup=25));
 table formation*ch06 / noprint outpct out=formation_69; 
 run; 
+proc freq data=leo.eph_formatted_2020; 
+weight pondera; 
+where ( (ch04=1) & (period=70)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_70; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=71)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_71; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=72)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_72; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=73)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_73; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=1) & (period=74)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_74; 
+run; 
 data formation_52; set formation_52; period=54; percent_col=pct_col/100; run; 
 data formation_53; set formation_53; period=55; percent_col=pct_col/100; run; 
 data formation_54; set formation_54; period=56; percent_col=pct_col/100; run; 
@@ -2215,6 +2584,11 @@ data formation_66; set formation_66; period=68; percent_col=pct_col/100; run;
 data formation_67; set formation_67; period=69; percent_col=pct_col/100; run; 
 data formation_68; set formation_68; period=70; percent_col=pct_col/100; run; 
 data formation_69; set formation_69; period=71; percent_col=pct_col/100; run; 
+data formation_70; set formation_70; period=72; percent_col=pct_col/100; run; 
+data formation_71; set formation_71; period=73; percent_col=pct_col/100; run; 
+data formation_72; set formation_72; period=74; percent_col=pct_col/100; run; 
+data formation_73; set formation_73; period=75; percent_col=pct_col/100; run; 
+data formation_74; set formation_74; period=76; percent_col=pct_col/100; run; 
 
 data formation_52; set formation_52; keep percent_col formation ch06 period; run; 
 data formation_53; set formation_53; keep percent_col formation ch06 period; run; 
@@ -2234,8 +2608,13 @@ data formation_66; set formation_66; keep percent_col formation ch06 period; run
 data formation_67; set formation_67; keep percent_col formation ch06 period; run; 
 data formation_68; set formation_68; keep percent_col formation ch06 period; run; 
 data formation_69; set formation_69; keep percent_col formation ch06 period; run; 
+data formation_70; set formation_70; keep percent_col formation ch06 period; run; 
+data formation_71; set formation_71; keep percent_col formation ch06 period; run; 
+data formation_72; set formation_72; keep percent_col formation ch06 period; run; 
+data formation_73; set formation_73; keep percent_col formation ch06 period; run; 
+data formation_74; set formation_74; keep percent_col formation ch06 period; run; 
 data formation_men_base; 
-set formation_52-formation_69;
+set formation_52-formation_74;
 run; 
 
 /*proc sort data=leo.cal_wag_f_for3; 
@@ -2281,7 +2660,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_for_1_men; 
-retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_for_1_men;
 rename ch06=age; 
 run; 
@@ -2304,7 +2683,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_for_2_men; 
-retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_for_2_men;
 rename ch06=age; 
 run; 
@@ -2330,7 +2709,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_for_3_men; 
-retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_for_3_men;
 rename ch06=age; 
 run; 
@@ -2432,6 +2811,31 @@ weight pondera;
 where ( (ch04=2) & (period=69)& (agegroup=16|agegroup=20|agegroup=25));
 table formation*ch06 / noprint outpct out=formation_69; 
 run; 
+proc freq data=leo.eph_formatted_2020; 
+weight pondera; 
+where ( (ch04=2) & (period=70)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_70; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=71)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_71; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=72)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_72; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=73)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_73; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where ( (ch04=2) & (period=74)& (agegroup=16|agegroup=20|agegroup=25));
+table formation*ch06 / noprint outpct out=formation_74; 
+run; 
 data formation_52; set formation_52; period=54; percent_col=pct_col/100; run; 
 data formation_53; set formation_53; period=55; percent_col=pct_col/100; run; 
 data formation_54; set formation_54; period=56; percent_col=pct_col/100; run; 
@@ -2445,11 +2849,16 @@ data formation_61; set formation_61; period=63; percent_col=pct_col/100; run;
 data formation_62; set formation_62; period=64; percent_col=pct_col/100; run; 
 data formation_63; set formation_63; period=65; percent_col=pct_col/100; run; 
 data formation_64; set formation_64; period=66; percent_col=pct_col/100; run; 
-data formation_65; set formation_65; period=67; percent_col=pct_col/100; run; 
+data formation_65; set formation_65; period=67; percent_col=pct_col/100; run;  
 data formation_66; set formation_66; period=68; percent_col=pct_col/100; run; 
 data formation_67; set formation_67; period=69; percent_col=pct_col/100; run; 
 data formation_68; set formation_68; period=70; percent_col=pct_col/100; run; 
 data formation_69; set formation_69; period=71; percent_col=pct_col/100; run; 
+data formation_70; set formation_70; period=72; percent_col=pct_col/100; run; 
+data formation_71; set formation_71; period=73; percent_col=pct_col/100; run; 
+data formation_72; set formation_72; period=74; percent_col=pct_col/100; run; 
+data formation_73; set formation_73; period=75; percent_col=pct_col/100; run; 
+data formation_74; set formation_74; period=76; percent_col=pct_col/100; run; 
 
 data formation_52; set formation_52; keep percent_col formation ch06 period; run; 
 data formation_53; set formation_53; keep percent_col formation ch06 period; run; 
@@ -2469,8 +2878,13 @@ data formation_66; set formation_66; keep percent_col formation ch06 period; run
 data formation_67; set formation_67; keep percent_col formation ch06 period; run; 
 data formation_68; set formation_68; keep percent_col formation ch06 period; run; 
 data formation_69; set formation_69; keep percent_col formation ch06 period; run; 
+data formation_70; set formation_70; keep percent_col formation ch06 period; run; 
+data formation_71; set formation_71; keep percent_col formation ch06 period; run; 
+data formation_72; set formation_72; keep percent_col formation ch06 period; run; 
+data formation_73; set formation_73; keep percent_col formation ch06 period; run; 
+data formation_74; set formation_74; keep percent_col formation ch06 period; run; 
 data formation_wom_base; 
-set formation_52-formation_69; 
+set formation_52-formation_74; 
 run; 
 
 
@@ -2511,7 +2925,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_for_1_wom; 
-retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_for_1_wom;
 rename ch06=age; 
 run; 
@@ -2534,7 +2948,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_for_2_wom; 
-retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_for_2_wom;
 rename ch06=age; 
 run; 
@@ -2560,7 +2974,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_for_3_wom; 
-retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain ch06 _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_for_3_wom;
 rename ch06=age; 
 run; 
@@ -2661,6 +3075,33 @@ weight pondera;
 where (  ch04=1 & (period=69)& (100>agegroup_ext>15));
 table ch07*agegroup_ext / noprint outpct out=marital_status_69; 
 run; 
+proc freq data=leo.eph_formatted_2020; 
+weight pondera; 
+where (  ch04=1 & (period=70)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_70; 
+run; 
+
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where (  ch04=1 & (period=71)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_71; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where (  ch04=1 & (period=72)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_72; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where (  ch04=1 & (period=73)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_73; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where (  ch04=1 & (period=74)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_74; 
+run; 
+
 data marital_status_52; set marital_status_52; period=54; percent_col=pct_col/100; run; 
 data marital_status_53; set marital_status_53; period=55; percent_col=pct_col/100; run; 
 data marital_status_54; set marital_status_54; period=56; percent_col=pct_col/100; run; 
@@ -2679,6 +3120,11 @@ data marital_status_66; set marital_status_66; period=68; percent_col=pct_col/10
 data marital_status_67; set marital_status_67; period=69; percent_col=pct_col/100; run; 
 data marital_status_68; set marital_status_68; period=70; percent_col=pct_col/100; run; 
 data marital_status_69; set marital_status_69; period=71; percent_col=pct_col/100; run;
+data marital_status_70; set marital_status_70; period=72; percent_col=pct_col/100; run;
+data marital_status_71; set marital_status_71; period=73; percent_col=pct_col/100; run;
+data marital_status_72; set marital_status_72; period=74; percent_col=pct_col/100; run;
+data marital_status_73; set marital_status_73; period=75; percent_col=pct_col/100; run;
+data marital_status_74; set marital_status_74; period=76; percent_col=pct_col/100; run;
 
 data marital_status_52; set marital_status_52; keep percent_col agegroup_ext ch07 period; run; 
 data marital_status_53; set marital_status_53; keep percent_col agegroup_ext ch07 period; run; 
@@ -2698,8 +3144,13 @@ data marital_status_66; set marital_status_66; keep percent_col agegroup_ext ch0
 data marital_status_67; set marital_status_67; keep percent_col agegroup_ext ch07 period; run; 
 data marital_status_68; set marital_status_68; keep percent_col agegroup_ext ch07 period; run;  
 data marital_status_69; set marital_status_69; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_70; set marital_status_70; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_71; set marital_status_71; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_72; set marital_status_72; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_73; set marital_status_73; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_74; set marital_status_74; keep percent_col agegroup_ext ch07 period; run; 
 data marital_status_base_men; 
-set marital_status_52-marital_status_69; 
+set marital_status_52-marital_status_74; 
 run; 
 
 
@@ -2756,7 +3207,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_1_men; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_1_men; 
 run; 
 %m_zero(leo.cal_post_2016_mar_stat_1_men); 
@@ -2790,7 +3241,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_2_men; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_2_men;
  
 run; 
@@ -2799,7 +3250,6 @@ proc export data=leo.cal_post_2016_mar_stat_2_men
 outfile='H:\Tout_LIAM2\bases_calage_liam2\bases align liam2\cal_post_2016_mar_stat_2_men.csv' 
 dbms=csv replace; 
 run; 
-
  
 proc transpose data=mar_stat_3_men out=transp_mar_stat_3_men; 
 by agegroup_ext;
@@ -2815,7 +3265,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_3_men; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_3_men;
  
 run; 
@@ -2839,7 +3289,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_4_men; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_4_men;
  
 run; 
@@ -2863,7 +3313,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_5_men; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_5_men;
  
 run; 
@@ -2963,6 +3413,31 @@ weight pondera;
 where (  ch04=2 & (period=69)& (100>agegroup_ext>15));
 table ch07*agegroup_ext / noprint outpct out=marital_status_69; 
 run; 
+proc freq data=leo.eph_formatted_2020; 
+weight pondera; 
+where (  ch04=2 & (period=70)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_70; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where (  ch04=2 & (period=71)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_71; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where (  ch04=2 & (period=72)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_72; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where (  ch04=2 & (period=73)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_73; 
+run; 
+proc freq data=leo.eph_formatted_2021; 
+weight pondera; 
+where (  ch04=2 & (period=74)& (100>agegroup_ext>15));
+table ch07*agegroup_ext / noprint outpct out=marital_status_74; 
+run; 
 data marital_status_52; set marital_status_52; period=54; percent_col=pct_col/100; run; 
 data marital_status_53; set marital_status_53; period=55; percent_col=pct_col/100; run; 
 data marital_status_54; set marital_status_54; period=56; percent_col=pct_col/100; run; 
@@ -2975,12 +3450,17 @@ data marital_status_60; set marital_status_60; period=62; percent_col=pct_col/10
 data marital_status_61; set marital_status_61; period=63; percent_col=pct_col/100; run; 
 data marital_status_62; set marital_status_62; period=64; percent_col=pct_col/100; run; 
 data marital_status_63; set marital_status_63; period=65; percent_col=pct_col/100; run; 
-data marital_status_64; set marital_status_64; period=66; percent_col=pct_col/100; run;  
+data marital_status_64; set marital_status_64; period=66; percent_col=pct_col/100; run; 
 data marital_status_65; set marital_status_65; period=67; percent_col=pct_col/100; run; 
 data marital_status_66; set marital_status_66; period=68; percent_col=pct_col/100; run; 
 data marital_status_67; set marital_status_67; period=69; percent_col=pct_col/100; run; 
 data marital_status_68; set marital_status_68; period=70; percent_col=pct_col/100; run; 
 data marital_status_69; set marital_status_69; period=71; percent_col=pct_col/100; run;
+data marital_status_70; set marital_status_70; period=72; percent_col=pct_col/100; run;
+data marital_status_71; set marital_status_71; period=73; percent_col=pct_col/100; run;
+data marital_status_72; set marital_status_72; period=74; percent_col=pct_col/100; run;
+data marital_status_73; set marital_status_73; period=75; percent_col=pct_col/100; run;
+data marital_status_74; set marital_status_74; period=76; percent_col=pct_col/100; run;
 
 data marital_status_52; set marital_status_52; keep percent_col agegroup_ext ch07 period; run; 
 data marital_status_53; set marital_status_53; keep percent_col agegroup_ext ch07 period; run; 
@@ -2998,10 +3478,15 @@ data marital_status_64; set marital_status_64; keep percent_col agegroup_ext ch0
 data marital_status_65; set marital_status_65; keep percent_col agegroup_ext ch07 period; run; 
 data marital_status_66; set marital_status_66; keep percent_col agegroup_ext ch07 period; run; 
 data marital_status_67; set marital_status_67; keep percent_col agegroup_ext ch07 period; run; 
-data marital_status_68; set marital_status_68; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_68; set marital_status_68; keep percent_col agegroup_ext ch07 period; run;  
 data marital_status_69; set marital_status_69; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_70; set marital_status_70; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_71; set marital_status_71; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_72; set marital_status_72; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_73; set marital_status_73; keep percent_col agegroup_ext ch07 period; run; 
+data marital_status_74; set marital_status_74; keep percent_col agegroup_ext ch07 period; run; 
 data marital_status_base_wom; 
-set marital_status_52-marital_status_69;
+set marital_status_52-marital_status_74;
 run; 
 data mar_stat_1_wom;
 set marital_status_base_wom (where=(ch07=1));
@@ -3055,7 +3540,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_1_wom; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_1_wom; 
 run; 
 %m_zero(leo.cal_post_2016_mar_stat_1_wom); 
@@ -3088,7 +3573,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_2_wom; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_2_wom;
  
 run; 
@@ -3113,7 +3598,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_3_wom; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_3_wom;
  
 run; 
@@ -3122,7 +3607,6 @@ proc export data=leo.cal_post_2016_mar_stat_3_wom
 outfile='H:\Tout_LIAM2\bases_calage_liam2\bases align liam2\cal_post_2016_mar_stat_3_wom.csv' 
 dbms=csv replace; 
 run; 
-
 proc transpose data=mar_stat_4_wom out=transp_mar_stat_4_wom; 
 by agegroup_ext;
 id period ;
@@ -3137,7 +3621,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_4_wom; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_4_wom;
  
 run; 
@@ -3146,7 +3630,6 @@ proc export data=leo.cal_post_2016_mar_stat_4_wom
 outfile='H:\Tout_LIAM2\bases_calage_liam2\bases align liam2\cal_post_2016_mar_stat_4_wom.csv' 
 dbms=csv replace; 
 run; 
- 
 proc transpose data=mar_stat_5_wom out=transp_mar_stat_5_wom; 
 by agegroup_ext;
 id period ;
@@ -3161,7 +3644,7 @@ drop _name_ _label_ ;
 RUN; 
 
 data leo.cal_post_2016_mar_stat_5_wom; 
-retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71;
+retain agegroup_ext _54 _55 _56 _57 _58 _59 _60 _61 _62 _63 _64 _65 _66 _67 _68 _69 _70 _71 _72 _73 _74 _75 _76;
 set transp_mar_stat_5_wom;
  
 run; 
@@ -3169,6 +3652,8 @@ run;
 proc export data=leo.cal_post_2016_mar_stat_5_wom
 outfile='H:\Tout_LIAM2\bases_calage_liam2\bases align liam2\cal_post_2016_mar_stat_5_wom.csv' 
 dbms=csv replace; 
+run; 
+proc print data=leo.cal_post_2016_mar_stat_5_wom; 
 run; 
 /*Finally, we format these alignment datasets so as to get them ready for backward simulations. We did not actually use post-2016 datasets
 		as the starting point of backward simulations, but it is possible to do so with our model (after slight adjustments, the 
@@ -3448,6 +3933,16 @@ run;
 %mean_var_post_2016(leo.eph_formatted_2020_68,ITL,labour_market_state,period,68,ch04); 
 %ITL_centiles_post_2016(leo.eph_formatted_2020,period,69);
 %mean_var_post_2016(leo.eph_formatted_2020_69,ITL,labour_market_state,period,69,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2020,period,70);
+%mean_var_post_2016(leo.eph_formatted_2020_70,ITL,labour_market_state,period,70,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2021,period,71);
+%mean_var_post_2016(leo.eph_formatted_2021_71,ITL,labour_market_state,period,71,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2021,period,72);
+%mean_var_post_2016(leo.eph_formatted_2021_72,ITL,labour_market_state,period,72,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2021,period,73);
+%mean_var_post_2016(leo.eph_formatted_2021_73,ITL,labour_market_state,period,73,ch04); 
+%ITL_centiles_post_2016(leo.eph_formatted_2021,period,74);
+%mean_var_post_2016(leo.eph_formatted_2021_74,ITL,labour_market_state,period,74,ch04); 
 proc print data=leo.itl_mean_52; run; 
 proc print data=leo.itl_mean_53; run; 
 proc print data=leo.itl_mean_54; run; 
@@ -3466,8 +3961,13 @@ proc print data=leo.itl_mean_66; run;
 proc print data=leo.itl_mean_67; run; 
 proc print data=leo.itl_mean_68; run; 
 proc print data=leo.itl_mean_69; run; 
+proc print data=leo.itl_mean_70; run; 
+proc print data=leo.itl_mean_71; run; 
+proc print data=leo.itl_mean_72; run; 
+proc print data=leo.itl_mean_73; run; 
+proc print data=leo.itl_mean_74; run; 
 data leo.itl_mean_post_2016; 
-set leo.itl_mean_52 - leo.itl_mean_69; 
+set leo.itl_mean_52 - leo.itl_mean_74; 
 		coefficient_men=mean_ITL_men/mean_ITL_all; 
 		coefficient_women=mean_ITL_women/mean_ITL_all; 
 run; 
@@ -3479,12 +3979,16 @@ proc export data=leo.coeffs_ripte_post_2016
 outfile='C:\Users\Leonardo\Documents\MISSAR_private\LIAM2_commented_code\globals\Structure_coefficients\structure_coefficients_post_2016.csv' 
 dbms=csv replace; 
 run; 
-
 /****************Here, we export the proportions of active age men and women that are in a given labour-market state after 2016. This is to update 
 		our labour-market state prospective scenarios. These values are then added to the excel files with historical proportions of men and women
 		by labour-market state.*/
 dm 'odsresults; clear'; 
 dm 'clear log'; 
+proc freq data=leo.eph_formatted_2021; table labour_market_state*ch04 /noprint outpct out=leo.lms_988; weight pondera; where 70>ageconti>15 & period=74; run; data leo.lms_988; set leo.lms_988; period2="2021_4"; run;
+proc freq data=leo.eph_formatted_2021; table labour_market_state*ch04 /noprint outpct out=leo.lms_989; weight pondera; where 70>ageconti>15 & period=73; run; data leo.lms_989; set leo.lms_989; period2="2021_3"; run;
+proc freq data=leo.eph_formatted_2021; table labour_market_state*ch04 /noprint outpct out=leo.lms_990; weight pondera; where 70>ageconti>15 & period=72; run; data leo.lms_990; set leo.lms_990; period2="2021_2"; run;
+proc freq data=leo.eph_formatted_2021; table labour_market_state*ch04 /noprint outpct out=leo.lms_991; weight pondera; where 70>ageconti>15 & period=71; run; data leo.lms_991; set leo.lms_991; period2="2021_1"; run;
+proc freq data=leo.eph_formatted_2020; table labour_market_state*ch04 /noprint outpct out=leo.lms_992; weight pondera; where 70>ageconti>15 & period=70; run; data leo.lms_992; set leo.lms_992; period2="2020_4"; run;
 proc freq data=leo.eph_formatted_2020; table labour_market_state*ch04 /noprint outpct out=leo.lms_993; weight pondera; where 70>ageconti>15 & period=69; run; data leo.lms_993; set leo.lms_993; period2="2020_3"; run;
 proc freq data=leo.eph_formatted_2020; table labour_market_state*ch04 /noprint outpct out=leo.lms_994; weight pondera; where 70>ageconti>15 & period=68; run; data leo.lms_994; set leo.lms_994; period2="2020_2"; run;
 proc freq data=leo.eph_formatted_2020; table labour_market_state*ch04 /noprint outpct out=leo.lms_995; weight pondera; where 70>ageconti>15 & period=67; run; data leo.lms_995; set leo.lms_995; period2="2020_1"; run;
@@ -3505,7 +4009,7 @@ proc freq data=leo.eph_formatted_2016; table labour_market_state*ch04 /noprint o
 proc freq data=leo.eph_formatted_2016; table labour_market_state*ch04 /noprint outpct out=leo.lms_1010; weight pondera; where 70>ageconti>15 & period=52; run; data leo.lms_1010; set leo.lms_1010; period2="2016_2"; run;
 
 data leo.hist_lms_post_2016; 
-set leo.lms_993-leo.lms_1010; 
+set leo.lms_988-leo.lms_1010; 
 run; 
 
 proc sort data=leo.hist_lms_post_2016; 
@@ -3595,6 +4099,11 @@ by period2; run;
 proc freq data=leo.eph_formatted_2016_2020; table labour_market_state*period /noprint outpct out=leo.lms_both_genders_post_2016; weight pondera; where 70>ageconti>15; run;
 data leo.lms_both_genders_post_2016; 
 set leo.lms_both_genders_post_2016; 
+if period=74 then period2="2021_4"; 
+if period=73 then period2="2021_3"; 
+if period=72 then period2="2021_2"; 
+if period=71 then period2="2021_1"; 
+if period=70 then period2="2020_4"; 
 if period=69 then period2="2020_3"; 
 if period=68 then period2="2020_2"; 
 if period=67 then period2="2020_1"; 
@@ -3683,6 +4192,11 @@ _2_all=_2e/100;
 _3_all=_3e/100; 
 _4_all=_4e/100; 
 _5_all=_5e/100; 
+if period="2021_4" then period2=188; 
+if period="2021_3" then period2=187; 
+if period="2021_2" then period2=186; 
+if period="2021_1" then period2=185; 
+if period="2020_4" then period2=184; 
 if period="2020_3" then period2=183; 
 if period="2020_2" then period2=182; 
 if period="2020_1" then period2=181; 
@@ -3892,15 +4406,15 @@ keep period period2 _1_all _2_all _3_all _4_all _5_all;
 run; 
 
 proc export data=leo.post_2016_lms_men
-outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_men.csv' 
-dbms=csv replace; 
+outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_men.xlsx' 
+dbms=xlsx replace; 
 run; 
 proc export data=leo.post_2016_lms_wom
-outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_wom.csv' 
-dbms=csv replace; 
+outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_wom.xlsx' 
+dbms=xlsx replace; 
 run; 
 
 proc export data=leo.post_2016_lms_men_wom
-outfile='C:\Users\Leonardo\Documents\Git_MISSAR_model\MISSAR\Excel_files_for_MISSAR\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_men_wom.csv' 
-dbms=csv replace; 
+outfile='C:\Users\Leonardo\Documents\Excel_files_for_MISSAR_Private\Prospective_scenarios\2014_q4_start\Historical_graphs_ages_16_69\Post_2016_men_wom.xlsx' 
+dbms=xlsx replace; 
 run; 

@@ -13,14 +13,14 @@ globals:
     #All our real income variables are expressed in November 2014 pesos. 
             - GROSS_WAGE_HIGH_2014_T4: float
             - REAL_WAGE_HIGH: float
-            - NET_WAGE_HIGH_2014_T4: float
+            #- NET_WAGE_HIGH_2014_T4: float
             - ANSES_GROSS_WAGE_HIGH_2014_T4: float
-            - ANSES_NET_WAGE_HIGH_2014_T4: float
+            #- ANSES_NET_WAGE_HIGH_2014_T4: float
             - MINIMUM_WAGE_HIGH_2014_T4: float
-        #The CPI_ANSES_INDEX_HIGH is equal to the CPI divided by the ANSES actualisation index. 
-            #It links real wage variables together (ANSES_GROSS_WAGE_HIGH_2014_T4*CPI_ANSES_INDEX_HIGH=GROSS_WAGE_HIGH_2014_T4). 
+        #The CPI_ANSES_HIGH is equal to the CPI divided by the ANSES actualisation index. 
+            #It links real wage variables together (ANSES_GROSS_WAGE_HIGH_2014_T4*CPI_ANSES_HIGH=GROSS_WAGE_HIGH_2014_T4). 
             # This variable is useful for computing the family-group income.  
-            - CPI_ANSES_INDEX_HIGH: float
+            - CPI_ANSES_HIGH: float
             #The coefficient variables (h for men, f for women) are computed following Duc et. al. 2013
             - COEFFICIENT_H: float
             - COEFFICIENT_F: float
@@ -32,7 +32,9 @@ globals:
             #Then, we list variables related to social security contributions and categorisations
             - MIN_PENSION_HIGH_2014_T4: float
             - MAX_PENSION_HIGH_2014_T4: float
+            - MAX_CONTRIBUTIVE_BASE_HIGH: float
             #We add a global depicting the real increase of pensions each quarter based on the adopted pension mobility law. 
+            
             #From the third quarter of 2018 onward, we assume it is equal to 30% of the real wage evolution. This is true as long as real wage increases at a fixed rate and 
             # that inflation stays the same, which we assume in our scenarios for the sake of simplicity. This is because the increase this quarter is 70% of the inflation and 30% of the RIPTE evolution 
             #two quarters ago, as per the 2017 pension reform.
@@ -166,12 +168,13 @@ entities:
             #Legislation: following Art. 2 of Decree 1667/2012, 
                 #(...) must be considered as income [for the means-test of family benefits] registered wage-earners remuneration, the rents of reference 
                 #of autonomous workers and monotributistas, pension income [be it contributive or non-contributive] (...)"
-        #We therefore sum in variable IGF formal wages, rents of reference of people listed in the Autonomous workers regime and pension income (be them direct, survivor's benefits, or non-contributive pensions). 
+        #We therefore sum in variable IGF formal wages, rents of reference of people listed in the Autonomous workers regime and pension income (be them direct, survivor's benefits
+                #, or non-contributive pensions). 
         #Our rent_aut variable, depicting the rent of reference of Autonomous workers, is not however discounted with the CPI. Instead, it is discounted following 
                 #ANSES discounting indexes. This is the discounting method necessary for computing retirement rights. We however need to discount it with the CPI
                 #to compute the IGF. We thus add a conversion key between ANSES discounting and the Consumer's Price Index in our globals file, which converts 
                 #the rent of reference into real November 2014 pesos discounted with official inflation figures. 
-                - igf_hh: persons.sum(discounted_itl_sal_gross) + persons.sum(disc_cost_v2_m) + persons.sum(rent_aut*CPI_ANSES_INDEX_HIGH)
+                - igf_hh: persons.sum(discounted_itl_sal_gross) + persons.sum(disc_cost_v2_m) + persons.sum(rent_aut*CPI_ANSES_HIGH)
             # We need for some benefits to know what is the maximum income reached by a formal wage-earner and monotributo category for a given household. 
                 - max_itl_sal_hh: persons.max(discounted_itl_sal_gross)
                 - max_monotributo_cat_hh: persons.max(monotributo_cat)
@@ -942,6 +945,10 @@ entities:
                 #We list here variables related to survivors benefits. 
                     #initial_pensioner is True when we consider the recipiendary of a penison or retirement benefit is exclusively a survivors benefits pensioner (and may yet retire on its own)
             - initial_pensioner: {type: bool, initialdata: false}
+            - tag_second_pension: {type: bool, initialdata: false}
+            - tag_initial_moratorium: {type: bool, initialdata: false}
+            - tag_second_pension_moratorium: {type: bool, initialdata: false}
+            - moratorium_survivor_pensioner: {type: bool, initialdata: false}
             - net_pension: {type: float, initialdata: false}
                     # The suffix c indicates a survivors benefit earned by the deceased's child, while the suffix p indicates a pension received by the departed's spouse. 
             - net_pension_child: {type: float, initialdata: false}
@@ -973,13 +980,15 @@ entities:
             - school_aid: {type: float, initialdata: false}
                 #We also include family benefits information trying to mimic the v5_m variable of the EPHc
             - discounted_v5_m: {type: float, initialdata: false}
-                # Finally, the sum of retirement benefits and survivor's pensions in real terms are stored in variable discounted_v2_m, as in the EPHc
+                # Sixthly, the sum of retirement benefits and survivor's pensions in real terms are stored in variable discounted_v2_m, as in the EPHc
                 # The actual cost for ANSES, including the compulsory contribution to elderly healthcare, is given by variable disc_cost_v2_m
             - discounted_v2_m_2: {type: float, initialdata: false}
             - disc_cost_v2_m_2: {type: float, initialdata: false}
             #We group in this variable all the bonuses paid temporarily to ANSES pension beneficiaries.
             - temporary_pension_bonus: {type: float, initialdata: false} 
-            
+            #Finally, we record total contributed years after 2003, important for determining access to Law 26970 pension moratorium for women
+            - car_post_2003: {type: int, initialdata: false}
+           
            
         links:
             mother: {type: many2one, target: person, field: mother_id}
@@ -1042,7 +1051,7 @@ entities:
             #We in particular make sure the father id of all individuals is taht of their mother's partner.
                 - father_id: mother.partner_id
             #We then count children and underage children. 
-            #We need to count them separately for the mother (nb_children) and the father (nb_children_bis) sinc ethey use respectively mother_id and father_id as their link variable.
+            #We need to count them separately for the mother (nb_children) and the father (nb_children_bis) since they use respectively mother_id and father_id as their link variable.
                 - nb_children: if(ISFEMALE,children.count(),0)
                 - nb_children_bis: if(ISMALE,children_bis.count(),0)
                 - underage_children: children.count(age<18)
@@ -1127,7 +1136,29 @@ entities:
                                         net_pension_2/0.97)
                 - gross_pension_p: if(age>=18, gross_pension, 0)
                 - gross_pension_2_p: if(age>=18, gross_pension_2, 0)
-                
+                # We know from administrative data that there were in 2014 16.86% more social security benefits paid than social security beneficiaries. This means 
+                        #20% of SIPA beneficiaries receive both a survivors benefit and a retirement pension. This is irrelevant for computing total ANSES expenditure, 
+                        #but the 2020 pension mobility formula, as well as the 26.417 pension mobility formula in force between 2009 and 2017, makes pension mobility
+                        #depend on total benefits paid. As such, it is important we correctly flag beneficiaries that also receive a survivors' benefit. 
+              #  - score_pensioner: if(initial_pensioner, -10000+uniform(), 
+               #                         if(male, -10000 + uniform(), 
+                #                            if(marital_status==4, 1000 + discounted_v2_m + uniform(),
+                 #                                   (discounted_v2_m + uniform()
+                  #                    ))))
+                                      
+                - score_pensioner: if(initial_pensioner, -10000+uniform(), 
+                                        if(marital_status!=4, -100000 + uniform(), 
+                                            if(male, discounted_v2_m/3 + uniform(), 
+                                                (discounted_v2_m + uniform()
+                                      ))))
+                #We know on 2014 16,86% of SIPA beneficiaries received two benefits, and 17,02% in 2015, from the Boletín Estadístico de la Seguridad Social of September 2020. 
+                        #We have trouble however aligning these exact proportions due to the align instruction not allowing for a weights option. We thus experimented
+                        #until we found an align value that resulted in around 17% of SIPA beneficiaries earning two benefits at the same time in 2015, and found it 
+                        #to be 20.75%. Once we correct the problems with weights as pointed out by Gijs Dekkers, this should no longer be an issue.
+                - tag_second_pension: if(discounted_v2_m>0,
+                                        align(score_pensioner,0.2075,leave=initial_pensioner), 
+                                            False
+                                        )
             # Also, since we start our simulations before the implementation of the universal pension, none of our starting individual receive this universal pension. 
                 - tag_pension_uni: False
         #Fourth, we have shown the residuals of our Mincer wage equations follow a Normal distribution in all of our starting datasets. For the fourth quarter of 
@@ -1139,7 +1170,63 @@ entities:
         #Fifth, having all individuals age at the same time was a problem for our education module. We thus assume respondents had a 25% chance of being born during a given quarter.        
                 
                 - age_quarters: age_quarters + choice([0, 1, 2, 3], [0.25, 0.25, 0.25, 0.25]) 
-        #Sixth, we are going to export aggregate files to determine the sustainability, adequacy and redistributive impact of social security. We create here the headers of such csv 
+        #Sixth, Law 26.417 pension mobility was actually computed using total contributive SIPA benefits, not total pensions. We do not have this information in the 
+                #EPHc: respondents that report having a pension benefit do not tell us whether it is contributive or not. 
+            # Following the September 2020 BESS, we can see it became possible to adhere to the Law 26.970 pension moratorium in 2015, so we can safely assume 
+                    #no respondent had taken this moratorium during the fourth quarter of 2014. The question for this quarter is thus which respondents 
+                    #had adhered to the 2006 pension moratorium. We know this moratorium was only open up until early 2007, so the youngest cohorts of pensioners
+                    #the fourth quarter of 2014 cannot be from the 2006 moratorium. This means by 2014, only men aged 72 or more and women
+                    #aged 67 or more could have been moratorium pensioners. 
+            #We know from the September 2020 Boletín Estadístico de la Seguridad Social that on 2014, 53.88% of retirement and survivor pensioners were contributive. 
+                    #More precisely, 41.74% of retirement pensioners were contributive, and 88.80% of survivor pensioners were contributive. We also know from this
+                    #Bulletin the total number of benefits and of beneficiaries in 2014: by substracting to the total number of beneficiaries, for each gender, 
+                    #total number of retirement benefits, we know how many beneficiaries only received a survivors' benefit. If we assume 88.8% of these were 
+                    #contributive pensions, we can deduce, for each gender, the proportion of beneficiaries whose main pension derives from a moratorium.
+            #Our results are that 53,83% of SIPA beneficiaries had a 2006 moratorium benefit as their main benefit. Taken by gender, this means 40.67% of male 
+                    #and 61.57% of female beneficiaries had a 2006 moratorium benefit as their main pension. 
+            
+                - score_2006_moratorium: if(discounted_v2_m<=0, -10000, 
+                                                    if(male, 
+                                                        if(age<72, 0,
+                                                            avg(discounted_v2_m,filter=discounted_v2_m>0)/discounted_v2_m + uniform()),
+                                                                if(age<67, 0, 
+                                                                    avg(discounted_v2_m,filter=discounted_v2_m>0)/discounted_v2_m + uniform()
+                                            )))
+                - tag_initial_moratorium: if(discounted_v2_m>0,    
+                                             if(male, align(score_pensioner,0.4067), 
+                                                align(score_pensioner,0.6157)), 
+                                                    False
+                                            )
+            #We then assume 11.2% of respondents' second pension (which is a survivors benefit) is a moratorium pension.                             
+                - tag_second_pension_moratorium: if(tag_second_pension, choice([True, False], [0.112,0.888]),
+                                                    False)
+            #We get 46.63% of total benefits the fourth quarter of 2014 are 2006 pension moratorium, which matches the figure available in September 2020 BESS, 46.12%. 
+                #To get this figure, uncomment the breakpoint below and type in the console (it might be too long for the console, just type separately the numerator
+                        #and denominator)
+                #(sum(tag_second_pension_moratorium,weights=pondera)+sum(tag_initial_moratorium,weights=pondera))/(sum(tag_second_pension,weights=pondera)+sum(discounted_v2_m>0,weights=pondera))
+               # - breakpoint()   
+            #We finally tag as False all initial moratorium survivor pensioners: these are simulated by our model in the death module, and correspond to non-initial 
+                    #survivor pensioners that get their benefit from the death of a moratorium pensioner.
+                - moratorium_survivor_pensioner: False 
+        #Seventh, we realised that since Law 26.970 is being indefinitely prolonged for women, then its real limit is the fact you can only buy back years up to 2003: 
+                #you need thus to have contributed enough years since 2004 to retire. We should change the import file to include the whole career since the first 
+                #quarter of 2004, but since we start the fourth quarter of 2014, the lag_count variables in the initial period are good enough (cover up to fourth
+                #quarter of 2004). We will change the import file in a further correction of the model to take the whole careers since the first quarter of 2004.
+            #We thus compute a variable that counts, for 2014, total contributed quarters after 2003. 
+                - temp_1: lag_count_sal_1+lag_count_sal_2+lag_count_sal_3+lag_count_sal_4+lag_count_sal_5+lag_count_sal_6+lag_count_sal_7+lag_count_sal_8+lag_count_sal_9+lag_count_sal_10
+                - temp_2: lag_count_sal_11+lag_count_sal_12+lag_count_sal_13+lag_count_sal_14+lag_count_sal_15+lag_count_sal_16+lag_count_sal_17+lag_count_sal_18+lag_count_sal_19+lag_count_sal_20
+                - temp_3: lag_count_sal_21+lag_count_sal_22+lag_count_sal_23+lag_count_sal_24+lag_count_sal_25+lag_count_sal_26+lag_count_sal_27+lag_count_sal_28+lag_count_sal_29+lag_count_sal_30
+                - temp_4: lag_count_sal_31+lag_count_sal_32+lag_count_sal_33+lag_count_sal_34+lag_count_sal_35+lag_count_sal_36+lag_count_sal_37+lag_count_sal_38+lag_count_sal_39+lag_count_sal_40
+                - temp_5: lag_count_ind_1+lag_count_ind_2+lag_count_ind_3+lag_count_ind_4+lag_count_ind_5+lag_count_ind_6+lag_count_ind_7+lag_count_ind_8+lag_count_ind_9+lag_count_ind_10
+                - temp_6: lag_count_ind_11+lag_count_ind_12+lag_count_ind_13+lag_count_ind_14+lag_count_ind_15+lag_count_ind_16+lag_count_ind_17+lag_count_ind_18+lag_count_ind_19+lag_count_ind_20
+                - temp_7: lag_count_ind_21+lag_count_ind_22+lag_count_ind_23+lag_count_ind_24+lag_count_ind_25+lag_count_ind_26+lag_count_ind_27+lag_count_ind_28+lag_count_ind_29+lag_count_ind_30
+                - temp_8: lag_count_ind_31+lag_count_ind_32+lag_count_ind_33+lag_count_ind_34+lag_count_ind_35+lag_count_ind_36+lag_count_ind_37+lag_count_ind_38+lag_count_ind_39+lag_count_ind_40
+                - temp_9: lag_mono_1+lag_mono_2+lag_mono_3+lag_mono_4+lag_mono_5+lag_mono_6+lag_mono_7+lag_mono_8+lag_mono_9+lag_mono_10
+                - temp_10: lag_mono_11+lag_mono_12+lag_mono_13+lag_mono_14+lag_mono_15+lag_mono_16+lag_mono_17+lag_mono_18+lag_mono_19+lag_mono_20
+                - temp_11: lag_mono_21+lag_mono_22+lag_mono_23+lag_mono_24+lag_mono_25+lag_mono_26+lag_mono_27+lag_mono_28+lag_mono_29+lag_mono_30
+                - temp_12: lag_mono_31+lag_mono_32+lag_mono_33+lag_mono_34+lag_mono_35+lag_mono_36+lag_mono_37+lag_mono_38+lag_mono_39+lag_mono_40
+                - car_post_2003: temp_1+temp_2+temp_3+temp_4+temp_5+temp_6+temp_7+temp_8+temp_9+temp_10+temp_11+temp_12
+                #Sixth, we are going to export aggregate files to determine the sustainability, adequacy and redistributive impact of social security. We create here the headers of such csv 
                 #files, so it is not repeated at each loop of the simulation in the output files. 
                 - csv('Period', 'Gini per capita, all income', 'Gini per capita, labour income','Gini per capita, labour and pension income', 'Gini per capita, labour and family benefits income', 
                                 'Decile ratio, all income', 'Decile ratio, labour income', 'Decile ratio, labour and pension income', 'Decile ratio, labour and familiy benefits income',
@@ -1157,10 +1244,13 @@ entities:
                                         'Bottom 10%, share of all income', 'Bottom 10%, share of labour income', 'Bottom 10%, share of labour and pension income', 'Bottom 10%, share of labour and familiy benefits income',
                                             fname='redistribution_high_sedlac.csv',mode='a')   
         ################################################################################################################
-                - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
+
+                - csv('Period', '0','[1;5[', '[5;10[', '[10;15[', '15', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
+                                '[70;75[','[75;80[','[80;85[','[85;90[','[90;95[','100+',
                                                 fname='active_age_men.csv',mode='a')
-                - csv('Period', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
-                                                fname='active_age_women.csv',mode='a')
+                - csv('Period', '0','[1;5[', '[5;10[', '[10;15[', '15', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
+                                '[70;75[','[75;80[','[80;85[','[85;90[','[90;95[','100+',
+                                                fname='active_age_women.csv',mode='a')                
                 - csv('Period','Mean_real_labour_income','Total_workers',
                                     fname='workers_and_wage_high.csv',mode='a')
         ################################################################################################################
@@ -1188,6 +1278,7 @@ entities:
                                                 'Child_benefit_coverage','Contributory_child_benefit_coverage','AUH_coverage',
                                                     'Gini_retirement_age','Gini_retirement_age_non_labour_income','Gini_65+','Gini_65+_non_labour_income',
                                                         'Gini_retirement_age_has_income', 'Gini_retirement_age_(has)_non_labour_income','Gini_65+_has_income','Gini_65+_(has)_non_labour_income',
+                                                            'Total_SIPA_beneficiaries','Total_SIPA_benefits', 'Total_non_moratorium_beneficiaries', 'Total_non_moratorium_benefits','Total_PUAM_benefits',
                                                     fname='adequacy_high.csv',mode='a')
         ###############################################################################################################
                 - csv('Period','All_pensions','Contributory_pensions','Moratorium_and_PUAM',
@@ -1203,7 +1294,7 @@ entities:
               
             death:
 #We combine in this step death simulations as well as the computation of survivor's pensions. This is because the latter are determined by the departed's characteristics, and that at the end of this step     
-# we remove dead people from our data. 
+    # we remove dead people from our data. 
 #The full rules for determining survivor's pensions are laid out in my PhD. Thesis' Appendix C.
     #1- We see which individuals can generate survivor's pensions if they die this exact period. 
         #The disability of a worker that is a regular or irregular contributor (see below) also triggers survivor's benefits. These are identical to those that would 
@@ -1223,6 +1314,13 @@ entities:
         #Now we determine whether the deceased individual causes a survivor's pension to be paid to its relatives. 
             #First, if the retired individual was receiving a direct retirement benefit (excluding the universal pension for the elderly adult), then a survivor's pension may be generated.
                 - retiree: if(liqui_retirement, 1, 0)
+            #We tag survivors benefits derived from the death of moratorium retirees: it is important for computing pension mobility following Res.6/2009 of Law 26417, 
+                    #where you only take non-moratorium retirement and survivors benefits.
+                - moratorium_retiree: if(retiree==1, 
+                                         if(moratorium_date>0, True,
+                                            if(tag_initial_moratorium, True, 
+                                                False)), False
+                                        )
             #The vast majority of survivor's pensions originate from the death of a retiree. Under some conditions however, the death of a worker may trigger survivor's pensions.
                 #First, if the worker had contributed 30 years or more (including the discount of years due to old age if he exceeded the minimum retirement age), he is considered a regular contributor.
                     #Else, if he contributed at least during two and a half years during the last five years, then he is also considered a regular contributor. 
@@ -1448,7 +1546,7 @@ entities:
                                       gross_pension_2_p*0.94)
                 - gross_pension_2: gross_pension_child_2 + gross_pension_2_p
                 - net_pension_2: net_pension_child_2 + net_pension_2_p
-        #We finally ensure no survivor's benefit is higher than the maximum pension.         
+        #We ensure no survivor's benefit is higher than the maximum pension.         
                 - gross_pension: if(gross_pension>MAX_PENSION_HIGH_2014_T4, MAX_PENSION_HIGH_2014_T4, gross_pension)
                 - gross_pension_2: if(gross_pension_2>MAX_PENSION_HIGH_2014_T4, MAX_PENSION_HIGH_2014_T4, gross_pension_2)
                 - net_pension: if(gross_pension>MAX_PENSION_HIGH_2014_T4,
@@ -1457,6 +1555,26 @@ entities:
                 - net_pension_2: if(gross_pension_2>MAX_PENSION_HIGH_2014_T4,
                                     MIN_PENSION_HIGH_2014_T4*0.97+ (MAX_PENSION_HIGH_2014_T4-MIN_PENSION_HIGH_2014_T4)*0.94,
                                         net_pension_2)      
+        #We finally tag survivors benefits that are derived from a moratorium retirement pension. 
+                - check_partner: if(pension_partner==0, False, 
+                                        True)
+                - check_father: if(pension_child_f==0, False, 
+                                        True)
+                - check_mother: if(pension_child_m==0, False, 
+                                        True)
+                - moratorium_survivor_pensioner: if(check_partner, if(partner.moratorium_retiree, True, 
+                                                                moratorium_survivor_pensioner),
+                                                                    moratorium_survivor_pensioner
+                                            )
+                - moratorium_survivor_pensioner: if(check_father, if(father.moratorium_retiree, True,
+                                                                moratorium_survivor_pensioner),
+                                                                    moratorium_survivor_pensioner
+                                            )
+                - moratorium_survivor_pensioner: if(check_mother, if(mother.moratorium_retiree, True, 
+                                                                moratorium_survivor_pensioner),
+                                                                     moratorium_survivor_pensioner
+                                            )                
+                                        
     # 6- Since we are done computing survivor's pensions, we can now remove dead people from the database.
         #We also erase their id in their relatives' observations (the surviving spouse gets an unset partner id).      
                 - partner_id: if(partner.dead, UNSET, partner_id)
@@ -1476,8 +1594,28 @@ entities:
                 - score_birth: if(ISCOUPLE or ISMARRIED, 1000 + uniform(), uniform())
             #2- Only women with up to 7 children can give birth (this sets a maximum number of 8 children).
             #3- Only women with a known partner aged 16 to 59 can give birth. 
+            #4- Probability of having children conditional to current number of children 
+                #We run for period 49, in the console, groupby(agegroup,nb_children,filter=not male). Then for women age 40 to 49, we count total women with a given number of 
+                    #children. We find women those ages with one child represent 99% of those with no children; with two children, 154% of those with one child (these are
+                    #conditional probabilities of having one more child given the current number of children); with three children, 96% of those with two children, etc. 
+                #This helps us reproduce plausible cohorts of mothers by number of children. 	
+                #For debugging purposes, uncomment the following to track new births. 
+               # - csv(period,groupby(age,nb_children,marital_status,filter=ISFEMALE and age>=10 and age<=49 and to_give_birth and (partner.age>=16 and partner.age<=59) and nb_children<7 and (ISCOUPLE or ISMARRIED)),
+                #      groupby(age,nb_children,marital_status,filter=ISFEMALE and not to_give_birth and age>=10 and age<=49  and (partner.age>=16 and partner.age<=59) and nb_children<7 and (ISCOUPLE or ISMARRIED)),
+                 #           fname='debug_birth.csv',mode='a')	
+                - score_birth: if(nb_children==0, score_birth*0.99, 
+                                  if(nb_children==1, score_birth*1.54, 
+                                     if(nb_children==2, score_birth*0.96, 
+                                        if(nb_children==3, score_birth*0.41, 
+                                           if(nb_children==4, score_birth*0.19,
+                                              if(nb_children==5, score_birth*0.09, 
+                                                 if(nb_children==6, score_birth*0.036,0)
+                                  ))))))
+            #5- Strongly decrease likelihood of child bearing if there is already a child less than 5 quarters old             
+                - score_birth: if(children.count(age_quarters<5)>=1, 0, 
+                                  score_birth)
                 - to_give_birth: logit_regr(score_birth,
-                                            filter=ISFEMALE and (age >= 10)and (age <= 49) and (partner.age>=16 and partner.age<=59) and nb_children<8,
+                                            filter=ISFEMALE and (age >= 10)and (age <= 49) and (partner.age>=16 and partner.age<=59) and nb_children<7,
                                             align='p_birth_f3.csv')
             #It is perfectly possible to estimate logistic equations on the probability of giving birth, and study fertility decisions depending on the parent's and
             #the household's characteristics. This estimated equation would then replace the arbitrary priority to women married or in a common-law union (temporary 
@@ -1519,14 +1657,18 @@ entities:
             #dependent labour-market scenarios, so as to reach the desired rate of, say, dependent wage-earners while taking into account the demographic 
             #structure of the starting population.
         #This active age population is the same whatever the economic scenario. As such, we only compute it once for each starting period. 
-                - csv(period,sum(pondera*male,filter=agegroup==16), sum(pondera*male,filter=agegroup==20),  sum(pondera*male,filter=agegroup==25),  sum(pondera*male,filter=agegroup==30), 
-                                 sum(pondera*male,filter=agegroup==35),  sum(pondera*male,filter=agegroup==40),  sum(pondera*male,filter=agegroup==45),  sum(pondera*male,filter=agegroup==50),  sum(pondera*male,filter=agegroup==55), 
-                                  sum(pondera*male,filter=agegroup==60),  sum(pondera*male,filter=agegroup==65), 
-                                    fname='active_age_men.csv',mode='a')
-                - csv(period,sum(pondera*(not male),filter=agegroup==16), sum(pondera*(not male),filter=agegroup==20),  sum(pondera*(not male),filter=agegroup==25),  sum(pondera*(not male),filter=agegroup==30), 
-                                 sum(pondera*(not male),filter=agegroup==35),  sum(pondera*(not male),filter=agegroup==40),  sum(pondera*(not male),filter=agegroup==45),  sum(pondera*(not male),filter=agegroup==50),  sum(pondera*(not male),filter=agegroup==55), 
-                                  sum(pondera*(not male),filter=agegroup==60),  sum(pondera*(not male),filter=agegroup==65), 
-                                    fname='active_age_women.csv',mode='a')
+                - csv(period,sum(age<=0 and male,weights=pondera),sum(age>=1 and age<5 and male,weights=pondera),sum(age>=5 and age<10 and male,weights=pondera),sum(age>=10 and age<15 and male,weights=pondera),sum(age==15 and male,weights=pondera),
+                                    sum(age>=16 and age<20 and male,weights=pondera),sum(age>=20 and age<25 and male,weights=pondera), sum(age>=25 and age<30 and male,weights=pondera),sum(age>=30 and age<35 and male,weights=pondera),
+                                        sum(age>=35 and age<40 and male,weights=pondera),sum(age>=40 and age<45 and male,weights=pondera),sum(age>=45 and age<50 and male,weights=pondera),sum(age>=50 and age<55 and male,weights=pondera),
+                                            sum(age>=55 and age<60 and male,weights=pondera),sum(age>=60 and age<65 and male,weights=pondera),sum(age>=65 and age<70 and male,weights=pondera),sum(age>=70 and age<75 and male,weights=pondera),
+                                                sum(age>=75 and age<80 and male,weights=pondera),sum(age>=80 and age<85 and male,weights=pondera),sum(age>=85 and age<90 and male,weights=pondera),sum(age>=90 and age<95 and male,weights=pondera),sum(age>=95 and male,weights=pondera),
+                                                    fname='active_age_men.csv',mode='a')
+                - csv(period,sum(age<=0 and not male,weights=pondera),sum(age>=1 and age<5 and not male,weights=pondera),sum(age>=5 and age<10 and not male,weights=pondera),sum(age>=10 and age<15 and not male,weights=pondera),sum(age==15 and not male,weights=pondera),
+                                    sum(age>=16 and age<20 and not male,weights=pondera),sum(age>=20 and age<25 and not male,weights=pondera), sum(age>=25 and age<30 and not male,weights=pondera),sum(age>=30 and age<35 and not male,weights=pondera),
+                                        sum(age>=35 and age<40 and not male,weights=pondera),sum(age>=40 and age<45 and not male,weights=pondera),sum(age>=45 and age<50 and not male,weights=pondera),sum(age>=50 and age<55 and not male,weights=pondera),
+                                            sum(age>=55 and age<60 and not male,weights=pondera),sum(age>=60 and age<65 and not male,weights=pondera),sum(age>=65 and age<70 and not male,weights=pondera),sum(age>=70 and age<75 and not male,weights=pondera),
+                                                sum(age>=75 and age<80 and not male,weights=pondera),sum(age>=80 and age<85 and not male,weights=pondera),sum(age>=85 and age<90 and not male,weights=pondera),sum(age>=90 and age<95 and not male,weights=pondera),sum(age>=95 and not male,weights=pondera),
+                                                    fname='active_age_women.csv',mode='a')
             studying: 
 #This module simulates the end of studies of our young population. Starting from age 16, it determines their date of exit of the education system and their attained level of education. 
     #1- We assume all children aged 15 or less are students. We also reset some initial variables. 
@@ -2292,6 +2434,10 @@ entities:
         # We accordingly increase by a quarter their career as an independent worker of the Autonomous workers regime (car_ind) or as a monotributista (car_mono_norref). 
                 - car_ind: if(autonomo==0, car_ind, car_ind+1)
                 - car_mono_norref: if(monotributo==0, car_mono_norref, car_mono_norref+1)
+                - car_post_2003: if(autonomo==0, car_post_2003, 
+                                    car_post_2003+1)
+                - car_post_2003: if(monotributo==0, car_post_2003, 
+                                    car_post_2003+1)
     #2- We then determine each "Monotributista"'s category. For Monotributistas, we only look at Monotributo categories' income limits. 
         #How we compute these limits is explained in my PhD. thesis, Appendix F. 
                 - monotributo_cat: if(monotributo==0, 0, 
@@ -2559,6 +2705,10 @@ entities:
                 #Errors in the pp04d_cod variable with the new version of the EPHc (2016-2017) bar us from identifying workers' economic sector.            
                 - contribution: if(labour_market_state!=1, 3, 
                             if(lag(labour_market_state)==1, contribution, choice([1, 2, 4], [0.5, 0.315, 0.185]))) 
+                - modulo_period: (period) % 4    
+                - max_medio_aguinaldo_gross: if(labour_market_state!=1, 0, 
+                                      if(modulo_period==1 or modulo_period==3,0, 
+                                         MAX_CONTRIBUTIVE_BASE_HIGH/6))
         #The reglamentation of Art. 166 of Law 27430 that determines the new repartition of employers' contributions between the PAMI and the ANSES 
                 #has not been issued at the moment. We thus assume the percentage that goes to the PAMI does not change. It does equal 1.62% of the gross wage 
                 #for workers of the service sector and 1.5% for national civil servants and workers of the primary and secondary sectors. 
@@ -2569,36 +2719,46 @@ entities:
                 #2- The "medio aguinaldo" (half of the thirteenth month paid on June and on December) will not pay employer's contributions for earning below 6000 constant 
                 # October 2017 pesos. Since our variable medio_aguinaldo is divided by 3 to consider it as an average monthly income derived from the thirteenth month, 
                 # the 12000 pesos of non-taxable income, when applied to the "medio aguinaldo", is divided by 6.  
-                #3- Although unclear, limitation number 1 will be applied only after factoring in the thirteenth month.       
+                #3- Although unclear, limitation number 1 will be applied only after factoring in the thirteenth month.
                 #4 - Finally, Art. 167 of Law 27430 restricts the application of the non-taxable income  to workers taken into account by the labour contract Law 20744,
                 # thus excluding civil servants and domestic service workers. Rural workers are explicitly included. 
                 #We do simulate civil servants in this model, so we do not apply non-taxable income to social security contributions made by their employers.
-                - taxable_income: if(labour_market_state!=1, 0, 
-                                    if(period<61,discounted_itl_gross+medio_aguinaldo_gross,
-                                        if(contribution==4, discounted_itl+medio_aguinaldo_gross,
-                                            if((discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_HIGH_2014_T4/6)<= MIN_PENSION_HIGH_2014_T4, MIN_PENSION_HIGH_2014_T4
-                                                ,discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo-NON_TAXABLE_INCOME_HIGH_2014_T4/6
-                                    ))))
+        #Art. 9 of Law 24.241 determines there is a minimum and maximum contributive base, both discounted following pension mobility since March 2009. The ratio between 
+                #those values has remained constant ever since established by ANSES Res. 135/2009 (16/03/2009): 268.06/8711.82. We thus apply it to taxable income for employers 
+                #and employee's contributions		
+                - taxable_income: if(labour_market_state!=1, 0,
+                                    if(period<61 or contribution==4, 
+                                       if(discounted_itl_gross+medio_aguinaldo_gross<= (MAX_CONTRIBUTIVE_BASE_HIGH + max_medio_aguinaldo_gross)*268.06/8711.82,(MAX_CONTRIBUTIVE_BASE_HIGH + max_medio_aguinaldo_gross)*268.06/8711.82,
+                                          discounted_itl_gross+medio_aguinaldo_gross),
+                                             if((discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo_gross-NON_TAXABLE_INCOME_HIGH_2014_T4/6)<= (MAX_CONTRIBUTIVE_BASE_HIGH + max_medio_aguinaldo_gross)*268.06/8711.82, (MAX_CONTRIBUTIVE_BASE_HIGH + max_medio_aguinaldo_gross)*268.06/8711.82
+                                                ,discounted_itl_gross-NON_TAXABLE_INCOME_HIGH_2014_T4 + medio_aguinaldo_gross-NON_TAXABLE_INCOME_HIGH_2014_T4/6
+                                    )))
             #We have a weird bug that automatically transforms global variables of the type 0.195 into 195, although it does not affect values such as 0.18. 
-                    #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.                            
+                    #We thus wrote values of the CONT_PAT global variable in thousands and then divide it by 1000 in our code.
+            #Art. 9 of Law 24.241 specifies there is a maximum taxable wage, above which there are no employee's contributions. Employers' contributions are
+                    #made over the whole gross wage, with no limitations. We thus add this restriction in the code. 
+                - taxable_income_employee: if(labour_market_state!=1, 0, 
+                                              if(discounted_itl_gross+medio_aguinaldo_gross<= (MAX_CONTRIBUTIVE_BASE_HIGH + max_medio_aguinaldo_gross)*268.06/8711.82, (MAX_CONTRIBUTIVE_BASE_HIGH + max_medio_aguinaldo_gross)*268.06/8711.82,
+                                                 if(discounted_itl_gross + medio_aguinaldo_gross<=MAX_CONTRIBUTIVE_BASE_HIGH + max_medio_aguinaldo_gross, discounted_itl_gross+medio_aguinaldo_gross,
+                                                    MAX_CONTRIBUTIVE_BASE_HIGH + max_medio_aguinaldo_gross
+                                                    )
+                                                 )
+                                              )
                 - contribution_sal_SIPA: if(labour_market_state!=1, 0, 
-                                     if(contribution==1, taxable_income*(CONT_PAT_1/1000-0.0162)+(discounted_itl_gross+medio_aguinaldo_gross)*0.11,
-                                        if(contribution==2, taxable_income*(CONT_PAT_2/1000-0.015) +(discounted_itl_gross+medio_aguinaldo_gross)*0.11, 
-                                            taxable_income*(CONT_PAT_4/1000-0.015) +(discounted_itl_gross+medio_aguinaldo_gross)*0.11)))
+                                     if(contribution==1, taxable_income*(CONT_PAT_1/1000-0.0162)+(taxable_income_employee)*0.11,
+                                        if(contribution==2, taxable_income*(CONT_PAT_2/1000-0.015) +(taxable_income_employee)*0.11, 
+                                            taxable_income*(CONT_PAT_4/1000-0.015) +(taxable_income_employee)*0.11)))
                 - contribution_sal_PAMI: if(labour_market_state!=1, 0, 
-                                    if(contribution==1, taxable_income*(0.0162)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03,
-                                        if(contribution==2, taxable_income*(0.015)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03, 
-                                            taxable_income*(0.015)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03)))
-                                            
-               
-                # On inclut dans les contributions de santé ce qui va aux obras sociales (90% du total) et au Fonds Solidaire de Redistribution (10% du total). Il peut être intéressant de les étudier séparément, 
-                #notamment suivant les ballons d'essai concernant l'élimintation des contributions au FSR. Nous décidons ici de ne pas les distinguer. 
+                                    if(contribution==1, taxable_income*(0.0162)+(taxable_income_employee)*0.03,
+                                        if(contribution==2, taxable_income*(0.015)+(taxable_income_employee)*0.03, 
+                                            taxable_income*(0.015)+(taxable_income_employee)*0.03)))
+                
                 #We add up in healthcare contributions (contribution_sal_obra_social) what goes to the "obras sociales" (90% of the total) with what goes to the Solidarity Redistribution
                         #Fund ("Fondo Solidario de Redistribución"). It is possible to separate these contributions at this step, but we choose not to since we focus on the ANSES. 
                 - contribution_sal_obra_social: if(labour_market_state!=1, 0, 
-                                                if(contribution==1, taxable_income*(0.06)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03,
-                                                    if(contribution==2, taxable_income*(0.06)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03, 
-                                                        taxable_income*(0.06)+(discounted_itl_gross+medio_aguinaldo_gross)*0.03))) 
+                                                if(contribution==1, taxable_income*(0.06)+(taxable_income_employee)*0.03,
+                                                    if(contribution==2, taxable_income*(0.06)+(taxable_income_employee)*0.03, 
+                                                        taxable_income*(0.06)+(taxable_income_employee)*0.03))) 
                 - contribution_sal_tot: contribution_sal_SIPA+contribution_sal_PAMI+contribution_sal_obra_social
                 
                 
@@ -2610,16 +2770,23 @@ entities:
                         sum(contribution_aut_SIPA*pondera)/1000, sum(contribution_mono_SIPA*pondera)/1000,sum(mono_integrated_tax*pondera)/1000,
                                 fname='high_SIPA_income.csv',mode='a')
     #7 -We track the cost of the change in contribution rates and of the reduction of employers contributions established by Law 27430.
-                - old_contribution_sal_SIPA: if(labour_market_state!=1, 0, 
-                                                if(contribution==1,(discounted_itl_gross+medio_aguinaldo_gross)*(0.11+0.21-0.0162),
-                                                    (discounted_itl_gross+medio_aguinaldo_gross)*(0.11+0.17-0.015)
+                - old_taxable_income: if(labour_market_state!=1, 0,
+                                       if(discounted_itl_gross+medio_aguinaldo_gross<= MAX_CONTRIBUTIVE_BASE_HIGH*268.06/8711.82, MAX_CONTRIBUTIVE_BASE_HIGH*268.06/8711.82,
+                                          discounted_itl_gross+medio_aguinaldo_gross)
+                                        )
+                - old_contribution_sal_SIPA: contribution_sal_SIPA
+                - old_contribution_sal_PAMI: contribution_sal_PAMI
+                - old_contribution_sal_obra_social: contribution_sal_obra_social
+                - old_contribution_sal_SIPA: if(labour_market_state!=1 or period<61, old_contribution_sal_SIPA, 
+                                                if(contribution==1,taxable_income_employee*0.11 + old_taxable_income*(0.21-0.0162),
+                                                    taxable_income_employee*0.11 + old_taxable_income*(0.17-0.015)
                                                    ))
                 - old_contribution_sal_PAMI: if(labour_market_state!=1, 0, 
-                                                if(contribution==1, (discounted_itl_gross+medio_aguinaldo_gross)*(0.03+0.0162), 
-                                                    (discounted_itl_gross+medio_aguinaldo_gross)*(0.03+0.015)
+                                                if(contribution==1, taxable_income_employee*0.03 + old_taxable_income*0.0162, 
+                                                    taxable_income_employee*0.03 + old_taxable_income*0.015
                                                    ))
                 - old_contribution_sal_obra_social: if(labour_market_state!=1, 0, 
-                                                        (discounted_itl_gross+medio_aguinaldo_gross)*(0.03+0.06)
+                                                        taxable_income_employee*0.03 + old_taxable_income*0.06
                                                        )
                 - csv(period,sum(old_contribution_sal_SIPA*pondera)/1000-sum(contribution_sal_SIPA*pondera)/1000,
                             sum(old_contribution_sal_PAMI*pondera)/1000-sum(contribution_sal_PAMI*pondera)/1000,
@@ -2630,6 +2797,9 @@ entities:
         #pensions after the five-year penalty period has passed). 
     #1- We first actualise the formal wage-earner careers of individuals in our database.     
                 - car_sal: if(labour_market_state==1,car_sal+1,car_sal)
+                - car_post_2003: if(labour_market_state==1, car_post_2003+1, 
+                                    car_post_2003)
+                        
         #It is worthy to note the discounting index used by ANSES before 2016 (used in variable lag_sal) and the new post 2016 discounting index (lag_sal_2) are identical
                 #since the implementation of the pension mobility law in March 2009. Therefore, the difference between these two ways to compute retirement pensions will 
                 #quickly fade over time for new retirement benefits. This is also why we do not distinguish them neither in our "globals" file nor in the new 
@@ -2831,7 +3001,8 @@ entities:
                                                 gross_retirement_2)),
                                                     gross_retirement_2)
     #3- We compute pensions obtained through the Law 26970 moratorium. It is accessible for men and women since September 2014 and until September 2016 for the former, 
-            #July 2019 for the latter. I
+            #July 2019 originally for the latter. Access to the 26970 moratorium for women has since been extended indefinitely, so the only real constraint is 
+            #buying back years only until 31/12/2003.
         #First, it is means-tested. As said in Art. 8 of Law 26970 : 
             #"The means-test (...) will be positive when the person asking for a pension does not verify the following elements: 
             #a) Gross yearly income earned, in the last twelve months before the evaluation date, whose mean is higher than the right to recieving a family pension as 
@@ -2841,9 +3012,12 @@ entities:
                 - new_moratoria: if(liqui_retirement, False, 
                                     if(new_contributory_pension, False, 
                                         if(age<60 or (age<65 and male), False, 
-                                            if(period>=67 or (male and period>=56) or period<48, False,
-                                                if(((car_sal + car_ind + car_mono_norref)<(120-extra_trim/2)),True
-                                                    ,False)))))
+                                            if((male and period>=56) or period<48, False,
+                                                if(((car_sal + car_ind + car_mono_norref)>=(120-extra_trim/2)),False, 
+
+                                                   if((age_quarters-18*4-(period-4))>=(120-extra_trim/2), True,
+                                                        if((age_quarters-18*4-(period-4)+car_post_2003)>=(120-extra_trim/2), True,
+                                    False))))))) 
             # IGF stands for family-group income. The means-test we apply here is that if someone in the household earns more than the maximum individual income cap 
                     #or if the IGF exceeds the maximum household income cap for earning a family benefit, then that person cannot have a moratorium pension. 
                 - igf: household.igf_hh                                
@@ -2875,7 +3049,7 @@ entities:
                 - moratorium_date: if(new_contributory_pension, -1, moratorium_date)                
                 - new_moratoria: if(moratorium_date==0 or moratorium_date==-1, False, new_moratoria)
                 - liqui_retirement: if(new_moratoria or new_contributory_pension,True,liqui_retirement)
-               #Now we compute the moratorium pension earned by the beneficiaries. These are, following our hypothesis, either 80% of the minimum pension or the minimum
+               #3.2. Now we compute the moratorium pension earned by the beneficiaries. These are, following our hypothesis, either 80% of the minimum pension or the minimum
                         #pension. As such, we do not need to increase them every period following the pension mobility index, as this is already done in our globals file. 
                 - moratorium_value: if(moratorium_date==0 or moratorium_date==-1, 0,
                                         if(new_moratoria, MIN_PENSION_HIGH_2014_T4*0.8,
@@ -2883,14 +3057,17 @@ entities:
                 - gross_retirement: if(moratorium_date==0 or moratorium_date==-1, gross_retirement, moratorium_value)
                 - gross_retirement_2: if(moratorium_date==0 or moratorium_date==-1, gross_retirement_2, moratorium_value)
     #4- We compute universal pension beneficiaries. These pensions were given starting from period 56 (fourth quarter of 2016) to people aged 65 or more 
-                #that did not have any other retirement pension (survivors pensions can be accumulated with a universal benefit).  
+                #that did not have any other retirement pension (survivors pensions can not be accumulated with a universal benefit).  
                 - new_pension_uni: if(period<56, False, 
-                                    if(liqui_retirement or gross_retirement>0,False, 
+                                    if(liqui_retirement or gross_retirement>0 or gross_pension>0,False, 
                                         if(age>=65, True,False)))
                 - tag_pension_uni: if(new_pension_uni, True,
                                       if(new_contributory_pension, False,
-                                         if(liqui_retirement,False, 
-                                            tag_pension_uni)))
+                                         if(liqui_retirement,False,
+
+                                            if(gross_pension>0, False, 
+                                                tag_pension_uni
+                                     ))))      
         #The 2019 budget Law 27467 forbids formal workers from earning the universal pension, except those in the social monotributo program. 
                 - forbid_pension_uni: if(period<65, False, 
                                           if(labour_market_state==1 or labour_market_state==2, True, 
@@ -3072,16 +3249,19 @@ entities:
                 - no_mono_benefit: if(mother.labour_market_state==1 or father.labour_market_state==1, True, 
                                             if(father.lag_count_ind_1==1 or mother.lag_count_ind_1==1, True, 
                                                 False))
+                #There is not, however, a clear and constant criterium to determine which monotributo category gets what family benefit, and there is even a significant intra-year
+                # volatility (for instance, on June 2021 Category D got the highest family benefit, but on September 2021 it went down a category). For the sake of simplicity, 
+                # and given how on average these benefits were given, we consider categories A to D get the highest benefit; Category E, the second best; F, the second lowest; and G and H, the lowest.
                 - child_benefit: if(father_id==UNSET or mother_id==UNSET, 0, 
                                     if(no_mono_benefit, child_benefit, 
                                         if(age>=18 or labour_market_state==1 or labour_market_state==2  or lag_count_ind_1==1 or lag_mono_1==1, 0,
                                             if(period<54 or child_benefit>0, child_benefit,
                                                 if(household.wage_earners_hh>0 or household.autonomous_hh>0 or household.monotributistas_hh==0, child_benefit, 
                                                     if(household.max_monotributo_cat_hh==9 or mother.monotributo_cat==9 or father.monotributo_cat==9, child_benefit, 
-                                                        if(household.max_monotributo_cat_hh==8 or mother.monotributo_cat==8 or father.monotributo_cat==8, CHILD_BEN_HIGH_4, 
-                                                            if(household.max_monotributo_cat_hh==7 or mother.monotributo_cat==7 or father.monotributo_cat==7, CHILD_BEN_HIGH_3, 
-                                                                if(household.max_monotributo_cat_hh==6 or mother.monotributo_cat==6 or father.monotributo_cat==6, CHILD_BEN_HIGH_2, 
-                                                                    if(household.max_monotributo_cat_hh<=5 and household.max_monotributo_cat_hh>=1, CHILD_BEN_HIGH_1,
+                                                        if(household.max_monotributo_cat_hh>=7 or mother.monotributo_cat>=7 or father.monotributo_cat>=7, CHILD_BEN_HIGH_4, 
+                                                            if(household.max_monotributo_cat_hh==6 or mother.monotributo_cat==6 or father.monotributo_cat==6, CHILD_BEN_HIGH_3, 
+                                                                if(household.max_monotributo_cat_hh==5 or mother.monotributo_cat==5 or father.monotributo_cat==5, CHILD_BEN_HIGH_2, 
+                                                                    if(household.max_monotributo_cat_hh<=4 and household.max_monotributo_cat_hh>=1, CHILD_BEN_HIGH_1,
                                                                         child_benefit))))))))))
                                                 
         #We then compute child benefits for children for whom we don't know who at least one of their parents is. We use only the family-group income to perform 
@@ -3100,10 +3280,10 @@ entities:
                                             if(period<54, child_benefit,
                                                 if(household.wage_earners_hh>0 or household.autonomous_hh>0 or household.monotributistas_hh==0, child_benefit, 
                                                     if(household.max_monotributo_cat_hh==9 or mother.monotributo_cat==9 or father.monotributo_cat==9, child_benefit, 
-                                                        if(household.max_monotributo_cat_hh==8 or mother.monotributo_cat==8 or father.monotributo_cat==8, CHILD_BEN_HIGH_4, 
-                                                            if(household.max_monotributo_cat_hh==7 or mother.monotributo_cat==7 or father.monotributo_cat==7, CHILD_BEN_HIGH_3, 
-                                                                if(household.max_monotributo_cat_hh==6 or mother.monotributo_cat==6 or father.monotributo_cat==6, CHILD_BEN_HIGH_2, 
-                                                                    if(household.max_monotributo_cat_hh<=5 and household.max_monotributo_cat_hh>=1, CHILD_BEN_HIGH_1,
+                                                        if(household.max_monotributo_cat_hh>=7 or mother.monotributo_cat>=7 or father.monotributo_cat>=7, CHILD_BEN_HIGH_4, 
+                                                            if(household.max_monotributo_cat_hh==6 or mother.monotributo_cat==6 or father.monotributo_cat==6, CHILD_BEN_HIGH_3, 
+                                                                if(household.max_monotributo_cat_hh==5 or mother.monotributo_cat==5 or father.monotributo_cat==5, CHILD_BEN_HIGH_2, 
+                                                                    if(household.max_monotributo_cat_hh<=4 and household.max_monotributo_cat_hh>=1, CHILD_BEN_HIGH_1,
                                                                         child_benefit)))))))))                                               
     #5- We compute the Universal Child Benefit or AUH. It is open to the children of parents that are both either unregistered workers or unemployed. 
             #Children that do not attend school, are married or formal workers are excluded from the AUH. 
@@ -3151,7 +3331,7 @@ entities:
                 - auh: if(auh<=0, auh,
                             if(period==66, 727.85, 
                                 if(period==67, 666.98,
-                                    if(period==68, 583.17, 
+                                    if(period==68, 584.93, 
                                          auh)))) 
                 - auh: if(auh==0, auh, 
                             auh+temporary_auh_bonus)
@@ -3239,18 +3419,31 @@ entities:
         # Individuals that have a contributory benefit either have a retirement or a survivor's pension.   
                 - has_contributory_retirement: if(retirement_pension<=0, False, 
                                                     if(moratorium_date>0, False, 
-                                                        if(universal_net_pension>0, False, 
-                                                                True)))
-                - has_survivors_benefit: if(survivors_benefit>0, True, 
-                                            False)
+
+
+                                                        if(universal_net_pension>0, False,
+                                                            if(tag_initial_moratorium, False,
+                                                                True))))
+                - has_survivors_benefit: if(survivors_benefit>0, True,
+
+                                            if(tag_second_pension, True, 
+                                                False
+                                            ))
+                - has_contributory_survivors_benefit: if(not has_survivors_benefit, False,  
+                                                            if(moratorium_survivor_pensioner, False,
+                                                                if(tag_second_pension_moratorium, False, 
+                                                                    True)
+                                                        ))
                 - has_contributory_benefit: if(has_contributory_retirement, True, 
-                                                if(has_survivors_benefit, True, 
+                                                if(has_contributory_survivors_benefit, True, 
                                                     False))
         # For the moratorium benefits, our model has trouble identifying beneficiaries of 2006 moratorium pensions since by 2014 they all received a 
             #normal pension equal at least to the minimum pension. This boolean therefore mainly identifies beneficiaries of the 2014 pension moratorium.  
                 - has_moratorium_pension: if(discounted_v2_m==0, False, 
-                                        if(moratorium_date>0, True,
-                                            False))
+                                                if(moratorium_date>0, True,
+
+                                                    if(tag_initial_moratorium, True, 
+                                            False)))      
                 - has_universal_pension: if(universal_net_pension==0, False, 
                                         True)
                 - has_retirement_pension: if(has_contributory_retirement, True, 
@@ -3384,6 +3577,17 @@ entities:
                                             filter=age>=65 and (discounted_itl+all_pension_income+discounted_v5_m)!=0,weights=pondera)
                 - gini_65_has_income_non_labour: gini(all_pension_income+discounted_v5_m+temporary_pension_bonus,
                                             filter=age>=65 and (all_pension_income+discounted_v5_m)!=0,weights=pondera)
+               #The new Law 27.609 formula follows closely Law 26.417 mobility: we need to input the evolution of total retirement and survivors' benefits paid, as they
+                    #determine part of the mobility. Non-SIPA benefits, such as family benefits, do not count. 
+                # There are two reglamentation hypotheses: we either adopt Res. 6/2009, as with Law 26.417, and only take contributory SIPA benefits (so no moratorium
+                        #pensions and no PUAM); or we take all benefits (including the PUAM and moratorium pensions). We thus export total SIPA beneficiaries and 
+                        #benefits, non-moratorium SIPA benefits; as well as PUAM benefits, for the sake of descriptive statistics. 
+                - total_sipa_beneficiaries: sum(has_any_benefit, weights=pondera)
+                - total_sipa_benefits: sum(has_retirement_pension,weights=pondera) + sum(has_survivors_benefit and not tag_second_pension,weights=pondera) + sum(tag_second_pension,weights=pondera)
+                - total_sipa_non_moratorium_beneficiaries: sum(has_contributory_retirement or has_contributory_survivors_benefit, weights=pondera)
+                - total_sipa_non_moratorium_benefits: sum(has_contributory_retirement,weights=pondera) + sum(has_contributory_survivors_benefit and not tag_second_pension, weights=pondera) 
+                                                           + sum(tag_second_pension and not tag_second_pension_moratorium,weights=pondera)
+                - total_PUAM_benefits: sum(has_universal_pension,weights=pondera)
                 - csv(period, contributory_pensioners_share, moratorium_pensioners_share, universal_pensioners_share,
                             retirement_coverage_legal_age,retirement_coverage_65,all_coverage_legal_age,all_coverage_65,contributory_coverage_legal_age,contributory_coverage_65,survivors_coverage_legal_age,survivors_coverage_65,moratorium_coverage_legal_age,moratorium_coverage_65,PUAM_coverage_legal_age,PUAM_coverage_65,
                                 mean_contributory_retirement,mean_survivors_pension, mean_moratorium_pension, mean_universal_pension, mean_retirement_pension, mean_pension_benefit,
@@ -3392,6 +3596,7 @@ entities:
                                             child_benefit_coverage, contributory_child_benefit_coverage, auh_coverage,
                                                 gini_ret_age_all, gini_ret_age_non_labour, gini_65_all, gini_65_non_labour,
                                                     gini_ret_age_has_income_all, gini_ret_age_has_income_non_labour, gini_65_has_income_all, gini_65_has_income_non_labour,
+                                                        total_sipa_beneficiaries,total_sipa_benefits,total_sipa_non_moratorium_beneficiaries,total_sipa_non_moratorium_benefits,total_PUAM_benefits,
                                             fname='adequacy_high.csv',mode='a')
             temporary_measures_pensions: 
             #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri government. 
@@ -3427,8 +3632,9 @@ entities:
         # For the moratorium benefits, our model has trouble identifying beneficiaries of 2006 moratorium pensions since by 2014 they all received a 
             #normal pension equal at least to the minimum pension. This boolean therefore mainly identifies beneficiaries of the 2014 pension moratorium.  
                 - has_moratorium_pension: if(discounted_v2_m==0, False, 
-                                        if(moratorium_date>0, True,
-                                            False))
+                                             if(moratorium_date>0, True,
+                                                if(tag_initial_moratorium, True, 
+                                            False)))
 
                 - has_universal_pension: if(universal_net_pension==0, False, 
 
@@ -3441,7 +3647,8 @@ entities:
                 - has_any_benefit: if(has_retirement_pension, True, 
                                         if(has_survivors_benefit, True, 
                                             False))
-     #In our model, we take as the first quarter of 2018 pension, the one paid in February 2018. So the March 2018 nominal increase only appears in 
+    # 3- Temporary pension bonuses
+            #In our model, we take as the first quarter of 2018 pension, the one paid in February 2018. So the March 2018 nominal increase only appears in 
                         #period 62, the second quarter of 2018. As such, even though the bonus was paid on March 2018, we add it only on the second quarter of 2018. 
                 #To determine the real value of the bonus, we proceed as such: the $10,000 pesos limit is applied to the pension earned in the second quarter of 2018, 
                         # discounted following May 2018 inflation: we thus divide the pension limit with the CPI index value of May 2018. This equals $4317.05 November 
@@ -3451,14 +3658,14 @@ entities:
                         #Thus, contributory retirement pensioners get $339.55, while moratorium and universal pensioners get half this bonus, $169.78.
                 #We also divide by three this bonus: it was paid on a single month, and the pension variable for a given period is the mean pension during a quarter.
                 - decree_1058_2017_bonus: if(period!=62, 0, 
-                                            if(disc_cost_v2_m>4317.05, 0,
+                                            if(disc_cost_v2_m_2>4317.05, 0,
                                                if(has_contributory_benefit, 339.55/3, 
                                                 if(has_moratorium_pension or has_universal_pension, 169.78/3,
                                                     0))))
                 - temporary_pension_bonus: decree_1058_2017_bonus
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
-            #hypotetical bonuses in the future. As suchk, we simply export in a separate csv file the cost of temporary pension bonuses. 
+            #hypotetical bonuses in the future. As such, we simply export in a separate csv file the cost of temporary pension bonuses. 
                 - csv(period,sum(temporary_pension_bonus*pondera)/1000,sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==339.55/3)/1000,
                                 sum(temporary_pension_bonus*pondera,filter=decree_1058_2017_bonus==169.78/3)/1000,
                                                 fname='temporary_pension_bonus_high.csv',mode='a')
@@ -3524,7 +3731,7 @@ simulation:
                 #Until we find a workaround / a future LIAM2 update fixes this issue, we need to keep the (useless) output dataset. 
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
-    start_period: 49 
+    start_period: 49
     periods: 104
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
