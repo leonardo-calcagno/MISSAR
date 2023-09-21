@@ -23,7 +23,7 @@ gs4_auth() #Connection to google account
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
-setwd("C:/Users/lcalcagno/Documents/Investigaci贸n/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci髇/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
@@ -81,7 +81,7 @@ download.file(
 
 rm(correct_CPI_url,alt_CPI_url,CPI_url,current_month_exists,last_month_exists)
 
-df_latest_CPI<-read_excel("latest_CPI.xls",sheet="脥ndices IPC Cobertura Nacional") %>% 
+df_latest_CPI<-read_excel("latest_CPI.xls",sheet="蚽dices IPC Cobertura Nacional") %>% 
   rename(CPI_index_type=1) %>%  #Rename the first column
   subset(CPI_index_type=="Nivel general") %>% 
   mutate(CPI_region=ifelse(row_number(CPI_index_type)==1, "Nacional",
@@ -222,7 +222,7 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 start.time=Sys.time()
 
 ##Go to the folder with updated AIF files (see download_all_AIF)
-setwd("C:/Users/lcalcagno/Documents/Investigaci贸n/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci髇/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
 getwd()
 ###The only month that does not work is January 2000, it is a weird xml file. You need to open it with 
@@ -494,7 +494,7 @@ concept_names<- as.data.frame(df_AIF$concepto) %>%
 view(concept_names)
 
 ##Update global----
-#Here, we are only interested in ANSES fiscal income, used for pension mobiliy computation. 
+#Here, we are only interested in ANSES fiscal income, used for pension mobility computation. 
 
 
 
@@ -531,7 +531,7 @@ head(time.taken)
 
 #On 4 GB Ram laptop, 2 minutes. 
 start.time=Sys.time()
-setwd("C:/Users/lcalcagno/Documents/Investigaci贸n/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci髇/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
 
@@ -995,7 +995,7 @@ remDr$findElement(using="xpath",value=previous_page)$clickElement() #Here you cl
 
 #Cleanup -----
 rm(output_name,sheet_name)
-setwd("C:/Users/lcalcagno/Documents/Investigaci贸n/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci髇/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 unlink("download_folder",recursive=TRUE)
 rm(list=ls())
