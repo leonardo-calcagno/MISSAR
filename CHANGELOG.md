@@ -62,18 +62,21 @@ Version 1.3.
 
 Version 1.4. (ongoing)
 - Corrected various globals errors, including Law 26.417 pension mobility formula computation
-- Macro for family links determination for post 2016 EPH dataset
 - 2021 temporary benefits taken into account: doubling of family benefits, pension bonuses...
-- Take into account 2022 temporary benefits:
 - Correct birth module, making child-bearing probability conditional on current number of children
 - Correct major birth probability error in p_birth_f3.csv; also, stop dividing by 4 for quarterly probabilities of giving birth
 - Add Decree 475/2021 quarter validation for women depending on total children, and number of children with AUH
 - Generate and handle globals with R and google drive
 - Handle MISSAR results with R and google drive
 - Include 2022 proposed pension moratorium legislation
-- Updated economic data: 
+- Manually updated economic data: 
 	* Autonomous and monotributista information up to February 2022
 	* Gender of autonomous and monotributistas workers measured for December 2021 (BESS)
-	* EPH survey up to fourth quarter of 2021
-	* CPI up to April 2022
-	* Wages up to March 2022
+- Data scraping for automatic calibration data updates: 
+	* CPI, RIPTE and INDEC wage indexes
+	* ANSES fiscal income , from Savings-Investment-Accounts
+	* Social security contributions (AFIP)
+	* Ongoing: ANSES benefits, with Selenium
+- Migration from SAS to R:
+	* Alignment tables from the EPH dataset (2003-2023)
+	* Macro for family links determination for post 2016 EPH dataset
