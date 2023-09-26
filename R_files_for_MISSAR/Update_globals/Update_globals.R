@@ -1,4 +1,5 @@
-# Packages -----------------
+#Load workspace------
+##Packages -----
 rm(list=ls())
 gc()
 
@@ -595,6 +596,7 @@ list_xls_post_2017<-df_list_xls %>%
   t() %>% 
   as.character()
 
+
 read_cuadro_8<-function(path){
   nm_8 <- try(grep("Cuadro 8", excel_sheets(path), 
                ignore.case = TRUE, value = TRUE)
@@ -694,6 +696,62 @@ df_post_2017<-df_post_2017 %>%
 #Time series of monthly ANSES contributions, in millions of current pesos
 df_ANSES_contributions<-rbind(df_2003_2016,df_post_2017) 
 
+##Independent workers -----
+  #We made the historical excel manually with data from https://www.afip.gob.ar/estudios/anuario-estadisticas-tributarias/ 
+     #from 1998 to 2003.
+  #The objective here is to get these cal_auton_h_p , cal_auton_f_p, cal_mono_h_p and cal_mono_f_p alignment tables automatically. 
+#We take from the same excel than social security contributions the amount of autonomous workers and monotributistas since 2003.
+
+read_cuadro_1<-function(path){
+  nm_1 <- try(grep("Cuadro 1", excel_sheets(path), 
+                   ignore.case = TRUE, value = TRUE)
+  )
+  nm_1<-nm_1[[1]]
+  x <- try(read_excel(path=path, sheet = nm_1))#No relevant information, and sometimes causes bugs
+}
+###2003-2017 files ------
+
+gc()
+df_list_2003_2008_ind<-sapply(list_xls_pre_2008,read_cuadro_1,simplify=FALSE)#This keeps the file names 
+
+drop_all_na<-function(indata){
+  outdata<-indata[,colSums(is.na(indata))<nrow(indata)] #Drop cols with all missing
+  outdata<-outdata[rowSums(is.na(outdata))<ncol(outdata),] #Drop rows with all missing
+}
+
+format_cuadro_1_monthly<-function(indata){
+  
+  has_num<-colSums(mapply(grepl,"[0-9]",indata)) #Detects, for each column, how many lines have at least one integer
+  has_char<-colSums(mapply(grepl,"^[A-Za-z]",indata)) #Detects, for each column, how many lines have at least one character
+  output<-indata[,has_char>4 | has_num>=8] %>%  #Relevant columns have at least 5 lines with text or 8 lines with integers
+    as.data.frame() %>% 
+    drop_all_na()
+  
+  is_percent<-colSums(mapply(grepl,"VARIAC|Variac",output))#We take out columns with percent variations
+  output<-output[,!is_percent] 
+  if(nrow(output)==22){ #Two dfs have useless information in the first row, we trim them
+    output<-output[2:nrow(output),]
+  }
+  output<-output
+}
+
+df_list_2003_2008_ind<-sapply(df_list_2003_2008_ind,format_cuadro_1_monthly,simplify=FALSE)
+gc()
+first_col<-df_list_2003_2008_ind[[1]] %>% 
+  rename(indep_type=1, 
+         subsystem=2)
+for (i in 2:length(df_list_2003_2008_ind)){
+  extract_data<-df_list_2003_2008_ind[[i]] %>% 
+    select(c(3))
+  first_col<-first_col %>% 
+    cbind(extract_data)
+}
+df_indep_2003_2008<-first_col #Monthly information on registered independent workers
+rm(first_col,i,extract_data,path,nm_1)
+
+
+#filter(!if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
+
 ##Update globals file -----
 
 vector_ANSES_contributions<-df_ANSES_contributions %>% 
@@ -711,7 +769,6 @@ rm(list=ls(pattern="*list_"))
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
-
 
 
 #ANSES benefits-----
