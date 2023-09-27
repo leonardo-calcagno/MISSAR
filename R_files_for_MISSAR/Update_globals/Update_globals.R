@@ -552,11 +552,9 @@ start.time=Sys.time()
 setwd("C:/Users/lcalcagno/Documents/Investigación/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
-
+##Load bulletin files----
 #List all social-security bulletin excel files
 list_xls<-list.files(pattern='*.xls')
-
-
 ###Import all downloaded excel files (from https://stackoverflow.com/questions/32888757/how-can-i-read-multiple-excel-files-into-r)
 
 #Social security contributions for ANSES are always on sheet "Cuadro 9" from May 2003 to November 2008; 
@@ -709,33 +707,66 @@ read_cuadro_1<-function(path){
   nm_1<-nm_1[[1]]
   x <- try(read_excel(path=path, sheet = nm_1))#No relevant information, and sometimes causes bugs
 }
+
 ###2003-2017 files ------
 
 gc()
 df_list_2003_2008_ind<-sapply(list_xls_pre_2008,read_cuadro_1,simplify=FALSE)#This keeps the file names 
+df_list_2008_2016_ind<-sapply(list_xls_2008_2016,read_cuadro_1,simplify=FALSE)#This keeps the file names 
+correct<-df_list_2008_2016_ind$"2013_07.xls" %>% 
+  select(-c(1,2))#There are two columns with useless data in this excel
+df_list_2008_2016_ind$"2013_07.xls"<-correct
+rm(correct)
+
+df_list_post_2017_ind<-sapply(list_xls_post_2017,read_cuadro_1,simplify=FALSE)#This keeps the file names 
 
 drop_all_na<-function(indata){
   outdata<-indata[,colSums(is.na(indata))<nrow(indata)] #Drop cols with all missing
   outdata<-outdata[rowSums(is.na(outdata))<ncol(outdata),] #Drop rows with all missing
 }
-
-format_cuadro_1_monthly<-function(indata){
-  
+format_cuadro_1_monthly<-function(indata,corr_nrow){
+ # for(i in 1:length(df_list_2008_2016_ind)){
+ # indata<-df_list_2008_2016_ind[[i]]
+#  corr_nrow<-99
   has_num<-colSums(mapply(grepl,"[0-9]",indata)) #Detects, for each column, how many lines have at least one integer
   has_char<-colSums(mapply(grepl,"^[A-Za-z]",indata)) #Detects, for each column, how many lines have at least one character
-  output<-indata[,has_char>4 | has_num>=8] %>%  #Relevant columns have at least 5 lines with text or 8 lines with integers
+  output<-indata[,has_char>4 | has_num>=6] %>%  #Relevant columns have at least 5 lines with text or 8 lines with integers
     as.data.frame() %>% 
     drop_all_na()
   
   is_percent<-colSums(mapply(grepl,"VARIAC|Variac",output))#We take out columns with percent variations
   output<-output[,!is_percent] 
-  if(nrow(output)==22){ #Two dfs have useless information in the first row, we trim them
+  if(nrow(output)==corr_nrow){ #Two dfs have useless information in the first row, we trim them
     output<-output[2:nrow(output),]
   }
-  output<-output
+  output<-output %>% 
+    drop_all_na()
+  #print(i)
+#  }
 }
+df_list_2003_2008_ind<-sapply(df_list_2003_2008_ind,format_cuadro_1_monthly,22,simplify=FALSE)
+df_list_2008_2016_ind<-sapply(df_list_2008_2016_ind,format_cuadro_1_monthly,99,simplify=FALSE)
+get_contributors_monthly<-function(indata){
+  output<-indata %>% 
+    subset(!is.na(.[[2]]))#Keep, from second column, only non-missing lines
+  #We want an output with 9 rows, so we can cbind() later in one data frame  
+  if(nrow(output)<9){
+     output<-NA %>% #First row normally includes the month
+       rbind(output)  
+  }
+  if(nrow(output)==8) #This happens for later datasets, where "cotizantes totales seguridad social" are no longer informed 
+  {first_half<-output[1:3,]
+  second_half<-output[4:nrow(output),]
+  output<-first_half %>% 
+    rbind(NA) %>% 
+    rbind(second_half)
+  }
+  output<-output
+  
+}
+df_list_2008_2016_ind<-sapply(df_list_2008_2016_ind,get_contributors_monthly,simplify=FALSE)
+df_list_post_2017_ind<-sapply(df_list_post_2017_ind,format_cuadro_1_monthly,99,simplify=FALSE)
 
-df_list_2003_2008_ind<-sapply(df_list_2003_2008_ind,format_cuadro_1_monthly,simplify=FALSE)
 gc()
 first_col<-df_list_2003_2008_ind[[1]] %>% 
   rename(indep_type=1, 
@@ -747,7 +778,28 @@ for (i in 2:length(df_list_2003_2008_ind)){
     cbind(extract_data)
 }
 df_indep_2003_2008<-first_col #Monthly information on registered independent workers
-rm(first_col,i,extract_data,path,nm_1)
+rm(first_col,i,extract_data)
+
+first_col<-df_list_2008_2016_ind[[1]] %>% 
+  select(c(1)) %>% 
+  rename(indep_type=1) %>% 
+  mutate(indep_type=ifelse(row_number()==1, "Mes", 
+                           ifelse(row_number()==2, "Anio", 
+                                  indep_type)
+                           )
+  )
+
+for (i in 1:length(df_list_2008_2016_ind)){
+  print(i)
+  extract_data<-df_list_2008_2016_ind[[i]] %>% 
+    select(c(2))
+  first_col<-first_col %>% 
+    cbind(extract_data)
+}
+
+df_indep_2008_2016<-first_col #Monthly information on registered independent workers
+rm(first_col,i,extract_data)
+
 
 
 #filter(!if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
