@@ -23,7 +23,7 @@ gs4_auth() #Connection to google account
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
@@ -99,7 +99,7 @@ download.file(
 
 rm(correct_CPI_url,alt_CPI_url,CPI_url,current_month_exists,last_month_exists)
 ##Update sheet----
-df_latest_CPI<-read_excel("latest_CPI.xls",sheet="Índices IPC Cobertura Nacional") %>% 
+df_latest_CPI<-read_excel("latest_CPI.xls",sheet="?ndices IPC Cobertura Nacional") %>% 
   rename(CPI_index_type=1) %>%  #Rename the first column
   subset(CPI_index_type=="Nivel general") %>% 
   mutate(CPI_region=ifelse(row_number(CPI_index_type)==1, "Nacional",
@@ -240,7 +240,7 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 start.time=Sys.time()
 
 ##Go to the folder with updated AIF files (see download_all_AIF)
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
 getwd()
 ###The only month that does not work is January 2000, it is a weird xml file. You need to open it with 
@@ -549,7 +549,7 @@ head(time.taken)
 
 #On 4 GB Ram laptop, 2 minutes. 
 start.time=Sys.time()
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
 ##Load bulletin files----
@@ -809,7 +809,6 @@ first_col<-df_list_post_2017_ind[[1]] %>%
 first_col<-rbind(c("Year"),first_col) #Add year in first row
 first_col[[2,1]]<-"Month"
 for (i in 1:length(df_list_post_2017_ind)){
-  i<-1
 format_df<-df_list_post_2017_ind[[i]]
 format_df<-format_df %>% 
   subset(!is.na(.[[2]])) %>% #Keep, from second column, only non-missing lines
@@ -820,6 +819,57 @@ first_col<-first_col %>%
 }
 df_indep_post_2017<-first_col
 rm(first_col,format_df,i)
+format_aportantes<-function(indata,last_row){
+  df_aportantes<-indata[1:last_row,] 
+  df_aportantes<-df_aportantes %>% 
+    t() %>% 
+    as.data.frame() %>% 
+    subset(grepl(pattern="[0-9]",.[[3]],ignore.case=TRUE))
+  if(ncol(df_aportantes)==5){
+    df_aportantes<-df_aportantes %>% 
+      rename(mes=1,
+             anio=2,
+             aportantes=3,
+             cot_tot_ss=4,
+             cot_SIPA=5
+      )
+  }
+  if(ncol(df_aportantes)==4){
+    df_aportantes[,5]<-NA
+    df_aportantes<-df_aportantes %>% 
+      rename(mes=2,
+             anio=1,
+             aportantes=3,
+             cot_SIPA=4,
+             cot_tot_ss=5
+      ) %>% 
+      select(c(mes,anio,aportantes,cot_tot_ss,cot_SIPA))
+    
+  }
+ df_aportantes<-df_aportantes %>% 
+    mutate(anio=gsub(pattern="[A-Z]",replacement="",ignore.case=TRUE,anio),
+           across(-c(mes),~as.integer(.x)))
+  
+}
+
+df_aportantes_2003_2008<-format_aportantes(df_indep_2003_2008,5)
+df_aportantes_2008_2016<-format_aportantes(df_indep_2008_2016,5)
+df_aportantes_post_2017<-format_aportantes(df_indep_post_2017,4)
+df_aportantes<-df_aportantes_2003_2008 %>% 
+  rbind(df_aportantes_2008_2016) %>% 
+  rbind(df_aportantes_post_2017)
+rm(df_aportantes_2003_2008,df_aportantes_2008_2016,df_aportantes_post_2017)
+
+
+
+get_href<-function(html){
+  pg<-read_html(html)
+  
+  vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+}
+URL<-"https://www.trabajo.gob.ar/estadisticas/" %>% 
+  get_href()
+
 
 #filter(!if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
 
@@ -1141,7 +1191,7 @@ remDr$findElement(using="xpath",value=previous_page)$clickElement() #Here you cl
 
 #Cleanup -----
 rm(output_name,sheet_name)
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 unlink("download_folder",recursive=TRUE)
 rm(list=ls())
