@@ -693,7 +693,8 @@ df_post_2017<-df_post_2017 %>%
 
 #Time series of monthly ANSES contributions, in millions of current pesos
 df_ANSES_contributions<-rbind(df_2003_2016,df_post_2017) 
-
+rm(df_2003_2016,df_post_2017)
+rm(list=ls(pattern="df_list_*"))
 ##Independent workers -----
   #We made the historical excel manually with data from https://www.afip.gob.ar/estudios/anuario-estadisticas-tributarias/ 
      #from 1998 to 2003.
@@ -801,6 +802,24 @@ df_indep_2008_2016<-first_col #Monthly information on registered independent wor
 rm(first_col,i,extract_data)
 
 
+first_col<-df_list_post_2017_ind[[1]] %>% 
+  rename(indep_type=1) %>% 
+  subset(!is.na(.[[2]])) %>% 
+  select(c(1)) 
+first_col<-rbind(c("Year"),first_col) #Add year in first row
+first_col[[2,1]]<-"Month"
+for (i in 1:length(df_list_post_2017_ind)){
+  i<-1
+format_df<-df_list_post_2017_ind[[i]]
+format_df<-format_df %>% 
+  subset(!is.na(.[[2]])) %>% #Keep, from second column, only non-missing lines
+  select(-c(1))
+format_df<-rbind(c(2016+i),format_df)#Add year in first row
+first_col<-first_col %>% 
+  cbind(format_df)
+}
+df_indep_post_2017<-first_col
+rm(first_col,format_df,i)
 
 #filter(!if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
 
