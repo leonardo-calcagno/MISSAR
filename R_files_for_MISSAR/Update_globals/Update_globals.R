@@ -819,6 +819,7 @@ first_col<-first_col %>%
 }
 df_indep_post_2017<-first_col
 rm(first_col,format_df,i)
+
 format_aportantes<-function(indata,last_row){
   df_aportantes<-indata[1:last_row,] 
   df_aportantes<-df_aportantes %>% 
@@ -860,7 +861,57 @@ df_aportantes<-df_aportantes_2003_2008 %>%
   rbind(df_aportantes_post_2017)
 rm(df_aportantes_2003_2008,df_aportantes_2008_2016,df_aportantes_post_2017)
 
+df_indep_afjp<-df_indep_2003_2008[-c(3:5),] %>%
+  subset(!is.na(.[[3]])) %>% 
+  select(-c(1)) %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  rename(mes=1,
+         anio=2,
+         auton_tot=3,
+         auton_rep=4,
+         auton_afjp=5,
+         auton_ns=6,
+         sal_tot=7,
+         sal_rep=8,
+         sal_afjp=9,
+         sal_ns=10,
+         mixto_tot=11,
+         mixto_rep=12,
+         mixto_afjp=13,
+         monotributo=14
+         ) %>% 
+  subset(!is.na(anio)) %>% 
+  mutate(anio=gsub(pattern="[A-Z]",replacement="",ignore.case=TRUE,anio),
+         across(-c(mes),~as.integer(.x)))
+  
+df_indep_1<-df_indep_2008_2016[-c(3:5),] 
+df_indep_2<-df_indep_post_2017[-c(3:4),-c(1)] 
+mes<-df_indep_2[2,]
+df_indep_2<-df_indep_2[-c(2),]
+df_indep_2<-rbind(mes,df_indep_2)#Put month in first row
+rm(mes)
+names(df_indep_2)<-paste0("V",c(1:ncol(df_indep_2)))
 
+df_indep<-df_indep_1 %>% 
+  cbind(df_indep_2)
+rm(df_indep_1,df_indep_2)
+
+df_indep<-df_indep%>% 
+  t() %>% 
+  as.data.frame() %>% 
+  rename(mes=1,
+         anio=2,
+         auton_tot=3,
+         sal_tot=4,
+         mixto_tot=5,
+         monotributo=6
+  )
+df_indep<-df_indep[-c(1),] %>% 
+  mutate(anio=gsub(pattern="[A-Z]",replacement="",ignore.case=TRUE,anio),
+         across(-c(mes),~as.integer(.x)))
+
+##Labour ministry data-----
 
 get_href<-function(html){
   pg<-read_html(html)
@@ -868,7 +919,10 @@ get_href<-function(html){
   vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 }
 URL<-"https://www.trabajo.gob.ar/estadisticas/" %>% 
-  get_href()
+  get_href() 
+
+df_URL<-URL%>% 
+  subset(grepl(pattern=".xls",.[[1]]) & grepl(pattern="registrado",.[[1]]))
 
 
 #filter(!if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
