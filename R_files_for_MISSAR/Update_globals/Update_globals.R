@@ -996,16 +996,41 @@ df_list_men<-list()
 df_list_wom<-list()
 for(i in 1:10){
   df<-df_list_pop[[i]]
+  vector_names<-c("agegroups","total","age_0_4","age_5_9","age_10_14","age_15_19"
+                  ,"age_20_24","age_25_29","age_30_34","age_35_39","age_40_44","age_45_49"
+                  ,"age_50_54","age_55_59","age_60_64","age_65_69","age_70_74","age_75_79",
+                  "age_80")
   df_men<-df[,1:19] %>% 
     as.data.frame()
+  names(df_men)<-vector_names
   df_wom<-df[,22:ncol(df)] %>% 
     as.data.frame()
+  names(df_wom)<-vector_names
+  
   df_list_men[[i]]<-df_men
   df_list_wom[[i]]<-df_wom
   rm(df,df_men,df_wom)
 }
-
-
+df_active_pop<-data.frame(matrix(nrow=10,ncol=3))
+names(df_active_pop)<-c("anio","active_men","active_women")
+for (i in 1:10){
+  anio<-i+1999
+  df_active_pop[[i,1]]<-anio
+  indata<-df_list_men[[i]]%>% 
+    subset(grepl(pattern="total del",.[[1]],ignore.case=TRUE)) %>% 
+    mutate(across(-c(agegroups),~as.double(.x)),
+           active_pop=age_15_19*4/5+age_20_24+age_25_29+age_30_34+age_35_39+age_40_44+age_45_49+
+             age_50_54+age_55_59+age_60_64+age_65_69)
+  df_active_pop[[i,2]]<-indata[[1,ncol(indata)]]
+  
+  indata<-df_list_wom[[i]]%>% 
+    subset(grepl(pattern="total del",.[[1]],ignore.case=TRUE)) %>% 
+    mutate(across(-c(agegroups),~as.double(.x)),
+           active_pop=age_15_19*4/5+age_20_24+age_25_29+age_30_34+age_35_39+age_40_44+age_45_49+
+             age_50_54+age_55_59+age_60_64+age_65_69)
+  df_active_pop[[i,3]]<-indata[[1,ncol(indata)]]
+}
+rm(indata,anio,i)
 #filter(!if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
 
 ##Update globals file -----
