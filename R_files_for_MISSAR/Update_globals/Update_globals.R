@@ -963,6 +963,7 @@ print("ERROR: Not January 2012, revise code")
 rm(first_date)
 rm(has_char,has_num,row_has_num)
 ##Population data----
+###2000-2009-----
 #id_carpeta<-drive_get("Computed_proportions_of_monotributistas_and_autonomous_workers") 
 #For years 2000 to 2009, we use population projections of the Ministry of Health. 
 #For 2010 to 2040 it's population projections from the INDEC. 
@@ -1032,7 +1033,51 @@ for (i in 1:10){
 }
 rm(indata,anio,i)
 #filter(!if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
+###2010-2040-------
+URL<-"https://www.indec.gob.ar/ftp/cuadros/poblacion/c2_proyecciones_nac_2010_2040.xls"
+download.file(url=URL,destfile="pop_2010_2040.xls",mode="wb")
+df_pop_2010_2040<-read_excel("pop_2010_2040.xls",sheet=1)
+unlink("pop_2010_2040.xls",recursive=TRUE)
+names(df_pop_2010_2040)<-c("agegroups",paste0("year_",2010:2040))
 
+df_men_2010_2040<-df_pop_2010_2040[32:61,] %>% 
+  subset(!is.na(year_2011) & !is.na(agegroups)) %>% 
+  mutate(year_2010=as.integer(year_2010),
+         agegroups=gsub(pattern=" ",replacement="",agegroups),
+         agegroups=gsub(pattern="-",replacement="_",agegroups),
+         agegroups=paste0("age_",agegroups)
+         ) %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  janitor::row_to_names(row_number=1,remove_row=TRUE) %>% 
+  mutate(anio=2010:2040,
+         across(starts_with("age_"),~as.double(.x)),
+         active_men=age_15_19*4/5+age_20_24+age_25_29+age_30_34+age_35_39+age_40_44+age_45_49+
+           age_50_54+age_55_59+age_60_64+age_65_69
+         ) %>% 
+  select(c(anio,active_men))
+
+df_wom_2010_2040<-df_pop_2010_2040[62:91,] %>% 
+  subset(!is.na(year_2011) & !is.na(agegroups)) %>% 
+  mutate(year_2010=as.integer(year_2010),
+         agegroups=gsub(pattern=" ",replacement="",agegroups),
+         agegroups=gsub(pattern="-",replacement="_",agegroups),
+         agegroups=paste0("age_",agegroups)
+         )%>% 
+  t() %>% 
+  as.data.frame()%>% 
+  janitor::row_to_names(row_number=1,remove_row=TRUE)%>% 
+  mutate(anio=2010:2040,
+         across(starts_with("age_"),~as.double(.x)),
+         active_women=age_15_19*4/5+age_20_24+age_25_29+age_30_34+age_35_39+age_40_44+age_45_49+
+           age_50_54+age_55_59+age_60_64+age_65_69
+         ) %>%  
+  select(c(anio,active_women))
+  
+df_active_pop_2010<-df_men_2010_2040 %>% 
+  left_join(df_wom_2010_2040)
+df_active_pop<-df_active_pop %>% 
+  rbind(df_active_pop_2010)
 ##Update globals file -----
 
 vector_ANSES_contributions<-df_ANSES_contributions %>% 
