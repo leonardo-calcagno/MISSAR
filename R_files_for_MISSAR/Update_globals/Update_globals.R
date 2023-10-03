@@ -23,7 +23,7 @@ gs4_auth() #Connection to google account
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
-setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
@@ -549,7 +549,7 @@ head(time.taken)
 
 #On 4 GB Ram laptop, 2 minutes. 
 start.time=Sys.time()
-setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
 ##Load bulletin files----
@@ -923,6 +923,87 @@ URL<-"https://www.trabajo.gob.ar/estadisticas/" %>%
 
 df_URL<-URL%>% 
   subset(grepl(pattern=".xls",.[[1]]) & grepl(pattern="registrado",.[[1]]))
+download.file(df_URL[[1,1]],destfile="trabajo_registrado.xlsx",mode="wb")
+rm(URL,df_URL)
+df_workers<-read_excel("trabajo_registrado.xlsx",sheet=4) %>% 
+  janitor::row_to_names(row_number=1,remove_row=TRUE)
+unlink("trabajo_registrado.xlsx",recursive=TRUE)
+
+has_num<-colSums(mapply(grepl,"[0-9]",df_workers)) #Detects, for each column, how many lines have at least one integer
+has_char<-colSums(mapply(grepl,"^[A-Za-z]",df_workers)) #Detects, for each column, how many lines have at least one character
+row_has_num<-rowSums(mapply(grepl,"[0-9]",df_workers)) #Detects, for each row, how many lines have at least one integer
+
+df_workers<-df_workers[row_has_num>0,has_char>0 | has_num>0] %>%  #Drop rows and columns with no numbers
+  as.data.frame()
+
+detect_variables<-names(df_workers)
+autonomos<-grepl("(?=.*indep)(?=.*aut)",detect_variables,ignore.case=TRUE,perl=TRUE)
+monotributistas<-grepl("(?=.*monotribut)",detect_variables,ignore.case=TRUE,perl=TRUE)
+mono_soc<-grepl("(?=.*social)",detect_variables,ignore.case=TRUE,perl=TRUE)
+monotributistas<-monotributistas & !mono_soc
+monotributistas<-df_workers[,monotributistas ]
+mono_soc<-df_workers[,mono_soc]
+autonomos<-df_workers[,autonomos]
+periodo<-df_workers[,1]
+df_indep_lab<-periodo %>% 
+  cbind(autonomos) %>% 
+  cbind(monotributistas) %>% 
+  cbind(mono_soc) %>% 
+  as.data.frame() %>% 
+  rename(mes=1) %>%  
+  mutate(across(-c(mes),~1000*as.double(.x))) %>% 
+  subset(!is.na(autonomos)) %>% 
+  mutate(monotributo=monotributistas+mono_soc)
+rm(autonomos,monotributistas,mono_soc,periodo,detect_variables)
+#Verify the first row is January 2012
+first_date<-as.Date(as.integer(df_indep_lab[[1,1]]), origin = "1899-12-30")
+if(substr(first_date,start=1,stop=4)!="2012" | substr(first_date,start=6,stop=7)!="01"){
+print("ERROR: Not January 2012, revise code")  
+}
+rm(first_date)
+rm(has_char,has_num,row_has_num)
+##Population data----
+#id_carpeta<-drive_get("Computed_proportions_of_monotributistas_and_autonomous_workers") 
+#For years 2000 to 2009, we use population projections of the Ministry of Health. 
+#For 2010 to 2040 it's population projections from the INDEC. 
+#We copied data from 2000 to 2009 out of pdfs and into the following sheet that we import here
+id_indep<-drive_get("Auton_monotributo_simple_labour_ministry")
+df_pop<-read_sheet(ss=id_indep,sheet="pop_2000_2040")
+df_men<-df_pop[,1:19]
+df_wom<-df_pop[,22:ncol(df_pop)]
+df_list_pop<-list()
+df_list_pop[[1]]<-df_pop[1:34,] %>% 
+  as.data.frame()#2000
+df_list_pop[[2]]<-df_pop[35:63,] %>% 
+  as.data.frame()#2001
+df_list_pop[[3]]<-df_pop[71:99,] %>% 
+  as.data.frame() #2002
+df_list_pop[[4]]<-df_pop[100:106,] %>% 
+  as.data.frame() #2003
+df_list_pop[[5]]<-df_pop[107:112,] %>% 
+  as.data.frame() #2004
+df_list_pop[[6]]<-df_pop[113:118,] %>% 
+  as.data.frame() #2005
+df_list_pop[[7]]<-df_pop[119:124,] %>% 
+  as.data.frame() #2006
+df_list_pop[[8]]<-df_pop[125:130,] %>% 
+  as.data.frame() #2007
+df_list_pop[[9]]<-df_pop[131:136,] %>% 
+  as.data.frame() #2008
+df_list_pop[[10]]<-df_pop[137:143,] %>% 
+  as.data.frame() #2009
+df_list_men<-list()
+df_list_wom<-list()
+for(i in 1:10){
+  df<-df_list_pop[[i]]
+  df_men<-df[,1:19] %>% 
+    as.data.frame()
+  df_wom<-df[,22:ncol(df)] %>% 
+    as.data.frame()
+  df_list_men[[i]]<-df_men
+  df_list_wom[[i]]<-df_wom
+  rm(df,df_men,df_wom)
+}
 
 
 #filter(!if_any(everything(), ~ grepl("*Anses", .x,ignore.case=TRUE))) %>%  #This keeps rows where the "Anses" pattern appears at least once
