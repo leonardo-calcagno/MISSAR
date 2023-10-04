@@ -965,6 +965,20 @@ print("ERROR: Not January 2012, revise code")
 }
 rm(first_date)
 rm(has_char,has_num,row_has_num)
+
+#Add year data on labour ministry information
+df_indep_lab<-df_indep_lab %>% 
+  mutate(mes=gsub(pattern="\\*",replacement="",mes),
+         mes_date=as.Date(as.integer(mes), origin = "1899-12-30"),
+         mes=ifelse(is.na(mes_date), mes, 
+                    substr(start=6,stop=7,mes_date)),
+         anio=ifelse(is.na(mes_date),as.integer(paste0("20",substr(start=nchar(mes)-1,stop=nchar(mes),mes))),
+                     as.integer(substr(start=1,stop=4,mes_date))
+         )
+  ) %>% 
+  rename(auton_tot=autonomos
+  )
+
 ##Population data----
 ###2000-2009-----
 #id_carpeta<-drive_get("Computed_proportions_of_monotributistas_and_autonomous_workers") 
@@ -1112,6 +1126,36 @@ df_indep_98_03<-col_mes %>%
   cbind(col_mono)
 names(df_indep_98_03)<-c("mes","anio","auton_tot","sal_tot","mixto_tot","monotributo")
 rm(list=ls(pattern="col_*"))
+##Consolidated indep df--------
+df_indep_cal<-df_indep_98_03 %>% 
+  select(c(mes,anio,auton_tot,mixto_tot,monotributo))
+df_temp<-df_indep_afjp%>% 
+  select(c(mes,anio,auton_tot,mixto_tot,monotributo))
+df_indep_cal<-df_indep_cal %>% 
+  rbind(df_temp)
+df_temp<-df_indep%>% 
+  subset(anio<=2011) %>%  #From January 2012 onward, we use labour ministry data
+  select(c(mes,anio,auton_tot,mixto_tot,monotributo))
+df_indep_cal<-df_indep_cal %>% 
+  rbind(df_temp)
+
+df_indep_lab_cal<-df_indep_lab %>% 
+  select(c(mes,anio,auton_tot,monotributo))
+#We get mixt contributors from AFJP data
+df_indep_mixto<-df_indep %>% 
+  subset(anio>=2012) %>% 
+  select(c(mixto_tot))
+if(nrow(df_indep_mixto)<nrow(df_indep_lab_cal)){
+  df_indep_mixto<-df_indep_mixto %>% 
+    rbind(NA)
+}
+df_indep_lab_cal<-df_indep_lab_cal %>% 
+  cbind(df_indep_mixto)%>% 
+  select(c(mes,anio,auton_tot,mixto_tot,monotributo))
+df_indep_cal<-df_indep_cal %>% 
+  rbind(df_indep_lab_cal)
+
+rm(df_indep,df_indep_2003_2008,df_indep_2008_2016,df_indep_98_03,df_indep_lab,df_indep_lab_cal,df_indep_afjp,df_indep_mixto,df_indep_post_2017)
 ##Update globals file -----
 
 vector_ANSES_contributions<-df_ANSES_contributions %>% 
