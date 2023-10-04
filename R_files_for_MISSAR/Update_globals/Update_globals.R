@@ -23,7 +23,8 @@ gs4_auth() #Connection to google account
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
-setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("D:/Git_repos/")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
@@ -99,7 +100,7 @@ download.file(
 
 rm(correct_CPI_url,alt_CPI_url,CPI_url,current_month_exists,last_month_exists)
 ##Update sheet----
-df_latest_CPI<-read_excel("latest_CPI.xls",sheet="?ndices IPC Cobertura Nacional") %>% 
+df_latest_CPI<-read_excel("latest_CPI.xls",sheet="Índices IPC Cobertura Nacional") %>% 
   rename(CPI_index_type=1) %>%  #Rename the first column
   subset(CPI_index_type=="Nivel general") %>% 
   mutate(CPI_region=ifelse(row_number(CPI_index_type)==1, "Nacional",
@@ -240,7 +241,8 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 start.time=Sys.time()
 
 ##Go to the folder with updated AIF files (see download_all_AIF)
-setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
+setwd("D:/Git_repos/")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
 getwd()
 ###The only month that does not work is January 2000, it is a weird xml file. You need to open it with 
@@ -549,7 +551,8 @@ head(time.taken)
 
 #On 4 GB Ram laptop, 2 minutes. 
 start.time=Sys.time()
-setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("D:/Git_repos/")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
 ##Load bulletin files----
@@ -1078,6 +1081,37 @@ df_active_pop_2010<-df_men_2010_2040 %>%
   left_join(df_wom_2010_2040)
 df_active_pop<-df_active_pop %>% 
   rbind(df_active_pop_2010)
+
+##Import 1998-2003 independent data ------
+#From https://www.afip.gob.ar/institucional/estudios/serie%2Danual/ we have monthly information on independent workers taken from 
+    #yearly AFIP tax series. We compiled them in an excel we import here
+df_indep_98_03<-read_sheet(ss=id_indep,sheet="Datos mensuales",range="D1:BF35",col_names=FALSE)
+col_auton<-df_indep_98_03[10,] %>% 
+  t() %>% 
+  as.data.frame()
+col_mono<-df_indep_98_03[35,] %>% 
+  t() %>% 
+  as.data.frame()
+col_mixto<-df_indep_98_03[28,] %>% 
+  t() %>% 
+  as.data.frame()
+col_anio<-df_indep_98_03[1,]%>% 
+  t() %>% 
+  as.data.frame()
+col_mes<-df_indep_98_03[2,]%>% 
+  t() %>% 
+  as.data.frame()
+col_sal<-df_indep_98_03[20,]%>% 
+  t() %>% 
+  as.data.frame()
+df_indep_98_03<-col_mes %>% 
+  cbind(col_anio) %>% 
+  cbind(col_auton) %>% 
+  cbind(col_sal) %>% 
+  cbind(col_mixto) %>% 
+  cbind(col_mono)
+names(df_indep_98_03)<-c("mes","anio","auton_tot","sal_tot","mixto_tot","monotributo")
+rm(list=ls(pattern="col_*"))
 ##Update globals file -----
 
 vector_ANSES_contributions<-df_ANSES_contributions %>% 
