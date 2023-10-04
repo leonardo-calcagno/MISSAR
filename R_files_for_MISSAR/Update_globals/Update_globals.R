@@ -1156,6 +1156,39 @@ df_indep_cal<-df_indep_cal %>%
   rbind(df_indep_lab_cal)
 
 rm(df_indep,df_indep_2003_2008,df_indep_2008_2016,df_indep_98_03,df_indep_lab,df_indep_lab_cal,df_indep_afjp,df_indep_mixto,df_indep_post_2017)
+##Independent proportions by gender-----
+#From December 2021, the Boletin Estadistico de Seguridad Social made by the Labour Ministry informs the gender of registered 
+    #independent workers. We take these statistics (not available at earlier dates) to get an approximation of independent workers 
+    #by gender
+auton_men<-356248/486287
+auton_wom<-130033/486287
+mono_men<- 1081168/2168511
+mono_wom<-1087187/2168511
+df_active_pop_98<-df_active_pop %>% 
+  subset(anio==2000) %>% 
+  mutate(anio=1998)
+df_active_pop_99<-df_active_pop %>% 
+  subset(anio==2000) %>% 
+  mutate(anio=1999)
+df_active_pop_ext<-df_active_pop_98 %>% 
+  rbind(df_active_pop_99) %>% 
+  rbind(df_active_pop)
+rm(df_active_pop_99,df_active_pop_98)
+
+df_indep_propor<-df_indep_cal %>% 
+  left_join(df_active_pop_ext) %>% 
+  mutate(auton_tot=ifelse(is.na(auton_tot)&anio==1999,
+                          (362804+376896)/2, auton_tot),
+         perc_mono_indep=monotributo/(monotributo+auton_tot-mixto_tot),
+         perc_auton=(auton_tot+mixto_tot/2)/(active_men+active_women),
+         perc_mono=monotributo/(active_men+active_women),
+         perc_mono_men=monotributo*mono_men/active_men,
+         perc_mono_wom=monotributo*mono_wom/active_women,
+         perc_auton_men=(auton_tot+mixto_tot/2)*auton_men/active_men,
+         perc_auton_wom=(auton_tot+mixto_tot/2)*auton_wom/active_women
+         )
+
+
 ##Update globals file -----
 
 vector_ANSES_contributions<-df_ANSES_contributions %>% 
