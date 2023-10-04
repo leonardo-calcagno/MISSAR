@@ -12,7 +12,8 @@ library(rlist)
 start.time=Sys.time()
 
 ##Folder creation
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("D:Git_repos/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
 
 if(!file.exists("AIF")) {
@@ -26,7 +27,7 @@ getwd()
 #comment out the years you are not interested in.
 year <- c("00","01","02","03","04","05","06","07","08","09",
           "10","11","12","13","14","15","16","17","18","19",
-          "20","21","22"
+          "20","21","22","23"
 ) 
 year_90<-c("97","98","99")
 #year_short<-sapply(year,function(x) substr(start=3,stop=4,x))
@@ -35,14 +36,18 @@ year_90<-c("97","98","99")
 month <- c("ene", "feb", "mar", "abr", "may", "jun", "jul",
            "ago", "sep", "oct", "nov", "dic", 
            "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
-           "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+           "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+           "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul",
+           "Ago", "Sep", "Oct", "Nov", "Dic")
 
 
 #Put different names for each option, or they get overwritten
 numeric_month <- c("01", "02", "03", "04", "05", "06", "07",
                    "08", "09", "10", "11", "12", 
                    "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
-                   "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+                   "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+                   "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul",
+                   "Ago", "Sep", "Oct", "Nov", "Dic")
 
 
 
@@ -101,3 +106,4 @@ rm(month,year,year_90,numeric_month,names_xls,names_xls_90,urls_xls,urls_xls_90,
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
+rm(end.time,start.time,time.taken)
