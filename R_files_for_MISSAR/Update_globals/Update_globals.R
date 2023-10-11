@@ -551,8 +551,8 @@ head(time.taken)
 
 #On 4 GB Ram laptop, 2 minutes. 
 start.time=Sys.time()
-setwd("D:/Git_repos/")
-#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("D:/Git_repos/")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
 ##Load bulletin files----

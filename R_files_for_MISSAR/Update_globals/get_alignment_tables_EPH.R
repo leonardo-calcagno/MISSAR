@@ -11,7 +11,7 @@ library(eph)
 library(readr)
 library(googlesheets4)
 library(googledrive)
-setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
 closeAllConnections() #Else, you risk the "all connections are in use" error.
@@ -65,6 +65,47 @@ end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
 rm(start.time,end.time,time.taken,year,vars_to_import)
+
+
+library(glue)
+
+#Select years to import -------
+year <- c("2016","2017","2018","2019","2020","2021","2022","2023"
+) 
+
+#Possible imported months and years names
+quarter <- c("1_Trim","2_Trim","3_Trim","4_Trim","1erTrim","2doTrim","3erTrim","4toTrim","1er_Trim"
+)
+
+
+#Put different names for each option, or they get overwritten
+quarter_2 <- c("t1","t2","t3","t4","trim1","trim2","trim3","trim4","q1")
+
+setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
+
+
+if(!file.exists("EPH_folder")) {
+  dir.create("EPH_folder")
+}
+setwd("EPH_folder/")
+
+
+urls_xls <- 
+  tidyr::expand_grid(quarter, year) %>%
+  glue_data("https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/EPH_usu_{quarter}_{year}_txt.zip")
+
+
+# File names for xls y xlsx
+names_xls <- 
+  tidyr::expand_grid(quarter_2, year) %>%
+  glue_data("{year}_{quarter_2}.zip")
+
+#---- Download excels with purrr library
+
+walk2(urls_xls,names_xls,safely(download.file))
+
+
+
 #Variables of interest -----
 vector_periods<-dl_EPH_post_2016 %>% 
   select(c(ANO4,TRIMESTRE)) %>% 
@@ -103,6 +144,8 @@ rm(vector_periods)
   
   df_EPH_post_2016<-df_EPH_post_2016 %>% 
     select(-c(PP07H,PP07I,CH06,NIVEL_ED,CAT_INAC))
+  
+  
   
   
   #Run to verify independent workers in the EPH don't report social security contributions
@@ -205,6 +248,19 @@ make_5y_agegroup<-function(indata,agevariable){
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   make_5y_agegroup("ageconti")
 gc()
+#Reproduce demographic_men and demographic_women -----
+df_demographic_men<-df_EPH_post_2016 %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==1) %>% 
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(PONDERA=sum(PONDERA)) %>% 
+  ungroup()
+
+df_demographic_women<-df_EPH_post_2016 %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==2) %>% 
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(PONDERA=sum(PONDERA)) %>% 
+  ungroup()
+
 #Base alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69) %>% #Use ageconti for subsetting, else age 15 is included

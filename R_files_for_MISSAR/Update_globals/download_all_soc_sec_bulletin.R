@@ -14,8 +14,8 @@ library(rlist)
 rm(list=ls())
 gc()
 start.time=Sys.time()
-setwd("D:/Git_repos/")
-#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("D:/Git_repos/")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
 
 if(!file.exists("bol_men_ss")) {
