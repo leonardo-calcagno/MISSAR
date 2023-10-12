@@ -102,18 +102,9 @@ quarter <- c("1_Trim","2_Trim","3_Trim","4_Trim","1erTrim","2doTrim","3erTrim","
 #Put different names for each option, or they get overwritten
 quarter_2 <- c("t1","t2","t3","t4","trim1","trim2","trim3","trim4","q1")
 
-setwd("../")
-setwd("Scraped_datasets/")
-if(!file.exists("EPH_folder")) {
-  dir.create("EPH_folder")
-}
-setwd("EPH_folder/")
-
-
 urls_zip <- 
   tidyr::expand_grid(quarter, year) %>%
   glue_data("https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/EPH_usu_{quarter}_{year}_txt.zip")
-
 
 # File names for downloaded zip files
 names_zip <- 
@@ -121,6 +112,13 @@ names_zip <-
   glue_data("{year}_{quarter_2}.zip")
 
 #---- Download zip files with purrr library
+setwd("../")
+setwd("Scraped_datasets/")
+if(!file.exists("EPH_folder")) {
+  dir.create("EPH_folder")
+}
+setwd("EPH_folder/")
+
 
 walk2(urls_zip,names_zip,safely(download.file))
 list_zip <- list.files(pattern='*.zip')
@@ -163,7 +161,6 @@ table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Verify all periods are 
 unlink(list_txt,recursive=TRUE) #Keep only downloaded zip files
 unlink("*.pdf",recursive=TRUE)
 #unlink("*.zip",recursive=TRUE) #Uncomment to also delete downloaded zip files
-
 rm(array_missing,list_missing,list_ind,list_zip,i,list_txt,vars_to_import,df_periods,has_2016,missing_periods,possible_periods)
 
 
@@ -280,7 +277,7 @@ rm(vector_periods)
   
 
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
-  select(-c(contributes,is_indep,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
+  select(-c(contributes,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
 head(df_EPH_post_2016)
 #Finally, we create 5-year age groups for MISSAR's age-dependent alignment
 make_5y_agegroup<-function(indata,agevariable){
@@ -320,6 +317,25 @@ df_demographic_women<-df_EPH_post_2016 %>%
   subset(ageconti>15 & ageconti<70 & CH04==2) %>% 
   group_by(ANO4,TRIMESTRE,agegroup) %>% 
   summarise(PONDERA=sum(PONDERA)) %>% 
+  ungroup()
+
+df_independent_men<-df_EPH_post_2016 %>% 
+  mutate(indep=ifelse(is_indep, 1, 
+                      0)
+         ) %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==1) %>%
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(indep=sum(PONDERA*indep)/sum(PONDERA)
+            ) %>% 
+  ungroup()
+
+df_independent_women<-df_EPH_post_2016 %>% 
+  mutate(indep=ifelse(is_indep, 1, 
+                      0)
+  ) %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==2) %>%
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(indep=sum(PONDERA*indep)/sum(PONDERA)) %>% 
   ungroup()
 
 #Base alignment tables ------
