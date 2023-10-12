@@ -6,6 +6,7 @@
 # Packages -----------------
 rm(list=ls())
 gc()
+#install.packages("eph")
 library(tidyverse)
 library(eph)
 library(readr)
@@ -65,10 +66,32 @@ table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Shows which periods wer
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
-rm(start.time,end.time,time.taken,year,vars_to_import)
 
+df_periods<-table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) %>%  #Identify periods to download.
+  as.data.frame() %>% 
+  rename(ANO4=1,
+         TRIMESTRE=2,
+         obs=3)
+has_2016<-df_periods %>% 
+  subset(ANO4==2016)
 
-#Select years to import -------
+if(nrow(has_2016)==0){
+add_2016<-data.frame(2:4) %>% 
+  mutate(ANO4=2016,
+         obs=0) %>% 
+  rename(TRIMESTRE=1) %>% 
+  select(c(ANO4,TRIMESTRE,obs))
+df_periods<-add_2016 %>%
+  rbind(df_periods)
+rm(add_2016)
+}
+missing_periods<-df_periods %>% 
+  subset(obs==0) 
+
+rm(start.time,end.time,time.taken,year,df_periods)
+#The EPH package, most of the time, does not import all quarters correctly. 
+
+#Complete download if needed -------
 year <- c("2016","2017","2018","2019","2020","2021","2022","2023"
 ) 
 
@@ -76,13 +99,11 @@ year <- c("2016","2017","2018","2019","2020","2021","2022","2023"
 quarter <- c("1_Trim","2_Trim","3_Trim","4_Trim","1erTrim","2doTrim","3erTrim","4toTrim","1er_Trim"
 )
 
-
 #Put different names for each option, or they get overwritten
 quarter_2 <- c("t1","t2","t3","t4","trim1","trim2","trim3","trim4","q1")
 
-setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
-
-
+setwd("../")
+setwd("Scraped_datasets/")
 if(!file.exists("EPH_folder")) {
   dir.create("EPH_folder")
 }
@@ -99,7 +120,7 @@ names_zip <-
   tidyr::expand_grid(quarter_2, year) %>%
   glue_data("{year}_{quarter_2}.zip")
 
-#---- Download excels with purrr library
+#---- Download zip files with purrr library
 
 walk2(urls_zip,names_zip,safely(download.file))
 list_zip <- list.files(pattern='*.zip')
@@ -122,6 +143,28 @@ list_txt<-list.files(pattern="*.txt")
 list_ind<-list_txt %>% 
   subset(grepl(pattern="*ind|*pers",list_txt))
 
+missing_periods<-missing_periods %>% 
+  mutate(anio_corto=substr(ANO4,start=3,stop=4)
+         )
+array_missing<-paste0("T",missing_periods$TRIMESTRE,missing_periods$anio_corto)
+array_missing<-gsub(pattern="T420",replacement="4to.trim_2020",array_missing)
+
+list_missing<-list_ind %>% 
+  subset(grepl(pattern=paste(array_missing,collapse="|"),list_ind,ignore.case=TRUE))
+
+for (i in list_missing){
+  df_import<-read_delim(i, delim=";", escape_double=FALSE,
+                        trim_ws=TRUE, col_select=vars_to_import)
+  dl_EPH_post_2016<-dl_EPH_post_2016 %>% 
+    rbind(df_import)
+  rm(df_import)
+}
+table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Verify all periods are correctly imported
+unlink(list_txt,recursive=TRUE) #Keep only downloaded zip files
+unlink("*.pdf",recursive=TRUE)
+#unlink("*.zip",recursive=TRUE) #Uncomment to also delete downloaded zip files
+
+rm(array_missing,list_missing,list_ind,list_zip,i,list_txt,vars_to_import,df_periods,has_2016,missing_periods,possible_periods)
 
 
 #Variables of interest -----
