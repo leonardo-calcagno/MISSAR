@@ -9,6 +9,7 @@ gc()
 library(tidyverse)
 library(eph)
 library(readr)
+library(glue)
 library(googlesheets4)
 library(googledrive)
 setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
@@ -67,8 +68,6 @@ head(time.taken)
 rm(start.time,end.time,time.taken,year,vars_to_import)
 
 
-library(glue)
-
 #Select years to import -------
 year <- c("2016","2017","2018","2019","2020","2021","2022","2023"
 ) 
@@ -90,19 +89,38 @@ if(!file.exists("EPH_folder")) {
 setwd("EPH_folder/")
 
 
-urls_xls <- 
+urls_zip <- 
   tidyr::expand_grid(quarter, year) %>%
   glue_data("https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/EPH_usu_{quarter}_{year}_txt.zip")
 
 
-# File names for xls y xlsx
-names_xls <- 
+# File names for downloaded zip files
+names_zip <- 
   tidyr::expand_grid(quarter_2, year) %>%
   glue_data("{year}_{quarter_2}.zip")
 
 #---- Download excels with purrr library
 
-walk2(urls_xls,names_xls,safely(download.file))
+walk2(urls_zip,names_zip,safely(download.file))
+list_zip <- list.files(pattern='*.zip')
+for (i in 1:length(list_zip)){
+  unzip(list_zip[[i]])
+} #Open all zip folders
+#Some unzipped files are extracted in folders, we get the information from there
+list_folders<-list.dirs() %>% 
+  subset(grepl(pattern="*EPH",list_folders)
+  )
+for (i in list_folders){
+ ind_file<-list.files(path=i,pattern="*ind|*pers") 
+  file.copy(from=paste0(i,"/",ind_file), to=paste0(getwd(),"/",ind_file), 
+            overwrite = TRUE, recursive = FALSE, 
+            copy.mode = TRUE)
+}
+rm(ind_file)
+
+list_txt<-list.files(pattern="*.txt")
+list_ind<-list_txt %>% 
+  subset(grepl(pattern="*ind|*pers",list_txt))
 
 
 
