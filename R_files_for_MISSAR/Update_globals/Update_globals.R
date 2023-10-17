@@ -1219,15 +1219,72 @@ df_indep_propor<-df_indep_propor %>%
          )
          
 
+df_indep_quarter_propor<-df_indep_propor %>% 
+  group_by(anio,TRIMESTRE) %>% 
+  summarise(perc_mono_men=mean(perc_mono_men),
+            perc_mono_wom=mean(perc_mono_wom),
+            perc_auton_men=mean(perc_auton_men),
+            perc_auton_wom=mean(perc_auton_wom)
+  ) %>% 
+  ungroup()
 #Test: make it work for the fourth quarter of 2021
-df_trim4_indep_men<-df_independent_men %>% 
-  subset(ANO4==2022 & TRIMESTRE==4)
-df_trim4_demo_men<-df_demographic_men %>%  
-  subset(ANO4==2022 & TRIMESTRE==4)
-df_trim4_propor<-df_indep_propor %>% 
-  subset(anio==2022 & TRIMESTRE==4)
 
-head(df_indep_propor)
+df_trim4_demo_men<-df_demographic_men %>%  
+  subset(ANO4==2021 & TRIMESTRE==4)
+df_trim4_indep_men<-df_independent_men %>% 
+  subset(ANO4==2021 & TRIMESTRE==4) 
+base_proportion<-df_trim4_indep_men %>% 
+  subset(agegroup==35)
+base_proportion<- base_proportion[[1,4]]
+df_trim4_indep_men<-df_trim4_indep_men %>% 
+  mutate(age_prop=indep*100/base_proportion) %>% 
+  left_join(df_trim4_demo_men) %>% 
+  mutate(indep_pop=PONDERA*age_prop/100)
+
+rm(base_proportion)
+
+
+df_trim4_propor<-df_indep_quarter_propor %>% 
+  subset(anio==2021 & TRIMESTRE==4) 
+
+#col 3 for monotributo men, 4 monotributo women, 5 autonomous men, 6 autonomous women
+
+period_constants<-df_trim4_indep_men %>% 
+  summarise(active_age_pop=sum(PONDERA),
+            indep_pop_age=sum(indep_pop)) %>% 
+  ungroup()
+period_constants<-period_constants%>% 
+  mutate(auton_men_35=(period_constants[[1,1]]*df_trim4_propor[[1,5]]/period_constants[[1,2]]),
+         mono_men_35=(period_constants[[1,1]]*df_trim4_propor[[1,3]]/period_constants[[1,2]]))
+df_trim4_indep_men<-df_trim4_indep_men %>% 
+  mutate(cal_auton_h=age_prop*period_constants[[1,3]]/100,
+         cal_mono_h=age_prop*period_constants[[1,4]]/100,
+         control_auton_h=cal_auton_h*PONDERA,
+         control_mono_h=cal_mono_h*PONDERA)
+#These columns are the proportions for the alignment table. We control that, when applied to the 
+    #microsimulated population, they actually result in the known proportions of autonomous or monotributista 
+    #populations for the period. 
+
+control<-df_trim4_indep_men %>% 
+  summarise(control_auton_h=sum(control_auton_h),
+            control_mono_h=sum(control_mono_h)) %>% 
+  ungroup() %>% 
+  mutate(control_1=control_auton_h/period_constants[[1,1]]-df_trim4_propor[[1,5]],
+         control_2=control_mono_h/period_constants[[1,1]]-df_trim4_propor[[1,3]],
+         control_1=round(control_1,5),
+         control_2=round(control_2,5)) %>% 
+  select(c(control_1,control_2))
+
+if(!identical(control[[1,1]]+control[[1,2]],0)
+   ){
+  print("ERROR")
+}
+#Successful test: for one period and one gender, we get  the alignment proportions for autonomous and monotributista 
+    #independent workers. Next step is turning it into a function and applying it for all periods, and women. 
+    #SEGUIR AQUI 
+
+
+rm(df_indep_propor)
 ##Update globals file -----
 
 vector_ANSES_contributions<-df_ANSES_contributions %>% 
