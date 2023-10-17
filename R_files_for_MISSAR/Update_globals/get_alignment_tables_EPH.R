@@ -126,7 +126,8 @@ for (i in 1:length(list_zip)){
   unzip(list_zip[[i]])
 } #Open all zip folders
 #Some unzipped files are extracted in folders, we get the information from there
-list_folders<-list.dirs() %>% 
+list_folders<-list.dirs() 
+list_folders<-list_folders%>% 
   subset(grepl(pattern="*EPH",list_folders)
   )
 for (i in list_folders){
@@ -161,7 +162,7 @@ table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Verify all periods are 
 unlink(list_txt,recursive=TRUE) #Keep only downloaded zip files
 unlink("*.pdf",recursive=TRUE)
 #unlink("*.zip",recursive=TRUE) #Uncomment to also delete downloaded zip files
-rm(array_missing,list_missing,list_ind,list_zip,i,list_txt,vars_to_import,df_periods,has_2016,missing_periods,possible_periods)
+rm(array_missing,list_missing,list_ind,list_zip,i,list_txt,vars_to_import,has_2016,missing_periods)
 
 
 #Variables of interest -----
