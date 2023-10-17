@@ -74,7 +74,6 @@ download_yearly_ss_bulletin(2017)
 year <- c("03","04","05","2006","2007","2008","2009",
           "2010","2011","2012","2013","2014","2015","2016"
 ) 
-
 #Possible imported months and years names
 month <- c("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
            "agosto", "septiembre","setiembre", "octubre", "noviembre", "diciembre",

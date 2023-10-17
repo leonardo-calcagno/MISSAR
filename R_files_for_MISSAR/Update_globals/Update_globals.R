@@ -552,6 +552,7 @@ start.time=Sys.time()
 #setwd("D:/Git_repos/")
 #setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 #setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
+setwd("../../")
 setwd("Scraped_datasets/bol_men_ss")
 getwd()
 ##Load bulletin files----
@@ -1186,8 +1187,47 @@ df_indep_propor<-df_indep_cal %>%
          perc_auton_men=(auton_tot+mixto_tot/2)*auton_men/active_men,
          perc_auton_wom=(auton_tot+mixto_tot/2)*auton_wom/active_women
          )
+rm(df_aportantes,df_indep_cal,missing_concept,df_temp)
+rm(list=ls(pattern="auton*|mono*|df_active*|df_pop*"))
+ ##Independent alignment tables------
+#Here we make the cal_auton_h_p, cal_auton_f_p, cal_mono_h_p, cal_mono_f_p csv files 
+getwd()
+setwd("../../")
+setwd("Update_globals/EPH_alignment/") #We get population proportions from the EPH, see get_alingment_tables_EPH.R
+df_independent_men<-read_excel("independent_men.xlsx")
+df_independent_women<-read_excel("independent_women.xlsx")
+df_demographic_men<-read_excel("demographic_men.xlsx")
+df_demographic_women<-read_excel("demographic_women.xlsx")
+pattern_trim1<-"\\b1\\b|\\b2\\b|\\b3\\b|01|02|03|ene|feb|mar"
+pattern_trim2<-"\\b4\\b|\\b5\\b|\\b6\\b|04|05|06|abr|may|jun"
+pattern_trim3<-"\\b7\\b|\\b8\\b|\\b9\\b|07|08|09|jul|ago|sep|set"
+pattern_trim4<-"10|11|12|oct|nov|dic"
+df_indep_propor<-df_indep_propor %>%
+  unique() %>% 
+  mutate(TRIMESTRE=ifelse(grepl(pattern_trim1,mes,ignore.case=TRUE),1, 
+                          ifelse(grepl(pattern_trim2,mes,ignore.case=TRUE),2, 
+                                 ifelse(grepl(pattern_trim3,mes,ignore.case=TRUE),3, 
+                                        ifelse(grepl(pattern_trim4,mes,ignore.case=TRUE),4, 
+                                               NA)
+                                        )
+                                 )
+                          )
+         )
+df_indep_propor<-df_indep_propor %>% 
+  mutate(TRIMESTRE=ifelse(is.na(TRIMESTRE), data.table::shift(TRIMESTRE,12L,type="lag"),  
+                          TRIMESTRE) #Put value from 12 rows prior, for quarter variable, if missing
+         )
+         
 
+#Test: make it work for the fourth quarter of 2021
+df_trim4_indep_men<-df_independent_men %>% 
+  subset(ANO4==2022 & TRIMESTRE==4)
+df_trim4_demo_men<-df_demographic_men %>%  
+  subset(ANO4==2022 & TRIMESTRE==4)
+df_trim4_propor<-df_indep_propor %>% 
+  subset(anio==2022 & TRIMESTRE==4)
 
+head(df_indep_propor)
 ##Update globals file -----
 
 vector_ANSES_contributions<-df_ANSES_contributions %>% 
