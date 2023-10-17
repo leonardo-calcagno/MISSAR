@@ -23,8 +23,8 @@ gs4_auth() #Connection to google account
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
-setwd("D:/Git_repos/")
-#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("D:/Git_repos/")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
@@ -134,7 +134,6 @@ df_CPI_for_globals<-df_CPI_for_globals %>%
 
 range_write(df_CPI_for_globals,ss=id_globals,range="E889",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE)
 rm(df_CPI_for_globals,df_latest_CPI)
-
 #INDEC wage index ------
  #URL: https://www.indec.gob.ar/ftp/cuadros/sociedad/variaciones_salarios_09_22.xls for July data
 
@@ -239,12 +238,12 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 
 #On 4 GB Ram laptop, 7.6 minutes. 
 start.time=Sys.time()
-
 ##Go to the folder with updated AIF files (see download_all_AIF)
-setwd("D:/Git_repos/")
+#setwd("D:/Git_repos/")
 #setwd("C:/Users/lcalcagno/Documents/Investigacion/")
-setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
-getwd()
+#setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
+setwd("../../") #Relative path: go up to R_files_for_MISSAR
+setwd("Scraped_datasets/AIF")
 ###The only month that does not work is January 2000, it is a weird xml file. You need to open it with 
 #excel, and save it as an excel file in the AIF folder with a different name (2000_enero for instance). 
 
@@ -540,20 +539,20 @@ id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
 range_write(vector_ISS_fiscal_income,ss=id_globals,range="I284",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
 
 rm(total_files,control,list_AIF,table_file_size,concept_names,vector_ISS_fiscal_income,df_ISS_fiscal_income)
-
+setwd("../../") #Restore wd to R_files_for_MISSAR
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
 
-
 # Social security contributions----
-#Set the working directory to the folder with the downloaded monthly social security bulletin excel files
 
 #On 4 GB Ram laptop, 2 minutes. 
 start.time=Sys.time()
+#Set the working directory to the folder with the downloaded monthly social security bulletin excel files
 #setwd("D:/Git_repos/")
-setwd("C:/Users/lcalcagno/Documents/Investigacion/")
-setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
+setwd("Scraped_datasets/bol_men_ss")
 getwd()
 ##Load bulletin files----
 #List all social-security bulletin excel files
@@ -1145,7 +1144,7 @@ df_indep_lab_cal<-df_indep_lab %>%
 df_indep_mixto<-df_indep %>% 
   subset(anio>=2012) %>% 
   select(c(mixto_tot))
-if(nrow(df_indep_mixto)<nrow(df_indep_lab_cal)){
+while(nrow(df_indep_mixto)<nrow(df_indep_lab_cal)){
   df_indep_mixto<-df_indep_mixto %>% 
     rbind(NA)
 }
