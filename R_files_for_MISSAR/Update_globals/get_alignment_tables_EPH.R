@@ -162,7 +162,7 @@ table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Verify all periods are 
 unlink(list_txt,recursive=TRUE) #Keep only downloaded zip files
 unlink("*.pdf",recursive=TRUE)
 #unlink("*.zip",recursive=TRUE) #Uncomment to also delete downloaded zip files
-rm(array_missing,list_missing,list_ind,list_zip,i,list_txt,vars_to_import,has_2016,missing_periods)
+rm(array_missing,list_missing,list_ind,list_zip,i,list_txt,vars_to_import,has_2016,missing_periods,list_folders,names_zip,quarter,quarter_2,urls_zip,year)
 
 
 #Variables of interest -----
@@ -307,7 +307,7 @@ make_5y_agegroup<-function(indata,agevariable){
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   make_5y_agegroup("ageconti")
 gc()
-#Reproduce demographic_men and demographic_women -----
+#DF independent workers-----
 df_demographic_men<-df_EPH_post_2016 %>% 
   subset(ageconti>15 & ageconti<70 & CH04==1) %>% 
   group_by(ANO4,TRIMESTRE,agegroup) %>% 
@@ -338,7 +338,18 @@ df_independent_women<-df_EPH_post_2016 %>%
   group_by(ANO4,TRIMESTRE,agegroup) %>% 
   summarise(indep=sum(PONDERA*indep)/sum(PONDERA)) %>% 
   ungroup()
-
+##Export, for use in Update_globals.R 
+setwd("../../")
+setwd("Update_globals/")
+if(!file.exists("EPH_alignment")) {
+  dir.create("EPH_alignment")
+}
+setwd("EPH_alignment/")
+getwd()
+write.xlsx(df_demographic_men,"demographic_men.xlsx")
+write.xlsx(df_demographic_women,"demographic_women.xlsx")
+write.xlsx(df_independent_men,"independent_men.xlsx")
+write.xlsx(df_independent_women,"independent_women.xlsx")
 #Base alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69) %>% #Use ageconti for subsetting, else age 15 is included
