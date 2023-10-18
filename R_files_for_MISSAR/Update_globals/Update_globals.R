@@ -18,7 +18,7 @@ library(xml2)
 library(rvest)
 library(RSelenium)
 
-gs4_auth() #Connection to google account
+#gs4_auth() #Connection to google account
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
@@ -1226,62 +1226,132 @@ df_indep_quarter_propor<-df_indep_propor %>%
             perc_auton_men=mean(perc_auton_men),
             perc_auton_wom=mean(perc_auton_wom)
   ) %>% 
-  ungroup()
+  ungroup() %>% 
+  mutate(period=paste0(anio,"q",TRIMESTRE))
+
+first_col<-df_demographic_men %>% 
+  subset(ANO4==2016 & TRIMESTRE==3) %>% 
+  select(c(agegroup)) #Keep one column with possible age groups
+empty_line<-data.frame(1) %>% 
+  rename(agegroup=1)
+empty_line[[1,1]]<-NA
+first_col<-empty_line %>% 
+  rbind(first_col) 
+rm(empty_line)
+
+df_EPH_indep<-df_demographic_men %>% 
+  rename(active_men=PONDERA)
+df_demographic_women<-df_demographic_women %>% 
+  rename(active_women=PONDERA)
+df_independent_men<-df_independent_men %>% 
+  rename(indep_men=indep)
+df_independent_women<-df_independent_women %>% 
+  rename(indep_women=indep)
+df_EPH_indep<-df_EPH_indep %>% 
+  left_join(df_demographic_women) %>% 
+  left_join(df_independent_men) %>% 
+  left_join(df_independent_women)
+rm(df_demographic_men,df_demographic_women,df_independent_men,df_independent_women)
+df_EPH_indep<-df_EPH_indep %>% 
+  mutate(period=paste0(ANO4,"q",TRIMESTRE))
 #Test: make it work for the fourth quarter of 2021
 
-df_trim4_demo_men<-df_demographic_men %>%  
-  subset(ANO4==2021 & TRIMESTRE==4)
-df_trim4_indep_men<-df_independent_men %>% 
-  subset(ANO4==2021 & TRIMESTRE==4) 
-base_proportion<-df_trim4_indep_men %>% 
+array_period<-as.data.frame(table(df_EPH_indep$period)) %>% 
+  select(c(1)) %>% 
+  t()
+array_period_MISSAR<-55:152 #Period in MISSAR format, third quarter 2016 fourth quarter 2040
+
+for (i in 1:length(array_period)){
+input<-df_EPH_indep %>% 
+  subset(period==array_period[[i]])
+base_proportion<-input %>% 
   subset(agegroup==35)
-base_proportion<- base_proportion[[1,4]]
-df_trim4_indep_men<-df_trim4_indep_men %>% 
-  mutate(age_prop=indep*100/base_proportion) %>% 
-  left_join(df_trim4_demo_men) %>% 
-  mutate(indep_pop=PONDERA*age_prop/100)
+input<-input %>% 
+  mutate(age_prop_men=indep_men*100/base_proportion[[1,6]],
+         age_prop_women=indep_women*100/base_proportion[[1,7]],
+         indep_pop_men=active_men*age_prop_men/100,
+         indep_pop_women=active_women*age_prop_women/100
+         )
+indep_propor<-df_indep_quarter_propor %>% 
+  subset(period==array_period[[i]])
 
-rm(base_proportion)
-
-
-df_trim4_propor<-df_indep_quarter_propor %>% 
-  subset(anio==2021 & TRIMESTRE==4) 
+period_constants<-input %>% 
+  summarise(active_sum_men=sum(active_men),
+            active_sum_women=sum(active_women),
+            indep_sum_men=sum(indep_pop_men),
+            indep_sum_women=sum(indep_pop_women)
+            ) %>% 
+  ungroup()
 
 #col 3 for monotributo men, 4 monotributo women, 5 autonomous men, 6 autonomous women
-
-period_constants<-df_trim4_indep_men %>% 
-  summarise(active_age_pop=sum(PONDERA),
-            indep_pop_age=sum(indep_pop)) %>% 
-  ungroup()
-period_constants<-period_constants%>% 
-  mutate(auton_men_35=(period_constants[[1,1]]*df_trim4_propor[[1,5]]/period_constants[[1,2]]),
-         mono_men_35=(period_constants[[1,1]]*df_trim4_propor[[1,3]]/period_constants[[1,2]]))
-df_trim4_indep_men<-df_trim4_indep_men %>% 
-  mutate(cal_auton_h=age_prop*period_constants[[1,3]]/100,
-         cal_mono_h=age_prop*period_constants[[1,4]]/100,
-         control_auton_h=cal_auton_h*PONDERA,
-         control_mono_h=cal_mono_h*PONDERA)
+period_constants<-period_constants %>% 
+  mutate(auton_men_35=(period_constants[[1,1]]*indep_propor[[1,5]]/period_constants[[1,3]]),
+         mono_men_35=(period_constants[[1,1]]*indep_propor[[1,3]]/period_constants[[1,3]]),
+         auton_women_35=(period_constants[[1,2]]*indep_propor[[1,6]]/period_constants[[1,4]]),
+         mono_women_35=(period_constants[[1,2]]*indep_propor[[1,4]]/period_constants[[1,4]]),
+         )
+input<-input %>% 
+  mutate(cal_auton_h=age_prop_men*period_constants[[1,5]]/100,
+         cal_mono_h=age_prop_men*period_constants[[1,6]]/100,
+         cal_auton_f=age_prop_women*period_constants[[1,7]]/100,
+         cal_mono_f=age_prop_women*period_constants[[1,8]]/100,
+         control_auton_h=cal_auton_h*active_men,
+         control_mono_h=cal_mono_h*active_men,
+         control_auton_f=cal_auton_f*active_women,
+         control_mono_f=cal_mono_f*active_women)
 #These columns are the proportions for the alignment table. We control that, when applied to the 
     #microsimulated population, they actually result in the known proportions of autonomous or monotributista 
     #populations for the period. 
 
-control<-df_trim4_indep_men %>% 
+control<-input %>% 
   summarise(control_auton_h=sum(control_auton_h),
-            control_mono_h=sum(control_mono_h)) %>% 
+            control_mono_h=sum(control_mono_h),
+            control_auton_f=sum(control_auton_f),
+            control_mono_f=sum(control_mono_f)
+            ) %>% 
   ungroup() %>% 
-  mutate(control_1=control_auton_h/period_constants[[1,1]]-df_trim4_propor[[1,5]],
-         control_2=control_mono_h/period_constants[[1,1]]-df_trim4_propor[[1,3]],
+  mutate(control_1=control_auton_h/period_constants[[1,1]]-indep_propor[[1,5]],
+         control_2=control_mono_h/period_constants[[1,1]]-indep_propor[[1,3]],
+         control_3=control_auton_f/period_constants[[1,2]]-indep_propor[[1,6]],
+         control_4=control_mono_f/period_constants[[1,2]]-indep_propor[[1,4]],
          control_1=round(control_1,5),
-         control_2=round(control_2,5)) %>% 
-  select(c(control_1,control_2))
+         control_2=round(control_2,5),
+         control_3=round(control_3,5),
+         control_4=round(control_4,5)) %>% 
+  select(c(control_1,control_2,control_3,control_4))
 
-if(!identical(control[[1,1]]+control[[1,2]],0)
+if(!identical(control[[1,1]]+control[[1,2]]+control[[1,3]]+control[[1,4]],0)
    ){
   print("ERROR")
+  print(array_period_MISSAR[[i]])
 }
-#Successful test: for one period and one gender, we get  the alignment proportions for autonomous and monotributista 
-    #independent workers. Next step is turning it into a function and applying it for all periods, and women. 
-    #SEGUIR AQUI 
+rm(control)
+period_MISSAR<-array_period_MISSAR[[i]] #Fourth quarter of 2021. Period 3 is third quarter of 2003
+output<-input %>% 
+  select(c(cal_auton_h,cal_mono_h,cal_auton_f,cal_mono_f))
+names(output)<-c(paste0("auton_h_",period_MISSAR),
+                 paste0("mono_h_",period_MISSAR),
+                 paste0("auton_f_",period_MISSAR),
+                 paste0("mono_f_",period_MISSAR)
+                 )
+first_line<-output[1,]
+for(j in 1:4){
+  first_line[[1,j]]<-as.double(array_period_MISSAR[[i]])
+}
+output<-first_line %>% 
+  rbind(output)
+
+if(i==1){
+df_indep_cal<-first_col %>% 
+  cbind(output)
+}
+if(i>1){
+  df_indep_cal<-df_indep_cal %>% 
+    cbind(output)
+}
+print(i)
+rm(i,input,period_constants,indep_propor,base_proportion)
+}
 
 
 rm(df_indep_propor)
