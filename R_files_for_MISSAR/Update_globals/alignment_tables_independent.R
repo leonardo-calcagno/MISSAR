@@ -551,7 +551,7 @@ df_indep_propor<-df_indep_cal %>%
   )
 rm(df_aportantes,df_indep_cal,df_temp,URL,vector_names)
 rm(list=ls(pattern="auton*|mono*|df_active*|df_pop*"))
-##Independent alignment tables------
+#Independent alignment tables------
 #Here we make the cal_auton_h_p, cal_auton_f_p, cal_mono_h_p, cal_mono_f_p csv files 
 getwd()
 setwd("../../")

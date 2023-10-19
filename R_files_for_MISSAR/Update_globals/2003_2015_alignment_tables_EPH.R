@@ -10,7 +10,7 @@ library(tidyverse)
 library(eph)
 library(googlesheets4)
 library(googledrive)
-setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
 setwd("R_files_for_MISSAR/Update_globals")
 
 # Import datasets ------------------
@@ -36,7 +36,6 @@ vars_to_import<-c("PONDERA", #Weighting
                   "PP04C" #Total workers in workplace
 )
 gc()
-
 #Takes 2.4 minutes to download everything
 start.time=Sys.time()
 options(warn=1)#Set your warning level to 1; else, any missing quarter will cause an error and stop the download.
@@ -91,7 +90,6 @@ df_EPH_2003_2015<-dl_EPH_2003_2015 %>%
                  0)
   #  contributes=ifelse(PP04A==1, TRUE, #Make public-sector workers contribute to social security, even when they declare otherwise
   #                    contributes)
-  
   )
 rm(vector_periods)
 #Run this to control variables run as intended
@@ -116,6 +114,8 @@ df_EPH_2003_2015<-df_EPH_2003_2015 %>%
 df_EPH_2003_2015<-df_EPH_2003_2015 %>% 
   mutate(is_indep=ifelse(ESTADO==1 & (CAT_OCUP==1|CAT_OCUP==2),TRUE,
                          FALSE), #Identify independent workers
+       #  debug_indep=ifelse((CAT_OCUP==1|CAT_OCUP==2),TRUE, #A previous error added to the independent some unemployed
+        #                    FALSE),
          qualification_char=substr(start=nchar(PP04D_COD),stop=nchar(PP04D_COD),PP04D_COD),#The last digit of PP04D_COD gives the position's qualification level
          qualif_indep=ifelse(is_indep, 
                              ifelse(qualification_char!=1 & qualification_char!=2, FALSE, #Independents working in positions with professional or technical qualifications are skilled 
@@ -174,7 +174,7 @@ df_EPH_2003_2015<-df_EPH_2003_2015 %>%
 
 
 df_EPH_2003_2015<-df_EPH_2003_2015 %>% 
-  select(-c(contributes,is_indep,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
+  select(-c(contributes,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
 head(df_EPH_2003_2015)
 #Finally, we create 5-year age groups for MISSAR's age-dependent alignment
 make_5y_agegroup<-function(indata,agevariable){
@@ -262,6 +262,17 @@ cal_stu<-df_EPH_2003_2015 %>%
   mutate(cal_perc=ifelse(total!=0, total_stu/total, #LMS weighted participation by age group and gender
                          0)
   )
+
+cal_indep<-df_EPH_2003_2015 %>% 
+  subset(ageconti>=16 & ageconti<=69  & CH04!=0) %>%
+  group_by(period,CH04,agegroup,is_indep) %>% 
+  summarise(total_indep=sum(PONDERA)) %>% 
+  ungroup() %>% 
+  left_join(cal_base_agegroup) %>% 
+  mutate(cal_perc=ifelse(total!=0, total_indep/total, #Independent work weighted participation by age group and gender
+                         0)
+  )
+
 rm(cal_base,cal_base_age,cal_base_agegroup,cal_base_agegroup_ext)
 gc()
 align_table_03_15<-function(indata,agevar,varmode,varvalue,gender){
@@ -315,10 +326,6 @@ age_list<-indata %>%
   outdata<-outdata
 }
 
-
-
-
-
 list_cal_LMS_male<-list()
 for (i in 1:5){
   list_cal_LMS_male [[i]]<-align_table_03_15(cal_LMS,"agegroup","labour_market_state",i,1)
@@ -351,8 +358,10 @@ for (i in 1:2){
 }
 
 
-
-
+list_cal_indep<-list() #We put together alignment for male and female students
+for (i in 1:2){
+  list_cal_indep [[i]]<-align_table_03_15(cal_indep,"agegroup","is_indep",1,i)
+}
 
 #We name the output alignment tables
 #list_lms<-c("sal","ind","aun","cho","ina")
@@ -365,6 +374,7 @@ for (i in 1:2){
 df_list_cal_LMS_03_15<-c(list_cal_LMS_male,list_cal_LMS_female) 
 df_list_cal_mar_03_15<-c(list_cal_mar_male,list_cal_mar_female)
 df_list_cal_stu_03_15<-list_cal_student
+df_list_cal_indep_03_15<-list_cal_indep
 
 rm(list=ls(pattern="^list_"))
 rm(i)
@@ -384,6 +394,7 @@ stu_names<-c("15_stu_men_03_15","16_stu_wom_03_15")
 LMS_names<-c("wag","ind","inf","une","ina")
 LMS_names_short<-c("wag","ind","inf","une")
 mar_names<-c("uni","mar")
+indep_names<-c("17_indep_men_03_15","18_indep_wom_03_15")
 
 men<-paste0("0",1:5,"_",LMS_names,"_men_","03_15") #We add a 0 to allow sorting dataframes by name in R.
 women<-paste0("0",6:9,"_",LMS_names_short,"_wom_","03_15")
@@ -412,6 +423,11 @@ for (i in 1:4){
 for (i in 1:2){
   gs4_create(name=stu_names[i],sheets=df_list_cal_stu_03_15[i])
   drive_mv(file=stu_names[i],path=id_alignment_folder)
+}
+
+for (i in 1:2){
+  gs4_create(name=indep_names[i],sheets=df_list_cal_indep_03_15[i])
+  drive_mv(file=indep_names[i],path=id_alignment_folder)
 }
 rm(i)
 rm(list=ls(pattern="*_names"))
