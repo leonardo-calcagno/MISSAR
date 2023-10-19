@@ -73,7 +73,7 @@ read_cuadro_1<-function(path){
   x <- try(read_excel(path=path, sheet = nm_1))#No relevant information, and sometimes causes bugs
 }
 
-###2003-2017 files ------
+###2003-2017 files
 
 gc()
 df_list_2003_2008_ind<-sapply(list_xls_pre_2008,read_cuadro_1,simplify=FALSE)#This keeps the file names 
@@ -82,7 +82,7 @@ correct<-df_list_2008_2016_ind$"2013_07.xls" %>%
   select(-c(1,2))#There are two columns with useless data in this excel
 df_list_2008_2016_ind$"2013_07.xls"<-correct
 rm(correct)
-
+### Post 2017 files
 df_list_post_2017_ind<-sapply(list_xls_post_2017,read_cuadro_1,simplify=FALSE)#This keeps the file names 
 
 drop_all_na<-function(indata){
@@ -183,7 +183,7 @@ for (i in 1:length(df_list_post_2017_ind)){
 }
 df_indep_post_2017<-first_col
 rm(first_col,format_df,i)
-
+##Get contributors data-----
 format_aportantes<-function(indata,last_row){
   df_aportantes<-indata[1:last_row,] 
   df_aportantes<-df_aportantes %>% 
@@ -487,7 +487,8 @@ df_indep_98_03<-col_mes %>%
   cbind(col_mono)
 names(df_indep_98_03)<-c("mes","anio","auton_tot","sal_tot","mixto_tot","monotributo")
 rm(list=ls(pattern="col_*"))
-##Consolidated indep df--------
+
+#Consolidated indep df--------
 df_indep_cal<-df_indep_98_03 %>% 
   select(c(mes,anio,auton_tot,mixto_tot,monotributo))
 df_temp<-df_indep_afjp%>% 
@@ -716,3 +717,51 @@ for (i in 1:length(array_period)){
 
 rm(list=ls(pattern="df_list*|*_2010_2040|*list_xls"))
 rm(df_indep_propor,first_col,array_period,array_period_MISSAR,first_line,df_indep_quarter_propor,output,df_workers,df_EPH_indep)
+##Cal Mono and Auton------
+cal_mono_h<-df_indep_cal %>% 
+  select(starts_with("mono")) %>% 
+  select(contains("_h_"))
+cal_mono_f<-df_indep_cal %>% 
+  select(starts_with("mono")) %>% 
+  select(contains("_f_"))
+cal_auton_h<-df_indep_cal %>% 
+  select(starts_with("auto")) %>% 
+  select(contains("_h_"))
+cal_auton_f<-df_indep_cal %>% 
+  select(starts_with("auto")) %>% 
+  select(contains("_f_"))
+
+prospective_indep<-function(indata,varname){
+  indata<-cal_mono_h
+  varname<-"mono_h_"
+  if(ncol(indata)<=41){ #Up to 10 years of data since 2016
+  average<-indata [2:nrow(indata),2:ncol(indata)] 
+  average<-rowMeans(average) %>% 
+    as.data.frame() %>% 
+    rename(average_indep=1)}
+  if(ncol(indata)>41){ #More than 10 years of data since 2016
+    average<-indata [2:nrow(indata),(ncol(indata)-41):ncol(indata)] 
+    average<-rowMeans(average) %>% 
+      as.data.frame() %>% 
+      rename(average_indep=1)
+  }
+  
+  max_empirical_period<-indata[[1,ncol(indata)]]
+  for(i in max_empirical_period:152){
+    add_period<-data.frame(i) 
+    names(add_period)<-c(paste0(varname,i))
+    col_proj<-average
+    names(col_proj)<-c(paste0(varname,i))
+    col_proj<-add_period %>% 
+      rbind(col_proj)
+    indata<-indata %>% 
+      cbind(col_proj)
+  }
+  output<-indata
+}
+
+cal_mono_h<-prospective_indep(cal_mono_h,"mono_h")
+cal_mono_f<-prospective_indep(cal_mono_f,"mono_f")
+cal_auton_h<-prospective_indep(cal_auton_h,"auton_h")
+cal_auton_f<-prospective_indep(cal_auton_f,"auton_f")
+
