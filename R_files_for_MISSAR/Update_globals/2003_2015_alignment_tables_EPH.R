@@ -212,6 +212,12 @@ cal_base<-df_EPH_2003_2015 %>%
   summarise(total=sum(PONDERA)) %>% 
   ungroup()
 
+#df_demographic_women<-df_EPH_post_2016 %>% 
+#  subset(ageconti>15 & ageconti<70 & CH04==2) %>% 
+#  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+#  summarise(PONDERA=sum(PONDERA)) %>% 
+#  ungroup()
+
 cal_base_agegroup<-df_EPH_2003_2015 %>% 
   subset(ageconti>=16 & ageconti<=69  & CH04!=0) %>%
   group_by(period,CH04,agegroup) %>% 
@@ -272,8 +278,9 @@ cal_indep<-df_EPH_2003_2015 %>%
   mutate(cal_perc=ifelse(total!=0, total_indep/total, #Independent work weighted participation by age group and gender
                          0)
   )
-
-rm(cal_base,cal_base_age,cal_base_agegroup,cal_base_agegroup_ext)
+rm(cal_base,cal_base_age,cal_base_agegroup_ext
+   #,cal_base_agegroup
+   )
 gc()
 align_table_03_15<-function(indata,agevar,varmode,varvalue,gender){
   
@@ -378,7 +385,6 @@ df_list_cal_indep_03_15<-list_cal_indep
 
 rm(list=ls(pattern="^list_"))
 rm(i)
-rm(list=ls(pattern="^cal_"))
 #Drive export------
 #It is possible to use df_list_cal_LMS_03_15 directly in the get_alignment_tables_EPH file. It would however
     #mean every time you update alignment tables, you would need to launch this file. To avoid this, we rather
@@ -429,5 +435,58 @@ for (i in 1:2){
   gs4_create(name=indep_names[i],sheets=df_list_cal_indep_03_15[i])
   drive_mv(file=indep_names[i],path=id_alignment_folder)
 }
-rm(i)
+#Period 19, the third quarter of 2007, is actually missing. We correct periods values in cal_base_agegroup
+cal_base_agegroup<-cal_base_agegroup %>% 
+  mutate(period=ifelse(period<=18, period, 
+                       period+1)
+         )
+q2_2007<-cal_base_agegroup %>% 
+  subset(period==18) %>% 
+  rename(period_18=total) %>% 
+  select(-c(period))
+q4_2007<-cal_base_agegroup %>% 
+  subset(period==20)%>% 
+  rename(period_20=total)%>% 
+  select(-c(period))
+q3_2007<-q2_2007 %>% 
+  left_join(q4_2007) %>% 
+  mutate(total=(period_18+period_20)/2,
+         period=19) %>% 
+  select(c(period,CH04,agegroup,total))
+cal_base_agegroup<-cal_base_agegroup %>% 
+  rbind(q3_2007)
+rm(q2_2007,q3_2007,q4_2007)
+
+first_col<-cal_base_agegroup %>% 
+  select(c(agegroup)) %>% 
+  unique()
+for ( i in 3:50){
+  #print(i)
+  quarter_data_men<-cal_base_agegroup%>% 
+    subset(period==i & CH04==1) %>% 
+    select(c(total)) 
+  quarter_data_women<-cal_base_agegroup%>% 
+      subset(period==i & CH04==2) %>% 
+      select(c(total)) 
+  names(quarter_data_men)<-paste0("period_",i)
+  names(quarter_data_women)<-paste0("period_",i)
+    if(i==3){
+    cal_demographic_men<-first_col %>% 
+      cbind(quarter_data_men)
+    cal_demographic_women<-first_col %>% 
+      cbind(quarter_data_women)
+    }
+    if(i>3){
+      cal_demographic_men<-cal_demographic_men %>% 
+        cbind(quarter_data_men)
+      cal_demographic_women<-cal_demographic_women %>% 
+        cbind(quarter_data_women)
+    }
+}
+rm(first_col,quarter_data_men,quarter_data_women,i)
+gs4_create(name="19_demographic_men",sheets=cal_demographic_men)
+drive_mv(file="19_demographic_men",path=id_alignment_folder)
+gs4_create(name="19_demographic_women",sheets=cal_demographic_women)
+drive_mv(file="19_demographic_women",path=id_alignment_folder)
 rm(list=ls(pattern="*_names"))
+rm(list=ls(pattern="^cal_"))

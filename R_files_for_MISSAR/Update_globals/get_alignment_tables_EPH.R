@@ -339,7 +339,7 @@ df_independent_women<-df_EPH_post_2016 %>%
   group_by(ANO4,TRIMESTRE,agegroup) %>% 
   summarise(indep=sum(PONDERA*indep)/sum(PONDERA)) %>% 
   ungroup()
-##Export, for use in Update_globals.R 
+##Export, for use in alignment_tables_independent.R 
 setwd("../../")
 setwd("Update_globals/")
 if(!file.exists("EPH_alignment")) {
