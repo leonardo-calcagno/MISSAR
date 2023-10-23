@@ -649,6 +649,50 @@ col_period<-col_period[idx,] %>%
          )
 rm(idx,duptimes)
 
+array_agegroup<-c(16,20,25,30,35,40,45,50,55,60,65)
+array_indata<-list(df_indep_03_15_men,df_indep_03_15_women,df_demo_03_15_men,df_demo_03_15_women)
+array_varname<-c("indep_men","indep_women","active_men","active_women")
+
+for(j in 1:4){  
+  indata<-array_indata[[j]] 
+  varname<-array_varname[[j]]
+  
+  for(i in 1:11){ #There are 11 age groups
+    transp_data<-indata %>% 
+      t() %>% 
+      as.data.frame()
+    transp_data<-transp_data[2:nrow(transp_data),]
+    col_age<-transp_data %>% 
+      select(c(i)) %>% 
+      mutate(agegroup=array_agegroup[[i]])
+    names(col_age)<-c(varname,"agegroup")
+    
+    output_period<-col_period %>% 
+      cbind(col_age)
+    if(i==1){
+      output<-output_period
+    }
+    if(i>1){
+      output<-output %>% 
+        rbind(output_period)
+    }
+  }
+  if(j==1){
+    df_EPH_indep_03_15<-output
+  }
+  if(j>1){
+    df_EPH_indep_03_15<-df_EPH_indep_03_15 %>% 
+      left_join(output)
+  }
+}
+rm(output,i,j,output_period,array_agegroup,array_indata,array_varname)
+
+names_EPH_indep<-names(df_EPH_indep)
+df_EPH_indep_03_15<-df_EPH_indep_03_15 %>% 
+  select(all_of(c(names_EPH_indep)))
+df_EPH_indep<-df_EPH_indep_03_15 %>%  #Join in the same data frame as post-2016 EPH
+  rbind(df_EPH_indep)
+
 
 array_period<-as.data.frame(table(df_EPH_indep$period)) %>% 
   select(c(1)) %>% 
