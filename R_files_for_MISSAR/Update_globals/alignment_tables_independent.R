@@ -274,7 +274,6 @@ df_indep<-df_indep%>%
 df_indep<-df_indep[-c(1),] %>% 
   mutate(anio=gsub(pattern="[A-Z]",replacement="",ignore.case=TRUE,anio),
          across(-c(mes),~as.integer(.x)))
-
 ##Labour ministry data-----
 
 get_href<-function(html){
@@ -551,7 +550,7 @@ df_indep_propor<-df_indep_cal %>%
   )
 rm(df_aportantes,df_indep_cal,df_temp,URL,vector_names)
 rm(list=ls(pattern="auton*|mono*|df_active*|df_pop*"))
-#Independent alignment tables------
+#EPH Independents------
 #Here we make the cal_auton_h_p, cal_auton_f_p, cal_mono_h_p, cal_mono_f_p csv files 
 getwd()
 setwd("../../")
@@ -560,6 +559,21 @@ df_independent_men<-read_excel("independent_men.xlsx")
 df_independent_women<-read_excel("independent_women.xlsx")
 df_demographic_men<-read_excel("demographic_men.xlsx")
 df_demographic_women<-read_excel("demographic_women.xlsx")
+
+id_indep<-drive_get("17_indep_men_03_15")
+df_indep_03_15_men<-read_sheet(ss=id_indep)
+rm(id_indep)
+id_indep<-drive_get("18_indep_wom_03_15")
+df_indep_03_15_women<-read_sheet(ss=id_indep)
+rm(id_indep)
+id_indep<-drive_get("19_demographic_men")
+df_demo_03_15_men<-read_sheet(ss=id_indep)
+rm(id_indep)
+id_indep<-drive_get("20_demographic_women")
+df_demo_03_15_women<-read_sheet(ss=id_indep)
+rm(id_indep)
+
+
 pattern_trim1<-"\\b1\\b|\\b2\\b|\\b3\\b|01|02|03|ene|feb|mar"
 pattern_trim2<-"\\b4\\b|\\b5\\b|\\b6\\b|04|05|06|abr|may|jun"
 pattern_trim3<-"\\b7\\b|\\b8\\b|\\b9\\b|07|08|09|jul|ago|sep|set"
@@ -616,7 +630,25 @@ df_EPH_indep<-df_EPH_indep %>%
 rm(df_demographic_men,df_demographic_women,df_independent_men,df_independent_women)
 df_EPH_indep<-df_EPH_indep %>% 
   mutate(period=paste0(ANO4,"q",TRIMESTRE))
-#Test: make it work for the fourth quarter of 2021
+
+##Add 2003-2015 EPH data------
+
+col_period<-data.frame(2003:2015) 
+duptimes<-c(2,4,4,4,4,4,4,4,4,4,4,4,2)
+idx<-rep(1:nrow(col_period),duptimes)
+col_period<-col_period[idx,] %>% 
+  as.data.frame() %>% 
+  rename(ANO4=1) %>% 
+  mutate(TRIMESTRE=ifelse(row_number()%%4==0, 2, #row number modulo 4
+                          ifelse(row_number()%%4==1, 3, 
+                                 ifelse(row_number()%%4==2, 4, 
+                                        1)
+                                 )
+                          ),
+         period=paste0(ANO4,"q",TRIMESTRE)
+         )
+rm(idx,duptimes)
+
 
 array_period<-as.data.frame(table(df_EPH_indep$period)) %>% 
   select(c(1)) %>% 
@@ -730,6 +762,7 @@ cal_auton_h<-df_indep_cal %>%
 cal_auton_f<-df_indep_cal %>% 
   select(starts_with("auto")) %>% 
   select(contains("_f_"))
+rm(df_indep_cal)
 
 prospective_indep<-function(indata,varname){
   indata<-cal_mono_h
@@ -764,4 +797,5 @@ cal_mono_h<-prospective_indep(cal_mono_h,"mono_h")
 cal_mono_f<-prospective_indep(cal_mono_f,"mono_f")
 cal_auton_h<-prospective_indep(cal_auton_h,"auton_h")
 cal_auton_f<-prospective_indep(cal_auton_f,"auton_f")
-
+#Importar datos 2003-2015 y hacer misma operación con esos datos, capaz integrar esos períodos má arriba. 
+    #SEGUIR AQUÍ
