@@ -6,6 +6,7 @@ gc()
 # Open packages
 library(tidyverse)
 library(readxl)
+library(rvest)
 library(googlesheets4)
 library(googledrive)
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
@@ -690,8 +691,47 @@ rm(output,i,j,output_period,array_agegroup,array_indata,array_varname)
 names_EPH_indep<-names(df_EPH_indep)
 df_EPH_indep_03_15<-df_EPH_indep_03_15 %>% 
   select(all_of(c(names_EPH_indep)))
+###Get gap period 2015-2016------
+quarter_2015_2<-df_EPH_indep_03_15 %>% 
+  subset(ANO4==2015 & TRIMESTRE==2) %>% 
+  rename(active_men_15_2=active_men,
+         active_women_15_2=active_women,
+         indep_men_15_2=indep_men,
+         indep_women_15_2=indep_women) %>% 
+  select(-c(ANO4,TRIMESTRE,period))
+
+quarter_2016_2<-df_EPH_indep %>% 
+  subset(ANO4==2016 & TRIMESTRE==2) %>% 
+  rename(active_men_16_2=active_men,
+         active_women_16_2=active_women,
+         indep_men_16_2=indep_men,
+         indep_women_16_2=indep_women)%>% 
+  select(-c(ANO4,TRIMESTRE,period))
+
+get_gap_quarters<-function(year,quarter,pond1,pond2){
+output<-quarter_2015_2 %>% 
+  left_join(quarter_2016_2) %>% 
+  mutate(active_men=active_men_15_2*pond1/4+active_men_16_2*pond2/4,
+         active_women=active_women_15_2*pond1/4+active_women_16_2*pond2/4,
+         indep_men=indep_men_15_2*pond1/4+indep_men_16_2*pond2/4,
+         indep_women=indep_women_15_2*pond1/4+indep_women_16_2*pond2/4,
+         ANO4=year,
+         TRIMESTRE=quarter,
+         period=paste0(ANO4,"q",TRIMESTRE)
+         ) %>% 
+  select(all_of(names_EPH_indep))
+}
+quarter_2015_3<-get_gap_quarters(2015,3,3,1)
+quarter_2015_4<-get_gap_quarters(2015,4,2,2)
+quarter_2016_1<-get_gap_quarters(2016,1,1,3)
+gap_quarters<-quarter_2015_3 %>% 
+  rbind(quarter_2015_4) %>% 
+  rbind(quarter_2016_1)
+
 df_EPH_indep<-df_EPH_indep_03_15 %>%  #Join in the same data frame as post-2016 EPH
-  rbind(df_EPH_indep)
+   rbind(gap_quarters) %>% 
+   rbind(df_EPH_indep) 
+rm(list=ls(pattern="quarter_*"))
 
 
 array_period<-as.data.frame(table(df_EPH_indep$period)) %>% 
