@@ -11,6 +11,7 @@ library(googlesheets4)
 library(googledrive)
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 
+start.time=Sys.time()
 #Set the working directory to the folder with the downloaded monthly social security bulletin excel files
 setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
@@ -731,13 +732,11 @@ gap_quarters<-quarter_2015_3 %>%
 df_EPH_indep<-df_EPH_indep_03_15 %>%  #Join in the same data frame as post-2016 EPH
    rbind(gap_quarters) %>% 
    rbind(df_EPH_indep) 
-rm(list=ls(pattern="quarter_*"))
-
 
 array_period<-as.data.frame(table(df_EPH_indep$period)) %>% 
   select(c(1)) %>% 
   t()
-array_period_MISSAR<-55:152 #Period in MISSAR format, third quarter 2016 fourth quarter 2040
+array_period_MISSAR<-3:152 #Period in MISSAR format, third quarter 2016 fourth quarter 2040
 
 for (i in 1:length(array_period)){
   input<-df_EPH_indep %>% 
@@ -831,8 +830,8 @@ for (i in 1:length(array_period)){
   rm(i,j,input,period_constants,indep_propor,base_proportion,period_MISSAR)
 }
 
-rm(list=ls(pattern="df_list*|*_2010_2040|*list_xls"))
-rm(df_indep_propor,first_col,array_period,array_period_MISSAR,first_line,df_indep_quarter_propor,output,df_workers,df_EPH_indep)
+rm(list=ls(pattern="df_list*|*_2010_2040|*list_xls|quarter_*"))
+rm(df_indep_propor,first_col,array_period,array_period_MISSAR,first_line,output,df_workers,df_EPH_indep)
 ##Cal Mono and Auton------
 cal_mono_h<-df_indep_cal %>% 
   select(starts_with("mono")) %>% 
@@ -849,20 +848,12 @@ cal_auton_f<-df_indep_cal %>%
 rm(df_indep_cal)
 
 prospective_indep<-function(indata,varname){
-  indata<-cal_mono_h
-  varname<-"mono_h_"
-  if(ncol(indata)<=41){ #Up to 10 years of data since 2016
-  average<-indata [2:nrow(indata),2:ncol(indata)] 
-  average<-rowMeans(average) %>% 
-    as.data.frame() %>% 
-    rename(average_indep=1)}
-  if(ncol(indata)>41){ #More than 10 years of data since 2016
+  #Take average of last 10 years of data for projection
     average<-indata [2:nrow(indata),(ncol(indata)-41):ncol(indata)] 
     average<-rowMeans(average) %>% 
       as.data.frame() %>% 
       rename(average_indep=1)
-  }
-  
+    
   max_empirical_period<-indata[[1,ncol(indata)]]
   for(i in max_empirical_period:152){
     add_period<-data.frame(i) 
@@ -874,12 +865,29 @@ prospective_indep<-function(indata,varname){
     indata<-indata %>% 
       cbind(col_proj)
   }
-  output<-indata
+  
+  col_agegroup<-data.frame(NA) %>%
+    rename(agegroup=1) %>% 
+    rbind(df_demo_03_15_men[,1])
+  output<-col_agegroup %>% 
+    cbind(indata)
+  first_line_cal<-data.frame(matrix(NA,
+                                    nrow=1,
+                                    ncol=ncol(output)
+                                    ))
+  first_line_cal[[1,1]]<-"agegroup"
+  first_line_cal[[1,2]]<-"period"
+  names(first_line_cal)<-names(output)
+  output<-first_line_cal %>% 
+    rbind(output)
+  
 }
-
 cal_mono_h<-prospective_indep(cal_mono_h,"mono_h")
 cal_mono_f<-prospective_indep(cal_mono_f,"mono_f")
 cal_auton_h<-prospective_indep(cal_auton_h,"auton_h")
 cal_auton_f<-prospective_indep(cal_auton_f,"auton_f")
-#Importar datos 2003-2015 y hacer misma operación con esos datos, capaz integrar esos períodos má arriba. 
-    #SEGUIR AQUÍ
+
+end.time=Sys.time()
+time.taken=end.time-start.time
+head(time.taken)
+rm(start.time,end.time,time.taken)
