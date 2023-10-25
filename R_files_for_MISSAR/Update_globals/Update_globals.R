@@ -719,14 +719,21 @@ head(time.taken)
 
 
 #ANSES benefits-----
-setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
+setwd("R_files_for_MISSAR/Scraped_datasets")
+if(!file.exists("BESS")) {
+  dir.create("BESS")
+}
+setwd("BESS/")
+
 URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
-
-
 prefix<-"https://www.argentina.gob.ar"
 
-
-rD <- rsDriver(browser="firefox", port=4545L, verbose=F)
+#binman::rm_platform("phantomjs")
+#wdman::selenium(retcommand = TRUE)
+rD <- rsDriver(browser="firefox",chromever=NULL, port=4545L, verbose=F)
+#From https://stackoverflow.com/questions/45395849/cant-execute-rsdriver-connection-refused
+##Even though we specifiy firefox as the browser, Selenium tries to load chrome anyway, which leads to an error.
+    #It gets fixed with chromever=NULL
 remDr <- rD[["client"]]
 remDr$navigate(URL)
 
@@ -744,7 +751,7 @@ vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 
 vector_pasivos<-vector_urls %>% 
   rename(URL=1) %>% 
-  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess",URL)& grepl("pasivos",URL) ) 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl("pasivos",URL) ) 
 
 head(vector_pasivos)
 rm(vector_urls,pg)
@@ -764,7 +771,7 @@ vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 
 vector_pasivos_2<-vector_urls %>% 
   rename(URL=1) %>% 
-  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess",URL)& grepl("pasivos",URL) ) 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl("pasivos",URL) ) 
 
 vector_pasivos<-vector_pasivos %>% 
   bind_rows(vector_pasivos_2) %>% 
@@ -944,6 +951,8 @@ df_benefits<-months_from_quarters(df_benefits)
 rm(list_quarters,i,j)
 
 ##Non-contributive benefits ------
+rD <- rsDriver(browser="firefox",chromever=NULL, port=4545L, verbose=F)
+remDr <- rD[["client"]]
 remDr$navigate(URL)
 no_contributivo<- "no contributivo"
 remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(no_contributivo))
@@ -959,7 +968,7 @@ vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 
 vector_PNC<-vector_urls %>% 
   rename(URL=1) %>% 
-  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess",URL)& grepl("pnc",URL) ) 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl("pnc",URL) ) 
 
 head(vector_PNC)
 rm(vector_urls,pg)
@@ -980,7 +989,7 @@ vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 
 vector_PNC_2<-vector_urls %>% 
   rename(URL=1) %>% 
-  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess",URL)& grepl("pnc",URL) ) 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl("pnc",URL) ) 
 
 rm(vector_urls,pg)
 
