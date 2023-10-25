@@ -841,15 +841,17 @@ vector_pasivos<-vector_pasivos %>%
   arrange(year,quarter) %>% 
   mutate(destfile=paste0("pasivos_",year,"_",quarter,".xlsx"))
 
-head(vector_pasivos)
-
-list_URL<-vector_pasivos %>% 
-  select(c(full_URL)) %>% 
-  t() %>% 
-  as.character()
 }
-list_URL_pasivos <- get_poncho_urls("pasivos","Pasivos")
-list_URL_PNC <- get_poncho_urls("pnc","no contributivo")
+vector_pasivos <- get_poncho_urls("pasivos","Pasivos")
+#list_URL<-vector_pasivos %>% 
+#  select(c(full_URL)) %>% 
+#  t() %>% 
+#  as.character()
+vector_PNC <- get_poncho_urls("pnc","no contributivo")
+#list_URL<-vector_pasivos %>% 
+#  select(c(full_URL)) %>% 
+#  t() %>% 
+#  as.character()
 
 
 dl_benefits<-data.frame()
