@@ -727,18 +727,19 @@ setwd("BESS/")
 
 URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
 prefix<-"https://www.argentina.gob.ar"
-
-#binman::rm_platform("phantomjs")
-#wdman::selenium(retcommand = TRUE)
+#Uncomment and launch if needed binman and wdman
+binman::rm_platform("phantomjs")
+wdman::selenium(retcommand = TRUE)
 rD <- rsDriver(browser="firefox",chromever=NULL, port=4545L, verbose=F)
 #From https://stackoverflow.com/questions/45395849/cant-execute-rsdriver-connection-refused
 ##Even though we specifiy firefox as the browser, Selenium tries to load chrome anyway, which leads to an error.
-    #It gets fixed with chromever=NULL
+#It gets fixed with chromever=NULL
 remDr <- rD[["client"]]
-remDr$navigate(URL)
 
+get_poncho_urls <- function(keyword,keyword2){
+ remDr$navigate(URL)
+pasivos<-keyword2  
 ##Retirement benefits ------
-pasivos <- "Pasivos"
 remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(pasivos))
 
 
@@ -751,7 +752,7 @@ vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 
 vector_pasivos<-vector_urls %>% 
   rename(URL=1) %>% 
-  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl("pasivos",URL) ) 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl(keyword,URL,ignore.case=TRUE) ) 
 
 head(vector_pasivos)
 rm(vector_urls,pg)
@@ -771,7 +772,7 @@ vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 
 vector_pasivos_2<-vector_urls %>% 
   rename(URL=1) %>% 
-  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl("pasivos",URL) ) 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl(keyword,URL,ignore.case=TRUE) ) 
 
 vector_pasivos<-vector_pasivos %>% 
   bind_rows(vector_pasivos_2) %>% 
@@ -846,7 +847,11 @@ list_URL<-vector_pasivos %>%
   select(c(full_URL)) %>% 
   t() %>% 
   as.character()
-  
+}
+list_URL_pasivos <- get_poncho_urls("pasivos","Pasivos")
+list_URL_PNC <- get_poncho_urls("pnc","no contributivo")
+
+
 dl_benefits<-data.frame()
 
 for (i in 1:nrow(vector_pasivos)){
