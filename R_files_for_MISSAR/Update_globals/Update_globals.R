@@ -518,7 +518,7 @@ view(concept_names)
 
 
 df_ISS_fiscal_income<-df_AIF %>% 
-  mutate(is_fiscal_income=ifelse(grepl("*INGRESOS TRIBUTARIOS",concepto), 1, 
+  mutate(is_fiscal_income=ifelse(grepl("*INGRESOS TRIBUTARIOS| INGRESOS IMPOSITIVOS",concepto), 1, 
                                  0)
   )%>% 
   subset(is_fiscal_income==1 ) %>% 
