@@ -1,4 +1,3 @@
-
 # # This code downloads Argentina's Monthly Social Security Bulletin from AFIP, 
 #both monthly excels (from May 2003 to December 2016) and yearly excels (from January 2017 onward)
 #Takes 3.3 min in 8 GB RAM laptop
@@ -14,7 +13,8 @@ library(rlist)
 rm(list=ls())
 gc()
 start.time=Sys.time()
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+#setwd("D:/Git_repos/")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
 
 if(!file.exists("bol_men_ss")) {
@@ -73,7 +73,6 @@ download_yearly_ss_bulletin(2017)
 year <- c("03","04","05","2006","2007","2008","2009",
           "2010","2011","2012","2013","2014","2015","2016"
 ) 
-
 #Possible imported months and years names
 month <- c("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
            "agosto", "septiembre","setiembre", "octubre", "noviembre", "diciembre",

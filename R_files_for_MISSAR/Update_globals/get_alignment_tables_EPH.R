@@ -6,12 +6,15 @@
 # Packages -----------------
 rm(list=ls())
 gc()
+#install.packages("eph")
 library(tidyverse)
 library(eph)
 library(readr)
+library(glue)
+library(openxlsx)
 library(googlesheets4)
 library(googledrive)
-setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
 closeAllConnections() #Else, you risk the "all connections are in use" error.
@@ -64,7 +67,105 @@ table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Shows which periods wer
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
-rm(start.time,end.time,time.taken,year,vars_to_import)
+
+df_periods<-table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) %>%  #Identify periods to download.
+  as.data.frame() %>% 
+  rename(ANO4=1,
+         TRIMESTRE=2,
+         obs=3)
+has_2016<-df_periods %>% 
+  subset(ANO4==2016)
+
+if(nrow(has_2016)==0){
+add_2016<-data.frame(2:4) %>% 
+  mutate(ANO4=2016,
+         obs=0) %>% 
+  rename(TRIMESTRE=1) %>% 
+  select(c(ANO4,TRIMESTRE,obs))
+df_periods<-add_2016 %>%
+  rbind(df_periods)
+rm(add_2016)
+}
+missing_periods<-df_periods %>% 
+  subset(obs==0) 
+
+rm(start.time,end.time,time.taken,year,df_periods)
+#The EPH package, most of the time, does not import all quarters correctly. 
+
+#Complete download if needed -------
+year <- c("2016","2017","2018","2019","2020","2021","2022","2023"
+) 
+
+#Possible imported months and years names
+quarter <- c("1_Trim","2_Trim","3_Trim","4_Trim","1erTrim","2doTrim","3erTrim","4toTrim","1er_Trim"
+)
+
+#Put different names for each option, or they get overwritten
+quarter_2 <- c("t1","t2","t3","t4","trim1","trim2","trim3","trim4","q1")
+
+urls_zip <- 
+  tidyr::expand_grid(quarter, year) %>%
+  glue_data("https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/EPH_usu_{quarter}_{year}_txt.zip")
+
+# File names for downloaded zip files
+names_zip <- 
+  tidyr::expand_grid(quarter_2, year) %>%
+  glue_data("{year}_{quarter_2}.zip")
+
+#---- Download zip files with purrr library
+setwd("../")
+setwd("Scraped_datasets/")
+if(!file.exists("EPH_folder")) {
+  dir.create("EPH_folder")
+}
+setwd("EPH_folder/")
+
+
+walk2(urls_zip,names_zip,safely(download.file))
+list_zip <- list.files(pattern='*.zip')
+for (i in 1:length(list_zip)){
+  unzip(list_zip[[i]])
+} #Open all zip folders
+#Some unzipped files are extracted in folders, we get the information from there
+list_folders<-list.dirs() 
+list_folders<-list_folders%>% 
+  subset(grepl(pattern="*EPH",list_folders)
+  )
+for (i in list_folders){
+ ind_file<-list.files(path=i,pattern="*ind|*pers") 
+  file.copy(from=paste0(i,"/",ind_file), to=paste0(getwd(),"/",ind_file), 
+            overwrite = TRUE, recursive = FALSE, 
+            copy.mode = TRUE)
+}
+rm(ind_file)
+
+list_txt<-list.files(pattern="*.txt")
+list_ind<-list_txt %>% 
+  subset(grepl(pattern="*ind|*pers",list_txt))
+
+missing_periods<-missing_periods %>% 
+  mutate(anio_corto=substr(ANO4,start=3,stop=4)
+         )
+array_missing<-paste0("T",missing_periods$TRIMESTRE,missing_periods$anio_corto)
+array_missing<-gsub(pattern="T420",replacement="4to.trim_2020",array_missing)
+
+list_missing<-list_ind %>% 
+  subset(grepl(pattern=paste(array_missing,collapse="|"),list_ind,ignore.case=TRUE))
+
+for (i in list_missing){
+  df_import<-read_delim(i, delim=";", escape_double=FALSE,
+                        trim_ws=TRUE, col_select=vars_to_import)
+  dl_EPH_post_2016<-dl_EPH_post_2016 %>% 
+    rbind(df_import)
+  rm(df_import)
+}
+table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Verify all periods are correctly imported
+unlink(list_txt,recursive=TRUE) #Keep only downloaded zip files
+unlink("*.pdf",recursive=TRUE)
+#unlink("*.zip",recursive=TRUE) #Uncomment to also delete downloaded zip files
+rm(array_missing,list_missing,list_ind,list_zip,i,list_txt,vars_to_import,has_2016,missing_periods,list_folders,names_zip,quarter,quarter_2,urls_zip,year)
+
+
 #Variables of interest -----
 vector_periods<-dl_EPH_post_2016 %>% 
   select(c(ANO4,TRIMESTRE)) %>% 
@@ -103,6 +204,8 @@ rm(vector_periods)
   
   df_EPH_post_2016<-df_EPH_post_2016 %>% 
     select(-c(PP07H,PP07I,CH06,NIVEL_ED,CAT_INAC))
+  
+  
   
   
   #Run to verify independent workers in the EPH don't report social security contributions
@@ -176,7 +279,7 @@ rm(vector_periods)
   
 
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
-  select(-c(contributes,is_indep,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
+  select(-c(contributes,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
 head(df_EPH_post_2016)
 #Finally, we create 5-year age groups for MISSAR's age-dependent alignment
 make_5y_agegroup<-function(indata,agevariable){
@@ -205,6 +308,49 @@ make_5y_agegroup<-function(indata,agevariable){
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   make_5y_agegroup("ageconti")
 gc()
+#DF independent workers-----
+df_demographic_men<-df_EPH_post_2016 %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==1) %>% 
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(PONDERA=sum(PONDERA)) %>% 
+  ungroup()
+
+df_demographic_women<-df_EPH_post_2016 %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==2) %>% 
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(PONDERA=sum(PONDERA)) %>% 
+  ungroup()
+
+df_independent_men<-df_EPH_post_2016 %>% 
+  mutate(indep=ifelse(is_indep, 1, 
+                      0)
+         ) %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==1) %>%
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(indep=sum(PONDERA*indep)/sum(PONDERA)
+            ) %>% 
+  ungroup()
+
+df_independent_women<-df_EPH_post_2016 %>% 
+  mutate(indep=ifelse(is_indep, 1, 
+                      0)
+  ) %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==2) %>%
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(indep=sum(PONDERA*indep)/sum(PONDERA)) %>% 
+  ungroup()
+##Export, for use in alignment_tables_independent.R 
+setwd("../../")
+setwd("Update_globals/")
+if(!file.exists("EPH_alignment")) {
+  dir.create("EPH_alignment")
+}
+setwd("EPH_alignment/")
+getwd()
+write.xlsx(df_demographic_men,"demographic_men.xlsx")
+write.xlsx(df_demographic_women,"demographic_women.xlsx")
+write.xlsx(df_independent_men,"independent_men.xlsx")
+write.xlsx(df_independent_women,"independent_women.xlsx")
 #Base alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69) %>% #Use ageconti for subsetting, else age 15 is included

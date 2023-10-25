@@ -1,5 +1,5 @@
-
-# Packages -----------------
+#Load workspace------
+##Packages -----
 rm(list=ls())
 gc()
 
@@ -18,12 +18,13 @@ library(xml2)
 library(rvest)
 library(RSelenium)
 
-gs4_auth() #Connection to google account
+#gs4_auth() #Connection to google account
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+#setwd("D:/Git_repos/")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
@@ -133,7 +134,6 @@ df_CPI_for_globals<-df_CPI_for_globals %>%
 
 range_write(df_CPI_for_globals,ss=id_globals,range="E889",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE)
 rm(df_CPI_for_globals,df_latest_CPI)
-
 #INDEC wage index ------
  #URL: https://www.indec.gob.ar/ftp/cuadros/sociedad/variaciones_salarios_09_22.xls for July data
 
@@ -238,11 +238,12 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 
 #On 4 GB Ram laptop, 7.6 minutes. 
 start.time=Sys.time()
-
 ##Go to the folder with updated AIF files (see download_all_AIF)
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
-setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
-getwd()
+#setwd("D:/Git_repos/")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
+setwd("../../") #Relative path: go up to R_files_for_MISSAR
+setwd("Scraped_datasets/AIF")
 ###The only month that does not work is January 2000, it is a weird xml file. You need to open it with 
 #excel, and save it as an excel file in the AIF folder with a different name (2000_enero for instance). 
 
@@ -512,7 +513,7 @@ concept_names<- as.data.frame(df_AIF$concepto) %>%
 view(concept_names)
 
 ##Update global----
-#Here, we are only interested in ANSES fiscal income, used for pension mobiliy computation. 
+#Here, we are only interested in ANSES fiscal income, used for pension mobility computation. 
 
 
 
@@ -538,25 +539,25 @@ id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
 range_write(vector_ISS_fiscal_income,ss=id_globals,range="I284",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
 
 rm(total_files,control,list_AIF,table_file_size,concept_names,vector_ISS_fiscal_income,df_ISS_fiscal_income)
-
+setwd("../../") #Restore wd to R_files_for_MISSAR
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
 
-
 # Social security contributions----
-#Set the working directory to the folder with the downloaded monthly social security bulletin excel files
 
 #On 4 GB Ram laptop, 2 minutes. 
 start.time=Sys.time()
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
-setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
+#Set the working directory to the folder with the downloaded monthly social security bulletin excel files
+#setwd("D:/Git_repos/")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
+setwd("../../")
+setwd("Scraped_datasets/bol_men_ss")
 getwd()
-
+##Load bulletin files----
 #List all social-security bulletin excel files
 list_xls<-list.files(pattern='*.xls')
-
-
 ###Import all downloaded excel files (from https://stackoverflow.com/questions/32888757/how-can-i-read-multiple-excel-files-into-r)
 
 #Social security contributions for ANSES are always on sheet "Cuadro 9" from May 2003 to November 2008; 
@@ -595,6 +596,7 @@ list_xls_post_2017<-df_list_xls %>%
   select(c(file_name)) %>% 
   t() %>% 
   as.character()
+
 
 read_cuadro_8<-function(path){
   nm_8 <- try(grep("Cuadro 8", excel_sheets(path), 
@@ -694,6 +696,8 @@ df_post_2017<-df_post_2017 %>%
 
 #Time series of monthly ANSES contributions, in millions of current pesos
 df_ANSES_contributions<-rbind(df_2003_2016,df_post_2017) 
+rm(df_2003_2016,df_post_2017)
+rm(list=ls(pattern="df_list_*"))
 
 ##Update globals file -----
 
@@ -714,7 +718,6 @@ time.taken=end.time-start.time
 head(time.taken)
 
 
-
 #ANSES benefits-----
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
 URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
@@ -722,7 +725,7 @@ URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
 
 prefix<-"https://www.argentina.gob.ar"
 
-rD <-rsDriver()
+
 rD <- rsDriver(browser="firefox", port=4545L, verbose=F)
 remDr <- rD[["client"]]
 remDr$navigate(URL)
@@ -1014,7 +1017,7 @@ remDr$findElement(using="xpath",value=previous_page)$clickElement() #Here you cl
 
 #Cleanup -----
 rm(output_name,sheet_name)
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 unlink("download_folder",recursive=TRUE)
 rm(list=ls())
