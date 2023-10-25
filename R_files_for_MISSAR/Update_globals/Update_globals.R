@@ -517,7 +517,7 @@ view(concept_names)
 
 
 df_ISS_fiscal_income<-df_AIF %>% 
-  mutate(is_fiscal_income=ifelse(grepl("*INGRESOS TRIBUTARIOS",concepto), 1, 
+  mutate(is_fiscal_income=ifelse(grepl("*INGRESOS TRIBUTARIOS| INGRESOS IMPOSITIVOS",concepto), 1, 
                                  0)
   )%>% 
   subset(is_fiscal_income==1 ) %>% 
@@ -722,7 +722,7 @@ URL <- "https://www.argentina.gob.ar/trabajo/seguridadsocial/bess"
 
 prefix<-"https://www.argentina.gob.ar"
 
-
+rD <-rsDriver()
 rD <- rsDriver(browser="firefox", port=4545L, verbose=F)
 remDr <- rD[["client"]]
 remDr$navigate(URL)

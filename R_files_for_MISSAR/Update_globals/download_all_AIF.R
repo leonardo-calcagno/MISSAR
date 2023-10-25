@@ -12,7 +12,7 @@ library(rlist)
 start.time=Sys.time()
 
 ##Folder creation
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
 
 if(!file.exists("AIF")) {
@@ -24,15 +24,16 @@ getwd()
 #Select years to import -------
 #We left here the code to import all months, since 1997. It takes a while. Feel free to 
 #comment out the years you are not interested in.
-year <- c("00","01","02","03","04","05","06","07","08","09",
-          "10","11","12","13","14","15","16","17","18","19",
-          "20","21","22"
-) 
-year_90<-c("97","98","99")
+year <- c(#"00","01","02","03","04","05","06","07","08","09",
+          #"10","11","12","13","14","15","16","17","18","19",
+          #"20","21","22",
+         "23"
+         ) 
+#year_90<-c("97","98","99")
 #year_short<-sapply(year,function(x) substr(start=3,stop=4,x))
 
 #Possible imported months and years names
-month <- c("ene", "feb", "mar", "abr", "may", "jun", "jul",
+month <- c("ene", "feb", "mar", "abr", "may", "jun", "jul",#The URL is case-sensitive (!) and starting from march 2023 it is capitalised, change accordingly
            "ago", "sep", "oct", "nov", "dic", 
            "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
            "agosto", "septiembre", "octubre", "noviembre", "diciembre")
