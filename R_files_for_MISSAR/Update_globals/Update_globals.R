@@ -892,8 +892,6 @@ for (i in 1:nrow(vector_pasivos)){
     bind_rows(input)
 }
 rm(input,pg,i)
-
-
 for (i in 1:nrow(vector_PNC)){
   download.file(vector_PNC[[i,1]],destfile=vector_PNC[[i,4]],mode="wb",overwrite=TRUE)
   input<-read_excel(vector_PNC[[i,4]],sheet="3.1")  #Reads the sheet with total Non-Contributive Pensions
@@ -907,6 +905,10 @@ for (i in 1:nrow(vector_PNC)){
     mutate(year=vector_PNC[[i,2]],
            quarter=vector_PNC[[i,3]]) %>% 
     select(c(year,quarter,everything()))
+  if(nrow(input)>1){
+    print(i)
+    print("ERROR")
+  }
   if(i==1){
     dl_PNC<-input %>% 
       bind_rows(input)
@@ -917,8 +919,9 @@ for (i in 1:nrow(vector_PNC)){
   }
 }
 
-rm(input,pg,i)
-
+rm(input,i)
+dl_PNC<-dl_PNC %>% 
+  unique()
 #The fourth quarter value is actually a yearly average, we correct this. 
 get_4q_value<-function(indata, ano4){
   
@@ -950,15 +953,18 @@ output<-indata
 }
 
 df_list_ben<-list()
+df_list_PNC<-list()
 year<-as.integer(substr(start=1,stop=4,Sys.Date()))
 
 for (i in 2020:year){
   index<-i-2019
   df_list_ben[[index]]<-get_4q_value(dl_benefits,i)
+  df_list_PNC[[index]]<-get_4q_value(dl_PNC,i)
 }
 
 df_benefits<-bind_cols(df_list_ben)
-rm(df_list_ben,year)
+df_PNC<-bind_cols(df_list_PNC)
+rm(df_list_ben,df_list_PNC,year)
 
 months_from_quarters<-function(indata){
 
@@ -990,74 +996,9 @@ output<-indata
 }
 
 df_benefits<-months_from_quarters(df_benefits)
+df_PNC<-months_from_quarters(df_PNC)
 
 rm(list_quarters,i,j)
-
-##Non-contributive benefits ------
-rD <- rsDriver(browser="firefox",chromever=NULL, port=4545L, verbose=F)
-remDr <- rD[["client"]]
-remDr$navigate(URL)
-no_contributivo<- "no contributivo"
-remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(no_contributivo))
-
-Sys.sleep(3) # give the page time to fully load
-html <- remDr$getPageSource()[[1]]
-
-pg<-read_html(html)
-
-vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
-
-
-
-vector_PNC<-vector_urls %>% 
-  rename(URL=1) %>% 
-  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl("pnc",URL) ) 
-
-head(vector_PNC)
-rm(vector_urls,pg)
-
-
-rm(input,pg,vector_pasivos,vector_pasivos_2,vector_urls)
-
-next_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[4]/a" 
-remDr$findElement(using="xpath",value=next_page)$clickElement() #Here you click the next page button
-
-
-Sys.sleep(3) # give the page time to fully load
-html <- remDr$getPageSource()[[1]]
-
-pg<-read_html(html)
-
-vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
-
-vector_PNC_2<-vector_urls %>% 
-  rename(URL=1) %>% 
-  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl("pnc",URL) ) 
-
-rm(vector_urls,pg)
-
-#May be best to make a function here, ONGOING
-
-
-vector_PNC<-vector_PNC %>% 
-  bind_rows(vector_PNC_2) %>% 
-  unique() %>% 
-  mutate(full_URL=paste0(prefix,URL)
-  )
-
-vector_PNC<-vector_PNC %>% 
-  mutate(year=9999,  
-         actual_year=year,
-         quarter="not_present",
-         actual_quarter=quarter
-  )
-
-list_quarters<-c("03","06","09","12")
-
-current_year<-Sys.Date() %>% 
-  substr(start=1,stop=4) %>% 
-  as.integer()
-
 
 
 #If you need to go to previous page
