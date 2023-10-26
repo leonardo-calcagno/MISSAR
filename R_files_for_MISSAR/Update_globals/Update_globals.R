@@ -839,9 +839,11 @@ vector_pasivos<-vector_pasivos %>%
 
 vector_pasivos<-vector_pasivos %>% 
   arrange(year,quarter) %>% 
-  mutate(destfile=paste0("pasivos_",year,"_",quarter,".xlsx"))
+  mutate(destfile=paste0("pasivos_",year,"_",quarter,".xlsx")) %>% 
+  subset(!grepl(pattern="not_present",quarter))
 
 }
+
 vector_pasivos <- get_poncho_urls("pasivos","Pasivos")
 #list_URL<-vector_pasivos %>% 
 #  select(c(full_URL)) %>% 
@@ -853,7 +855,16 @@ vector_PNC <- get_poncho_urls("pnc","no contributivo")
 #  t() %>% 
 #  as.character()
 
+vector_PNC<-vector_PNC %>% 
+  mutate(quarter=ifelse(grepl(pattern="06-2023",full_URL), "06", 
+                        quarter),
+         destfile=ifelse(grepl(pattern="06-2023",full_URL), "pasivos_2023_06.xlsx", 
+                         destfile),
+         destfile=gsub(pattern="pasivos",replacement="PNC",destfile)
+         ) %>% 
+  arrange(year,quarter)
 
+#Change in excel format from june 2023 onward: monthly PUAM benefits are no longer available, quarter benefits only
 dl_benefits<-data.frame()
 
 for (i in 1:nrow(vector_pasivos)){
@@ -880,8 +891,33 @@ for (i in 1:nrow(vector_pasivos)){
   dl_benefits<-dl_benefits %>% 
     bind_rows(input)
 }
-rm(input,pg,vector_pasivos,vector_pasivos_2,vector_urls)
-  
+rm(input,pg,i)
+
+
+for (i in 1:nrow(vector_PNC)){
+  download.file(vector_PNC[[i,1]],destfile=vector_PNC[[i,4]],mode="wb",overwrite=TRUE)
+  input<-read_excel(vector_PNC[[i,4]],sheet="3.1")  #Reads the sheet with total Non-Contributive Pensions
+  has_num<-rowSums(mapply(grepl,"[0-9]",input)) #Detecta las columnas con al menos un número
+  input<-input[which(has_num>5),] %>% 
+    select(c(2))
+  input<-input [nrow(input),] %>% 
+    mutate(across(everything(),~as.integer(.x)), #We put variables as integer
+    ) %>% 
+    rename(PNC=1) %>% 
+    mutate(year=vector_PNC[[i,2]],
+           quarter=vector_PNC[[i,3]]) %>% 
+    select(c(year,quarter,everything()))
+  if(i==1){
+    dl_PNC<-input %>% 
+      bind_rows(input)
+  }
+  if(i>1){
+  dl_PNC<-dl_PNC %>% 
+    bind_rows(input)
+  }
+}
+
+rm(input,pg,i)
 
 #The fourth quarter value is actually a yearly average, we correct this. 
 get_4q_value<-function(indata, ano4){
@@ -922,7 +958,7 @@ for (i in 2020:year){
 }
 
 df_benefits<-bind_cols(df_list_ben)
-rm(df_list_ben)
+rm(df_list_ben,year)
 
 months_from_quarters<-function(indata){
 
