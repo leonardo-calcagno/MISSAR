@@ -944,11 +944,11 @@ df_PUAM<-read_excel("PNC_2023_03.xlsx",sheet="3.7") %>%
 
 df_PUAM<-df_PUAM[3:nrow(df_PUAM),]%>% #Keep only integers
   mutate(PUAM=as.integer(PUAM),
-         date=as.Date(as.integer(date),origin="1899-12-30")#,
+         date=as.Date(as.integer(date),origin="1899-12-30"),
          # month=substr(date,start=6,stop=7),
-         #year=substr(date,start=1,stop=4)
+         year=as.integer(substr(date,start=1,stop=4))
   ) %>% 
-  select(c(date,PUAM))
+  select(c(year,date,PUAM))
 #We get separately PUAM figures from the second quarter of 2023 onward
 
 list_PUAM_23 <- list.files(pattern='*.xls') %>% 
@@ -1041,6 +1041,7 @@ df_PNC<-bind_cols(df_list_PNC)
 df_PUAM_23<-bind_cols(df_list_PUAM)
 rm(df_list_ben,df_list_PNC,df_list_PUAM,year)
 
+
 months_from_quarters<-function(indata){
 original_ncols<-ncol(indata)
 
@@ -1071,7 +1072,21 @@ output<-indata
 df_benefits<-months_from_quarters(df_benefits)
 df_PNC<-months_from_quarters(df_PNC)
 df_PUAM_23<-months_from_quarters(df_PUAM_23)
-rm(list_quarters,i,j,index)
+
+#We add PUAM data from 2020 onward
+df_PUAM<-df_PUAM %>% 
+  subset(year>=2020) 
+df_PUAM<-df_PUAM[1:(nrow(df_PUAM)-1),]%>%  #We take out the march 2023 value, to avoid duplicates
+  select(-c(year)) %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  janitor::row_to_names(row_number=1) %>% 
+  janitor::clean_names() %>% 
+  mutate(across(everything(),~as.integer(.x)) #We put variables as integer
+  )
+df_PUAM<-df_PUAM %>% 
+  cbind(df_PUAM_23)
+rm(list_quarters,i,j,index,df_PUAM_23)
 
 
 #If you need to go to previous page
