@@ -24,7 +24,8 @@ id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
 id_globals_senate<- drive_get("Globals_moratorium_senate") 
 ##Generate temporary download folder----
 #setwd("D:/Git_repos/")
-setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("Documents/MISSAR/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
@@ -850,6 +851,8 @@ vector_pasivos <- get_poncho_urls("pasivos","Pasivos")
 #  t() %>% 
 #  as.character()
 vector_PNC <- get_poncho_urls("pnc","no contributivo")
+head(vector_PNC)
+#Check periods are properly loaded
 #list_URL<-vector_pasivos %>% 
 #  select(c(full_URL)) %>% 
 #  t() %>% 
@@ -863,6 +866,11 @@ vector_PNC<-vector_PNC %>%
          destfile=gsub(pattern="pasivos",replacement="PNC",destfile)
          ) %>% 
   arrange(year,quarter)
+
+###Save URLs------
+#This allows for running the code in machines where Selenium can't be installed.
+write.xlsx(vector_pasivos,"URL_benefits.xlsx")
+write.xlsx(vector_PNC,"URL_noncon_pen.xlsx")
 
 #Change in excel format from june 2023 onward: monthly PUAM benefits are no longer available, quarter benefits only
 dl_benefits<-data.frame()
