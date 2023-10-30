@@ -740,7 +740,7 @@ remDr <- rD[["client"]]
 get_poncho_urls <- function(keyword,keyword2){
  remDr$navigate(URL)
 pasivos<-keyword2  
-##Retirement benefits ------
+##Get URLs ------
 remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(pasivos))
 
 
@@ -867,14 +867,14 @@ vector_PNC<-vector_PNC %>%
          ) %>% 
   arrange(year,quarter)
 
-###Save URLs------
+##Save URLs
 #This allows for running the code in machines where Selenium can't be installed.
 write.xlsx(vector_pasivos,"URL_benefits.xlsx")
 write.xlsx(vector_PNC,"URL_noncon_pen.xlsx")
-
-#Change in excel format from june 2023 onward: monthly PUAM benefits are no longer available, quarter benefits only
+rm(prefix,rD,remDr,URL,vector_pasivos,vector_PNC)
+##Import benefits------
+###Retirement ------
 dl_benefits<-data.frame()
-
 for (i in 1:nrow(vector_pasivos)){
   download.file(vector_pasivos[[i,1]],destfile=vector_pasivos[[i,4]],mode="wb",overwrite=TRUE)
   
@@ -900,6 +900,7 @@ for (i in 1:nrow(vector_pasivos)){
     bind_rows(input)
 }
 rm(input,pg,i)
+###Non-contributive------
 for (i in 1:nrow(vector_PNC)){
   download.file(vector_PNC[[i,1]],destfile=vector_PNC[[i,4]],mode="wb",overwrite=TRUE)
   input<-read_excel(vector_PNC[[i,4]],sheet="3.1")  #Reads the sheet with total Non-Contributive Pensions
@@ -930,6 +931,65 @@ for (i in 1:nrow(vector_PNC)){
 rm(input,i)
 dl_PNC<-dl_PNC %>% 
   unique()
+###PUAM----
+#Monthly PUAM benefits are available in a single excel up to December 2022. Then, 
+#from march 2023 onward we only have end-of-quarter figures. 
+#The december 2022 PNC excel is downloaded through vector_PNC, so we load it here
+
+df_PUAM<-read_excel("PNC_2023_03.xlsx",sheet="3.7") %>% 
+  select(c(2,3)) %>% 
+  rename(date=1,
+         PUAM=2) %>% 
+  subset(!is.na(PUAM))
+
+df_PUAM<-df_PUAM[3:nrow(df_PUAM),]%>% #Keep only integers
+  mutate(PUAM=as.integer(PUAM),
+         date=as.Date(as.integer(date),origin="1899-12-30")#,
+         # month=substr(date,start=6,stop=7),
+         #year=substr(date,start=1,stop=4)
+  ) %>% 
+  select(c(date,PUAM))
+#We get separately PUAM figures from the second quarter of 2023 onward
+
+list_PUAM_23 <- list.files(pattern='*.xls') %>% 
+  as.data.frame() %>% 
+  rename(file_name=1) %>% 
+  subset(!grepl(pattern="present|2020|2021|2022",file_name)) %>% 
+  subset(grepl(pattern="PNC",file_name)) %>% 
+  subset(!(grepl(pattern="2023",file_name) & grepl(pattern="03",file_name)))
+
+df_PUAM_23<-data.frame()
+for(i in 1:nrow(list_PUAM_23)){
+  input<-read_excel(list_PUAM_23[[i,1]],sheet="3.7")
+  col_period<-colSums(mapply(grepl,"período|periodo",input,ignore.case=TRUE)) #Detects columns with at least one number
+  col_ben<-colSums(mapply(grepl,"Total",input,ignore.case=TRUE)) 
+  col_notes<-colSums(mapply(grepl,"Nota",input,ignore.case=TRUE))
+  col_select<-col_ben+col_period-col_notes
+  output<-input[,which(col_select>0)] %>% 
+    rename(date=1,
+           PUAM=2) %>% 
+    subset(!is.na(date))
+  output<-output[nrow(output),] %>% 
+    mutate(PUAM=as.integer(PUAM),
+           date=as.Date(as.integer(date),origin="1899-12-30"))
+  df_PUAM_23<-df_PUAM_23 %>% 
+    rbind(output)
+}
+march_23<-df_PUAM[nrow(df_PUAM),] %>% 
+  mutate(year=2023,
+         quarter="03") %>% 
+  select(c(year,quarter,PUAM))
+#We add march 2023, to extrapolate between march and june
+df_PUAM_23<-df_PUAM_23 %>% 
+  mutate(year=as.integer(substr(date,start=1,stop=4)),
+         quarter=substr(date,start=6,stop=7)) %>% 
+  select(c(year,quarter,PUAM))
+df_PUAM_23<-march_23 %>% 
+  rbind(df_PUAM_23)
+
+rm(list_PUAM_23,input,output,i,march_23)
+rm(list=ls(pattern="col_*"))
+##Format benefits----
 #The fourth quarter value is actually a yearly average, we correct this. 
 get_4q_value<-function(indata, ano4){
   
@@ -970,16 +1030,21 @@ for (i in 2020:year){
   df_list_PNC[[index]]<-get_4q_value(dl_PNC,i)
 }
 
+df_list_PUAM<-list()
+for(i in 2023:year){
+  index<-i-2022
+  df_list_PUAM[[index]]<-get_4q_value(df_PUAM_23,i)
+}
+
 df_benefits<-bind_cols(df_list_ben)
 df_PNC<-bind_cols(df_list_PNC)
-rm(df_list_ben,df_list_PNC,year)
+df_PUAM_23<-bind_cols(df_list_PUAM)
+rm(df_list_ben,df_list_PNC,df_list_PUAM,year)
 
 months_from_quarters<-function(indata){
-
 original_ncols<-ncol(indata)
 
 for(i in 1:(ncol(indata)-1)){
-  
   store_names<-names(indata)
   indata<-indata %>% 
     mutate(first_month=indata[,i]*2/3+indata[,i+1]*1/3,
@@ -1005,8 +1070,8 @@ output<-indata
 
 df_benefits<-months_from_quarters(df_benefits)
 df_PNC<-months_from_quarters(df_PNC)
-
-rm(list_quarters,i,j)
+df_PUAM_23<-months_from_quarters(df_PUAM_23)
+rm(list_quarters,i,j,index)
 
 
 #If you need to go to previous page
