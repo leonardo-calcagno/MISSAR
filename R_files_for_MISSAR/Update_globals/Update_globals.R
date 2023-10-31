@@ -235,6 +235,12 @@ range_write(vector_RIPTE,ss=id_globals,range="N620",col_names =FALSE,sheet="Infl
 rm(vector_RIPTE)
 unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .csv is not in gitignore
 
+#Cleanup -----
+rm(output_name,sheet_name)
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
+unlink("download_folder",recursive=TRUE)
+
 #ANSES fiscal income, from Savings-Investment-Funding Account----
 
 #On 4 GB Ram laptop, 7.6 minutes. 
@@ -737,6 +743,9 @@ rD <- rsDriver(browser="firefox",chromever=NULL, port=4545L, verbose=F)
 ##Even though we specifiy firefox as the browser, Selenium tries to load chrome anyway, which leads to an error.
 #It gets fixed with chromever=NULL
 remDr <- rD[["client"]]
+#If you need to go to previous page
+#previous_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[1]/a"
+#remDr$findElement(using="xpath",value=previous_page)$clickElement() #Here you click the next page button
 
 get_poncho_urls <- function(keyword,keyword2){
  remDr$navigate(URL)
@@ -832,12 +841,6 @@ vector_pasivos<-vector_pasivos %>%
                      actual_year)
          ) %>% 
   select(-c(actual_quarter,actual_year,URL))
-
-#if(!file.exists("download_folder")) {
-#  dir.create("download_folder")
-#}
-#setwd("download_folder/")
-
 
 vector_pasivos<-vector_pasivos %>% 
   arrange(year,quarter) %>% 
@@ -1121,23 +1124,23 @@ names_months<-names(df_PNC)
 names(df_benefits)<-names_months
 names(df_PUAM)<-names_months
 rm(names_months)
-total_benefits<-df_benefits %>% 
+vector_benefits<-df_benefits %>% 
   rbind(df_PNC) %>% 
   rbind(df_PUAM) %>% 
   t() %>% 
-  as.data.frame() 
+  as.data.frame() %>% 
+  mutate(all_retirement=PUAM+total,
+         all_benefits=PUAM+total+PNC) %>% 
+  select(c(all_retirement,all_benefits,sin_moratoria))
 
+##Update globals file-----
 
-#If you need to go to previous page
+#We update ANSES fiscal income information in the global file
 
-
-previous_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[1]/a"
-remDr$findElement(using="xpath",value=previous_page)$clickElement() #Here you click the next page button
-
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
+range_write(vector_benefits,ss=id_globals,range="AO148",col_names =FALSE,sheet="Simulated_ANSES_contributions",reformat=FALSE) #
+rm(has_num,df_benefits,df_pNC,df_PUAM,vector_benefits)
+setwd("../../") #Restore wd to R_files_for_MISSAR
 
 #Cleanup -----
-rm(output_name,sheet_name)
-setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
-setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
-unlink("download_folder",recursive=TRUE)
 rm(list=ls())
