@@ -720,7 +720,8 @@ head(time.taken)
 
 
 #ANSES benefits-----
-setwd("R_files_for_MISSAR/Scraped_datasets")
+setwd("../../")
+setwd("Scraped_datasets")
 if(!file.exists("BESS")) {
   dir.create("BESS")
 }
@@ -871,7 +872,7 @@ vector_PNC<-vector_PNC %>%
 #This allows for running the code in machines where Selenium can't be installed.
 write.xlsx(vector_pasivos,"URL_benefits.xlsx")
 write.xlsx(vector_PNC,"URL_noncon_pen.xlsx")
-rm(prefix,rD,remDr,URL,vector_pasivos,vector_PNC)
+rm(prefix,rD,remDr,URL)
 ##Import benefits------
 ###Retirement ------
 dl_benefits<-data.frame()
@@ -931,6 +932,7 @@ for (i in 1:nrow(vector_PNC)){
 rm(input,i)
 dl_PNC<-dl_PNC %>% 
   unique()
+rm(vector_pasivos,vector_PNC)
 ###PUAM----
 #Monthly PUAM benefits are available in a single excel up to December 2022. Then, 
 #from march 2023 onward we only have end-of-quarter figures. 
@@ -1023,9 +1025,17 @@ output<-indata
 df_list_ben<-list()
 df_list_PNC<-list()
 year<-as.integer(substr(start=1,stop=4,Sys.Date()))
-
-for (i in 2020:year){
-  index<-i-2019
+#We have actual monthly data up until december 2020, so we only use information from 2021 onward
+dec_2020_ben<-dl_benefits %>% 
+  subset(year==2020 & quarter=="12")
+dec_2020_PNC<-dl_PNC %>% 
+  subset(year==2020 & quarter=="12")
+dl_benefits<-dl_benefits %>% 
+  subset(year>=2021)
+dl_PNC<-dl_PNC %>% 
+  subset(year>=2021)
+for (i in 2021:year){
+  index<-i-2020
   df_list_ben[[index]]<-get_4q_value(dl_benefits,i)
   df_list_PNC[[index]]<-get_4q_value(dl_PNC,i)
 }
@@ -1039,8 +1049,23 @@ for(i in 2023:year){
 df_benefits<-bind_cols(df_list_ben)
 df_PNC<-bind_cols(df_list_PNC)
 df_PUAM_23<-bind_cols(df_list_PUAM)
-rm(df_list_ben,df_list_PNC,df_list_PUAM,year)
+add_dec_2020<-function(indata,dec_data){
+dec_data<-dec_data %>%  
+  select(-c(year)) %>% 
+  t() %>%
+  as.data.frame()%>%  
+  janitor::row_to_names(row_number=1) %>% 
+  janitor::clean_names() %>% 
+  mutate(across(everything(),~as.integer(.x)) #We put variables as integer
+  )
+output<-dec_data %>% 
+  bind_cols(indata)
+}
+df_benefits<-add_dec_2020(df_benefits,dec_2020_ben)
+df_PNC<-add_dec_2020(df_PNC,dec_2020_PNC)
 
+rm(df_list_ben,df_list_PNC,df_list_PUAM,year,dec_2020_ben,dec_2020_PNC)
+rm(dl_benefits,dl_PNC,vector_pasivos,vector_PNC)
 
 months_from_quarters<-function(indata){
 original_ncols<-ncol(indata)
@@ -1073,9 +1098,9 @@ df_benefits<-months_from_quarters(df_benefits)
 df_PNC<-months_from_quarters(df_PNC)
 df_PUAM_23<-months_from_quarters(df_PUAM_23)
 
-#We add PUAM data from 2020 onward
+#We add PUAM data from 2021 onward (we have monthly data up until december 2020)
 df_PUAM<-df_PUAM %>% 
-  subset(year>=2020) 
+  subset(year>=2021) 
 df_PUAM<-df_PUAM[1:(nrow(df_PUAM)-1),]%>%  #We take out the march 2023 value, to avoid duplicates
   select(-c(year)) %>% 
   t() %>% 
@@ -1087,6 +1112,20 @@ df_PUAM<-df_PUAM[1:(nrow(df_PUAM)-1),]%>%  #We take out the march 2023 value, to
 df_PUAM<-df_PUAM %>% 
   cbind(df_PUAM_23)
 rm(list_quarters,i,j,index,df_PUAM_23)
+#We take out december 2020 data 
+df_benefits<-df_benefits[,2:length(df_benefits)]
+df_PNC<-df_PNC[,2:length(df_PNC)]
+
+#We now combine all benefits in one df
+names_months<-names(df_PNC)
+names(df_benefits)<-names_months
+names(df_PUAM)<-names_months
+rm(names_months)
+total_benefits<-df_benefits %>% 
+  rbind(df_PNC) %>% 
+  rbind(df_PUAM) %>% 
+  t() %>% 
+  as.data.frame() 
 
 
 #If you need to go to previous page
