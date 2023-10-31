@@ -69,14 +69,12 @@ Version 1.4. (ongoing)
 - Generate and handle globals with R and google drive
 - Handle MISSAR results with R and google drive
 - Include 2022 proposed pension moratorium legislation
-- Manually updated economic data: 
-	* Autonomous and monotributista information up to February 2022
-	* Gender of autonomous and monotributistas workers measured for December 2021 (BESS)
 - Data scraping for automatic calibration data updates: 
 	* CPI, RIPTE and INDEC wage indexes
 	* ANSES fiscal income , from Savings-Investment-Accounts
 	* Social security contributions (AFIP)
-	* Ongoing: ANSES benefits, with Selenium
+	* ANSES benefits, for pension mobility computation, with Selenium
+	* Autonomous and monotributista independent workers information (gender taken from December 2021 BESS)
 - Migration from SAS to R:
 	* Alignment tables from the EPH dataset (2003-2023)
 	* Macro for family links determination for post 2016 EPH dataset
