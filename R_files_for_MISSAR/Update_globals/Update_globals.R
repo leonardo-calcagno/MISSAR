@@ -1139,7 +1139,7 @@ vector_benefits<-df_benefits %>%
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
 range_write(vector_benefits,ss=id_globals,range="AO148",col_names =FALSE,sheet="Simulated_ANSES_contributions",reformat=FALSE) #
-rm(has_num,df_benefits,df_pNC,df_PUAM,vector_benefits)
+rm(has_num,df_benefits,df_PNC,df_PUAM,vector_benefits)
 setwd("../../") #Restore wd to R_files_for_MISSAR
 
 #Cleanup -----
