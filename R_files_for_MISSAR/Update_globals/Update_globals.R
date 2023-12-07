@@ -237,7 +237,7 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 
 #Cleanup -----
 rm(output_name,sheet_name)
-#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 unlink("download_folder",recursive=TRUE)
 
@@ -247,7 +247,7 @@ unlink("download_folder",recursive=TRUE)
 start.time=Sys.time()
 ##Go to the folder with updated AIF files (see download_all_AIF)
 #setwd("D:/Git_repos/")
-#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 #setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
 setwd("../../") #Relative path: go up to R_files_for_MISSAR
 setwd("Scraped_datasets/AIF")
@@ -284,7 +284,6 @@ read_second_sheet <- function(path) { #Sometimes, the correct table is in the se
 read_excel_as_df <- function(path) {
  x<-try(as.data.frame(read_excel(path=path)))  
 }
-
 df_list_xls <- sapply(list_xls, read_excel,simplify=FALSE)#This keeps the file names 
 df_list_s2_xls <- sapply(list_xls, read_second_sheet,simplify=FALSE)
 df_list_s3_xls <- sapply(list_xls, read_third_sheet,simplify=FALSE)
@@ -302,7 +301,14 @@ n.cols_s2_xls<-unlist(lapply(df_list_s2_xls, function(t) dim(t) [2]))
 n.cols_s3_xls<-unlist(lapply(df_list_s3_xls, function(t) dim(t) [2]))
 
 df_list_xls<-df_list_xls[which(n.cols_xls==10)]
+df_abr_2023<-df_list_s2_xls$"2023_Abr.xlsx" %>% 
+  select(-c(11,12))
 df_list_s2_xls<-df_list_s2_xls[which(n.cols_s2_xls==10)]
+df_list_s2_xls[[length(df_list_s2_xls)+1]]<-df_abr_2023
+new_names<-names(df_list_s2_xls)
+new_names[[length(new_names)]]<-"2023_Abr.xlsx"
+names(df_list_s2_xls)<-new_names
+rm(df_abr_2023,new_names)
 df_list_s3_xls<-df_list_s3_xls[which(n.cols_s3_xls==10)]
 
 #Sometimes, the second or third sheet has 10 columns, but is not the sheet with the AIF Table. 
@@ -417,8 +423,7 @@ table(df_AIF$file)
 rm(list=ls(pattern="*df_list"))
 rm(list=ls(pattern="*n.cols"))
 rm(list_xls,keep_s2_xls,keep_s3_xls,df_AIF_s2,df_AIF_s3,names_first_sheet,track_index)
-
-
+#DEBUG, MISSING APRIL 2023
 
 ##Format AIF dataset ------
 
@@ -529,9 +534,21 @@ df_ISS_fiscal_income<-df_AIF %>%
                                  0)
   )%>% 
   subset(is_fiscal_income==1 ) %>% 
-  mutate(month_num=as.numeric(month)) %>% 
+  mutate(month_num=month)
+array_month_char<-c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
+array_month_num<-c("01","02","03","04","05","06","07","08","09","10","11","12")
+for(i in 1:12){
+df_ISS_fiscal_income<-df_ISS_fiscal_income%>% 
+  mutate(month_num=ifelse(grepl(pattern=array_month_char[[i]],month,ignore.case=TRUE), array_month_num[[i]], 
+                          month_num)
+         ) 
+}
+df_ISS_fiscal_income<-df_ISS_fiscal_income %>% 
+  select(-c(month)) %>% 
+  rename(month=month_num) %>% 
   arrange(year,month) %>% 
   select(c(year,month,concepto,ISS))
+rm(array_month_char,array_month_num)
 #Here we check is_fiscal_income captures all rows that correspond to fiscal income, and only 
 #those rows.
 total_files<-nrow(as.data.frame(table(df_AIF$file)))
