@@ -1433,7 +1433,7 @@ entities:
                                                             'Total_SIPA_beneficiaries','Total_SIPA_benefits', 'Total_non_moratorium_beneficiaries', 'Total_non_moratorium_benefits','Total_PUAM_benefits',
                                                                 'Total_women_SIPA_beneficaries', 'Total_women_non_moratorium_beneficiaries', 'Total_women_PUAM_benefits',
                                                                     'Cont_retiree_by_care','Moratorium_by_care',
-                                                                         'Moratorium_senate_pensioners_share','Moratorium_senate_coverage_legal_age','Moratorium_senate_coverage_65','Mean_moratorium_senate_pension',
+                                                                         'Moratorium_senate_benefits','Moratorium_senate_pensioners_share','Moratorium_senate_coverage_legal_age','Moratorium_senate_coverage_65','Mean_moratorium_senate_pension',
                                                     fname='adequacy_high.csv',mode='a')
         ###############################################################################################################
                 - csv('Period','All_pensions','Contributory_pensions','Moratorium_and_PUAM',
@@ -4101,6 +4101,7 @@ entities:
                                                            + sum(tag_second_pension and not tag_second_pension_moratorium,weights=pondera)
                 - total_PUAM_benefits: sum(has_universal_pension,weights=pondera)
                 - total_women_PUAM_benefits: sum(has_universal_pension and not male, weights=pondera)
+                - total_moratorium_senate_benefits: sum(has_moratorium_senate_pension,weights=pondera) + sum(moratorium_senate_survivor_pensioner, weights=pondera)
                 #By Decree 475/2021, women can validate contribution years depending on the children they had. We want to track the stock of women that will retire thanks to this 
                         #measure. 
                 - stock_by_care: sum(retiree_care,weights=pondera)/sum(has_contributory_retirement and not male, weights=pondera)
@@ -4116,7 +4117,7 @@ entities:
                                                         total_sipa_beneficiaries,total_sipa_benefits,total_sipa_non_moratorium_beneficiaries,total_sipa_non_moratorium_benefits,total_PUAM_benefits,
                                                              total_women_sipa_beneficiaries, total_women_sipa_non_moratorium_beneficiaries, total_women_PUAM_benefits,
                                                                  stock_by_care,stock_moratorium_by_care,
-                                                                     moratorium_senate_pensioners_share,moratorium_senate_coverage_legal_age,moratorium_senate_coverage_65, mean_moratorium_senate_pension,  
+                                                                     total_moratorium_senate_benefits,moratorium_senate_pensioners_share,moratorium_senate_coverage_legal_age,moratorium_senate_coverage_65, mean_moratorium_senate_pension,  
                                             fname='adequacy_high.csv',mode='a')
             temporary_measures_pensions: 
             #There were some temporary measures taken in favour of ANSES beneficiaries by the Macri and Fernández governments. 
