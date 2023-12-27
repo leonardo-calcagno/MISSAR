@@ -3343,11 +3343,12 @@ entities:
                 - remaining_career: if(remaining_career<=0, 0, 
                                        remaining_career)
                 - moratorium_quarters: age_quarters-18*4 - (period-24) - (contributed_quarters - car_post_2008_q4)
-        #We assume here the moratorium is only available for four years (so until the fourth quarter of 2026, period 96). People that today have the PUAM may enter. Contrary to the 
+        #We assume here the moratorium is only available for four years (so until the first quarter of 2027 included, period 97). People that today have the PUAM may enter. Contrary to the 
                 #buyback mechanism, here you can only enter the moratorium if you reached retirement age. Following Art. 13 of the draft law, those earning today a moratorium pension 
                 #can't enter this new moratorium program. 
+        #The Law 27705 moratorium, by its Art. 4, is available for two years, for up to four years. By Res.76/2023 of ANSES, Annex I art. 8, the moratorium starts 23/3/2023, so is fully available in period 82
         #It is not possible to earn this proposed moratorium pension if you already have a retirement benefit, including a 2006 or a Law 26.970 moratorium pension.
-                - new_moratorium_senate: if(period<80 or period>96, False,
+                - new_moratorium_senate: if(period<82 or period>97, False,
                                            if(age<legal_retirement_age, False, 
                                               if(liqui_retirement, False,
                                                  if((contributed_quarters)>=(120-extra_trim/2), False, 
@@ -3357,10 +3358,22 @@ entities:
                                                 )
                                               )
                                           )
-        #The draft law does not include any explicit means condition to enter the pension moratorium; this is only mentioned when evaluating the characteristics 
-                #and span of the payment plan, and the characteristics of such plan are not explicit in the draft law. Our interpretation is thus that anyone can 
-                #enter, and for now we assume everyone gets the 10 year span to pay back missing months. 
-                - quarters_needed: if(period<80, 0, 
+        #Joint Res. 5345/2023 of ANSES and AFIP initially included consumption and declared wealth means conditions to enter the pension moratorium, which we do not simulate. 
+                #It states however in its art. 2 inc. a) that "the mean gross declared income in the 12 months prior to the evaluation date doesn't exceed the cap
+                #established to earn the family benefit determined by Law 24714, art. 6 inc. a), equal to the amount laid out in the second to last paragraph of Art. 30, inc. c) of the Income Tax Law, 
+                # text ordered in 2019 and its modifications.". This is equal to the income cap for the lowest family benefit. 
+        #At the same time, the cap to earn the lowest family benefit is equal since March 2023 to the minimum non-taxable income for income tax purposes. This cap since 
+                # september 2023 is at a very high level, so this means there is no actual income means-test. We still make it dependent on the correspondings global variable.
+        # ANSES Res. 76/2023, however, states that if the beneficiary already earns a pension benefit higher than the minimum pension, or if he fails the means test, 
+                #he or she can only retire by paying the owed months in one payment (Annex, art. 4). 
+        # We still assume everyone chooses to pay back the missing quarters in 120 instalments, although it is possible to do so in fewer instalments. 
+        # IGF stands for family-group income. The means-test we apply here is that if someone in the household earns more than the maximum individual income cap 
+                    #or if the IGF exceeds the maximum household income cap for earning a family benefit, then that person cannot have a moratorium pension. 
+        #The maximum individual income cap is equal to half the maximum family group income cap. 
+                - igf: household.igf_hh                                
+                - new_moratorium_senate: if(household.max_itl_sal_hh>IND_FAM_CAP_CENTRAL or igf>FAM_CAP_CENTRAL_4,
+                                            False, new_moratorium_senate) 
+                - quarters_needed: if(period<82, 0, 
                                       quarters_needed)
                 - quarters_needed: if(quarters_needed>0, quarters_needed,
                                      if(new_moratorium_senate, 
@@ -3370,7 +3383,7 @@ entities:
                 - quarters_needed: if(quarters_needed<0, 0, 
                                       quarters_needed)
                 - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
-                - tag_moratorium_senate: if(period<80, False, 
+                - tag_moratorium_senate: if(period<82, False, 
                                             tag_moratorium_senate)
         #Following Art. 12, it is possible to earn a survivors benefit together with this moratorium pension, but only if its below the minimum pension. 
                 - tag_moratorium_senate: if(new_moratorium_senate, True,
@@ -3409,7 +3422,7 @@ entities:
                 #over 10 years, which gives the highest inmediate pension level. 
         #Each instalment is discounted following pension mobility, so it is correct to recompute the initial debt at each period. 
                 - total_debt: quarters_needed*min_contributive_base*0.29
-                - remaining_payments: if(period<80, 0, 
+                - remaining_payments: if(period<82, 0, 
                                          remaining_payments)
                 - remaining_payments: if(new_moratorium_senate and tag_moratorium_senate, 40, 
                                          remaining_payments)
@@ -3440,7 +3453,7 @@ entities:
                 - remaining_payments: if(remaining_payments<0, 0, 
                                          remaining_payments)
         #3.5. We identify who retires with the new moratorium thanks to the recognised quarters for care labour.
-                - senate_moratorium_care: if(period<80, False,
+                - senate_moratorium_care: if(period<82, False,
                                             if(retiree_care or moratoria_care, False,
                                                senate_moratorium_care))
                 - new_moratorium_senate_care: if(not (new_moratorium_senate and tag_moratorium_senate), False,
@@ -3494,9 +3507,6 @@ entities:
         
     #EX-ANTE POLICY EVALUATION: the pension mobility formula is suspended for the first half of 2020, so the March and possibly June 2020 increases will be made 
             #by Decree (as of Art. 55 of Law 27541). 
-        #We are in 13/03/2020 and don't know yet what will be the March 2020 (or June 2020) increase. We take from this Página 12 article the range of increase
-                #leaked by ANSES: between $1500 and $2500 pesos of fixed sum increase, and maybe a simultaneous proportional increase of between 2% and 6%. 
-        #In this ex ante scenario, we take the high adjustment hypothesis: 6% increase and $2500 pesos for all, in both March and June. 
         #As usual, we take into account the March (June) increase in the second (third) quarter, since we work with mid-quarter pensions. This also means we take the
                 #real value of the fixed increase in the middle of the next quarter, so taking the inflation index of May and August 2020.
                 - gross_retirement: if(tag_pension_uni or moratorium_date>0, gross_retirement, 
@@ -4448,7 +4458,7 @@ entities:
                 #if contribution years after december 2008 are not enough to complement years between age 18 and december 2008). Also, if it may retire normally, 
                 #assuming it has registered labour until the legal retirement age, it is not flagged as retiring with a pension moratorium. 
         #We need a distinct process for those who can enter the moratorium but are currently earning the PUAM, o no benefit at all despite having the legal retirement age
-                - can_enter_moratorium: if(legal_retirement_date<80 or legal_retirement_date>96, False, 
+                - can_enter_moratorium: if(legal_retirement_date<82 or legal_retirement_date>97, False, 
                                               if((contributed_quarters + remaining_career)>=(120-extra_trim/2), False, 
                                                  if((moratorium_quarters + contributed_quarters + remaining_career)<(120-extra_trim/2), False,
                                                     True)
@@ -4457,7 +4467,7 @@ entities:
         #Buyable quarters are those between age 18 and the first quarter of 2012 (period 37), where there were no contributions made. You only buy quarters if you 
                 #can neither retire normally, nor enter the moratorium, assuming you have registered labour until reaching the legal retirement age. 
                 - buyable_quarters: age_quarters-18*4 -(period-37) - (contributed_quarters - car_post_2012_q1)
-                - buyback_quarter: if(age<(legal_retirement_age-10) or age >=(legal_retirement_age) or period <80, False,
+                - buyback_quarter: if(age<(legal_retirement_age-10) or age >=(legal_retirement_age) or period <82, False,
                                       if(can_enter_moratorium, False, 
                                              if(contributed_quarters + remaining_career>=(120-extra_trim/2), False, 
                                                 if((buyable_quarters + contributed_quarters + remaining_career )<(120-extra_trim/2), False,
@@ -4476,7 +4486,7 @@ entities:
                 - all_income: if(temporary_pension_bonus>0, all_income + temporary_pension_bonus, 
                                  all_income)
                 - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
-                - quarters_needed: if(legal_retirement_date>=80 and legal_retirement_date<=96, 
+                - quarters_needed: if(legal_retirement_date>=82 and legal_retirement_date<=97, 
                                       30*4 - moratorium_quarters - car_post_2008_q4 - trunc(extra_trim/2) - remaining_career,
                                       30*4 - contributed_quarters - trunc(extra_trim/2) - remaining_career)
                 - new_quarters_bought: if(not buyback_quarter, 0, 
@@ -4564,7 +4574,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49
-    periods: 40
+    periods: 104
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
