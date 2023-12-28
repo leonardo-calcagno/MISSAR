@@ -1417,6 +1417,7 @@ entities:
                                                 'Total_thirteenth_month_of_universal_pension_cost','Total_net_thirteenth_month_of_universal_pension',
                                                      'Contributory_retirement_care','Moratorium_retirement_care','New_contributory_pensioners','New_moratorium_pensioners','New_PUAM','Percent_care_pensioners','Percent_care_moratorium',
                                                          'Moratorium_senate_care','New_moratorium_senate_pensioners','Percent_care_moratorium_senate',
+                                                              'Law_27705_onetime_payments','Law_27705_onetime_payers',
                                                         fname='central_v2_m.csv',mode='a')
                 - csv('period','Total_family_benefits','Total_contributive_child_benefits','Total_auh','Total_spouse_benefit',
                                 'Total_school_aid','Total_wedding_benefit','Total_prenatal_benefit','Total_pregnancy_benefit','Total_birth_benefit',
@@ -3333,7 +3334,7 @@ entities:
                                             if((period-moratorium_date)>=20, MIN_PENSION_CENTRAL_2014_T4,MIN_PENSION_CENTRAL_2014_T4*0.8)))  
                 - gross_retirement: if(moratorium_date==0 or moratorium_date==-1, gross_retirement, moratorium_value)
                 - gross_retirement_2: if(moratorium_date==0 or moratorium_date==-1, gross_retirement_2, moratorium_value)
-        #3.4. New proposed moratorium pension:
+        #3.4. Law 27705 moratorium pension:
                 - legal_retirement_age: if(ISMALE, 65, 
                                            60)
                 - legal_retirement_date: period + legal_retirement_age*4 - age_quarters
@@ -3358,21 +3359,35 @@ entities:
                                                 )
                                               )
                                           )
-        #Joint Res. 5345/2023 of ANSES and AFIP initially included consumption and declared wealth means conditions to enter the pension moratorium, which we do not simulate. 
+        #3.4.1. Means-test and one-time payment
+        #Joint Res. 5345/2023 of ANSES and AFIP include consumption and declared wealth means conditions to enter the pension moratorium, which we do not simulate. 
                 #It states however in its art. 2 inc. a) that "the mean gross declared income in the 12 months prior to the evaluation date doesn't exceed the cap
                 #established to earn the family benefit determined by Law 24714, art. 6 inc. a), equal to the amount laid out in the second to last paragraph of Art. 30, inc. c) of the Income Tax Law, 
                 # text ordered in 2019 and its modifications.". This is equal to the income cap for the lowest family benefit. 
         #At the same time, the cap to earn the lowest family benefit is equal since March 2023 to the minimum non-taxable income for income tax purposes. This cap since 
-                # september 2023 is at a very high level, so this means there is no actual income means-test. We still make it dependent on the correspondings global variable.
+                # september 2023 is at a very high level, so this means there is no actual income means-test. We still make it dependent on the corresponding global variable.
         # ANSES Res. 76/2023, however, states that if the beneficiary already earns a pension benefit higher than the minimum pension, or if he fails the means test, 
                 #he or she can only retire by paying the owed months in one payment (Annex, art. 4). 
         # We still assume everyone chooses to pay back the missing quarters in 120 instalments, although it is possible to do so in fewer instalments. 
         # IGF stands for family-group income. The means-test we apply here is that if someone in the household earns more than the maximum individual income cap 
                     #or if the IGF exceeds the maximum household income cap for earning a family benefit, then that person cannot have a moratorium pension. 
         #The maximum individual income cap is equal to half the maximum family group income cap. 
-                - igf: household.igf_hh                                
-                - new_moratorium_senate: if(household.max_itl_sal_hh>IND_FAM_CAP_CENTRAL or igf>FAM_CAP_CENTRAL_4,
-                                            False, new_moratorium_senate) 
+                - igf: household.igf_hh
+                - tag_one_payment_27705: if(household.max_itl_sal_hh>IND_FAM_CAP_CENTRAL or igf>FAM_CAP_CENTRAL_4,
+                                            True, False)
+        #We tag those who fail the means test to process in the buyback_mechanism module whether they pay back the missing years 
+        #Following Art. 12, it is possible to earn a survivors benefit together with this moratorium pension, but only if it's below the minimum pension. Else, you need to 
+                #pay back all the missing quarters at once.	
+        #We only model one-time payment for new retirees, not for beneficiaries that become widows and earn a second pension higher than the minimum. It can
+                - tag_one_payment_27705: if(new_moratorium_senate and gross_pension>MIN_PENSION_CENTRAL_2014_T4, True, 
+                                               tag_one_payment_27705)
+                - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
+                - total_debt: quarters_needed*min_contributive_base*0.29
+        #We assume only family groups with twice the total income as compared to the debt they need to pay in one time, pay it in one instalment and retire.
+                - one_time_payment: if(tag_one_payment_27705 and total_debt<igf*2, total_debt, 
+                                            0)
+                - new_moratorium_senate: if(tag_one_payment_27705 and one_time_payment==0, False, 
+                                            new_moratorium_senate)
                 - quarters_needed: if(period<82, 0, 
                                       quarters_needed)
                 - quarters_needed: if(quarters_needed>0, quarters_needed,
@@ -3382,12 +3397,13 @@ entities:
                                       )
                 - quarters_needed: if(quarters_needed<0, 0, 
                                       quarters_needed)
-                - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
+        #If you pay the whole debt in one instalment, future payments are nil. We thus put quarters_needed at 0.
+                - quarters_needed: if(one_time_payment>0, 0, 
+                                      quarters_needed)
                 - tag_moratorium_senate: if(period<82, False, 
                                             tag_moratorium_senate)
-        #Following Art. 12, it is possible to earn a survivors benefit together with this moratorium pension, but only if its below the minimum pension. 
                 - tag_moratorium_senate: if(new_moratorium_senate, True,
-                                            if(gross_pension>MIN_PENSION_CENTRAL_2014_T4, False,
+                                            if(tag_one_payment_27705, False,
                                                tag_moratorium_senate)
                                             )
                 - liqui_retirement: if(tag_moratorium_senate, True, 
@@ -3626,6 +3642,7 @@ entities:
                                                 total_care_retirees,total_care_moratoria,sum(new_contributory_pension and discounted_v2_m>0,weights=pondera),sum(new_moratoria and discounted_v2_m>0,weights=pondera),sum(new_pension_uni and discounted_v2_m>0,weights=pondera),  
                                                      new_retiree_by_care,new_moratoria_by_care,
                                                          total_care_senate_moratorium,sum(new_moratorium_senate and discounted_v2_m>0,weights=pondera),new_moratorium_senate_by_care,
+                                                          sum(one_time_payment*pondera)/1000,sum(tag_one_payment_27705 and one_time_payment>0,weights=pondera),
                                                              fname='central_v2_m.csv',mode='a')
                 
             family_benefits: 
@@ -4489,6 +4506,7 @@ entities:
                 - quarters_needed: if(legal_retirement_date>=82 and legal_retirement_date<=97, 
                                       30*4 - moratorium_quarters - car_post_2008_q4 - trunc(extra_trim/2) - remaining_career,
                                       30*4 - contributed_quarters - trunc(extra_trim/2) - remaining_career)
+        #We assume available income to buy back missing quarters equals a quarter of individual total income, and that only formal workers can buy back missing periods
                 - new_quarters_bought: if(not buyback_quarter, 0, 
                                        trunc((all_income*0.25)/(min_contributive_base*0.29))
                                        )
@@ -4574,7 +4592,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49
-    periods: 104
+    periods: 40
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
