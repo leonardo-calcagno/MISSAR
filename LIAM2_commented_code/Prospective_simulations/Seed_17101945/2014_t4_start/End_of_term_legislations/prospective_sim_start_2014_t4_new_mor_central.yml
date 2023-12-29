@@ -4251,7 +4251,7 @@ entities:
                                            )
                 #Next, pension bonuses were given again on April and May 2021 ($1500) (Decree 218/2021) and on August 2021 ($5000) (Decree 481/2021) 
                 #The $1500 bonuses go to the second quarter of 2021 (period 74), while the $5000 goes to the third quarter of 2021 (period 75). 
-                        #As usual, we take the middle of quarter value to determine whether a beneficiary is elligible to the bonus, but take the real value of the month the bonus was 
+                        #As usual, we take the middle of quarter value to determine whether a beneficiary is eligible to the bonus, but take the real value of the month the bonus was 
                         #actually given to determine the real pension increase. 
                 - decree_218_2021_bonus: if(period==74, 
                                             if(has_any_benefit,
@@ -4287,19 +4287,49 @@ entities:
                                               ), 0
                                            )
                 #Next, the Decree 215 bonus added a $12000 payment on May, to match the $18000 given over May and June 2022 to unregistered workers. It is given to those that earned 
-                        #up to two minimum pensions, considering all their benefits, and increased their pension revenue to up to two minimum pensions plus $12000. 
-                        #We assume here 5% inflation on May 2022, consistent with our pessimistic scenario. When official CPI figures are released, this will be corrected.			
+                        #up to two minimum pensions, considering all their benefits, and increased their pension revenue to up to two minimum pensions plus $12000. 		
                 - decree_215_2022_bonus: if(period==78, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 960.61, 0,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 960.15, 0,
                                                     if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
-                                                         960.61/3, 
-                                                        (2*MIN_PENSION_CENTRAL_2014_T4 + 960.61 - disc_cost_v2_m_2)/3 
+                                                         960.15/3, 
+                                                        (2*MIN_PENSION_CENTRAL_2014_T4 + 960.15 - disc_cost_v2_m_2)/3 
                                                        )     
                                                   ), 0 
                                               ), 0
                                            )
-                - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus + decree_180_2022_bonus + decree_215_2022_bonus
+                #After that, Decree 532/2022 establishes bonuses for September (period 79), October and November 2022 (80). From then on, every month there has been pension bonuses for lower pensions, 
+                        #with varying conditions. First, Decree 532/2022 puts it at $7000 for those earning a minimum pension; but at $4000 for those with more than the minimum pension + $7000, 
+                        #up to two minimum pensions. 
+                - decree_532_2022_bonus: if(period==79, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 462.97*4/7, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                       436.09/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 462.97,
+                                                            (MIN_PENSION_CENTRAL_2014_T4 + 436.09-disc_cost_v2_m_2)/3,
+                                                            if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
+                                                                (436.09*4/7)/3,  
+                                                                (2*MIN_PENSION_CENTRAL_2014_T4 + 436.09*4/7-disc_cost_v2_m_2)/3)
+                                                            )))
+                                                  , 0 
+                                              , 0)
+                                           )
+                - decree_532_2022_bonus: if(period==80, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 390.84*4/7, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                       (390.84 + 410.06)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 390.84,
+                                                            (2*MIN_PENSION_CENTRAL_2014_T4 + (390.84 + 410.06) -2*disc_cost_v2_m_2)/3,
+                                                            if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
+                                                                4/7*(390.84 + 410.06)/3,  
+                                                                (4*MIN_PENSION_CENTRAL_2014_T4 + (390.84 + 410.06)*4/7-2*disc_cost_v2_m_2)/3)
+                                                            )))
+                                                  , decree_532_2022_bonus 
+                                              , decree_532_2022_bonus)
+                                           )
+                - temporary_pension_bonus: decree_1058_2017_bonus + decree_79_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus + decree_180_2022_bonus + decree_215_2022_bonus + decree_532_2022_bonus
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
             #hypotetical bonuses in the future. As such, we simply export in a separate csv file the cost of temporary pension bonuses. 
