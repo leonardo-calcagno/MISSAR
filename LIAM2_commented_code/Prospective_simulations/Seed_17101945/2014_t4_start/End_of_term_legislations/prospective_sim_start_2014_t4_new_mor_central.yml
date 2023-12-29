@@ -1417,7 +1417,7 @@ entities:
                                                 'Total_thirteenth_month_of_universal_pension_cost','Total_net_thirteenth_month_of_universal_pension',
                                                      'Contributory_retirement_care','Moratorium_retirement_care','New_contributory_pensioners','New_moratorium_pensioners','New_PUAM','Percent_care_pensioners','Percent_care_moratorium',
                                                          'Moratorium_senate_care','New_moratorium_senate_pensioners','Percent_care_moratorium_senate',
-                                                              'Law_27705_onetime_payments','Law_27705_onetime_payers',
+                                                              'Law_27705_onetime_payments','Law_27705_onetime_payers','Average_onetime_payment','Quarters_paid_onetime',
                                                         fname='central_v2_m.csv',mode='a')
                 - csv('period','Total_family_benefits','Total_contributive_child_benefits','Total_auh','Total_spouse_benefit',
                                 'Total_school_aid','Total_wedding_benefit','Total_prenatal_benefit','Total_pregnancy_benefit','Total_birth_benefit',
@@ -3373,8 +3373,9 @@ entities:
                     #or if the IGF exceeds the maximum household income cap for earning a family benefit, then that person cannot have a moratorium pension. 
         #The maximum individual income cap is equal to half the maximum family group income cap. 
                 - igf: household.igf_hh
-                - tag_one_payment_27705: if(household.max_itl_sal_hh>IND_FAM_CAP_CENTRAL or igf>FAM_CAP_CENTRAL_4,
-                                            True, False)
+                - tag_one_payment_27705: if(not new_moratorium_senate, False, 
+                                            if(household.max_itl_sal_hh>IND_FAM_CAP_CENTRAL or igf>FAM_CAP_CENTRAL_4,
+                                            True, False))
         #We tag those who fail the means test to process in the buyback_mechanism module whether they pay back the missing years 
         #Following Art. 12, it is possible to earn a survivors benefit together with this moratorium pension, but only if it's below the minimum pension. Else, you need to 
                 #pay back all the missing quarters at once.	
@@ -3382,24 +3383,29 @@ entities:
                 - tag_one_payment_27705: if(new_moratorium_senate and gross_pension>MIN_PENSION_CENTRAL_2014_T4, True, 
                                                tag_one_payment_27705)
                 - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
+                - quarters_needed: if(period<82, 0, 
+                                      quarters_needed)
+                - quarters_needed: if(quarters_needed<0, 0, 
+                                      quarters_needed)
                 - total_debt: quarters_needed*min_contributive_base*0.29
         #We assume only family groups with twice the total income as compared to the debt they need to pay in one time, pay it in one instalment and retire.
                 - one_time_payment: if(tag_one_payment_27705 and total_debt<igf*2, total_debt, 
                                             0)
+        #We assume people with total debt lower than twice the monthly family group income pay their pension debt in one payment. This assumption needs to be revised if there is 
+                #actual data of people retiring with this moratorium by making one payment. 
                 - new_moratorium_senate: if(tag_one_payment_27705 and one_time_payment==0, False, 
                                             new_moratorium_senate)
-                - quarters_needed: if(period<82, 0, 
-                                      quarters_needed)
                 - quarters_needed: if(quarters_needed>0, quarters_needed,
                                      if(new_moratorium_senate, 
                                         30*4 - contributed_quarters - trunc(extra_trim/2), 
                                         quarters_needed)
                                       )
-                - quarters_needed: if(quarters_needed<0, 0, 
-                                      quarters_needed)
         #If you pay the whole debt in one instalment, future payments are nil. We thus put quarters_needed at 0.
+                - one_time_paid: if(one_time_payment>0, quarters_needed, 
+                                   0)
                 - quarters_needed: if(one_time_payment>0, 0, 
                                       quarters_needed)
+                - total_debt: quarters_needed*min_contributive_base*0.29
                 - tag_moratorium_senate: if(period<82, False, 
                                             tag_moratorium_senate)
                 - tag_moratorium_senate: if(new_moratorium_senate, True,
@@ -3642,7 +3648,7 @@ entities:
                                                 total_care_retirees,total_care_moratoria,sum(new_contributory_pension and discounted_v2_m>0,weights=pondera),sum(new_moratoria and discounted_v2_m>0,weights=pondera),sum(new_pension_uni and discounted_v2_m>0,weights=pondera),  
                                                      new_retiree_by_care,new_moratoria_by_care,
                                                          total_care_senate_moratorium,sum(new_moratorium_senate and discounted_v2_m>0,weights=pondera),new_moratorium_senate_by_care,
-                                                          sum(one_time_payment*pondera)/1000,sum(tag_one_payment_27705 and one_time_payment>0,weights=pondera),
+                                                          sum(one_time_payment*pondera)/1000,sum(tag_one_payment_27705 and one_time_payment>0,weights=pondera),sum(one_time_payment*pondera)/sum(tag_one_payment_27705 and one_time_payment>0,weights=pondera),sum(one_time_paid,weights=pondera)/sum(tag_one_payment_27705 and one_time_payment>0,weights=pondera),
                                                              fname='central_v2_m.csv',mode='a')
                 
             family_benefits: 
@@ -4592,7 +4598,7 @@ simulation:
 #For the fourth quarter of 2014, the initial period is 48. However, simulation actually starts at the following period. we must thus tell LIAM2 
         #to start the simulation at period 49. 
     start_period: 49
-    periods: 40
+    periods: 104
 #The random seed ensures all random number generators are the same when we execute the same code twice. It is especially relevant when we want 
         #to run the model with various economic or demographic scenarios. 
     random_seed: 17101945
