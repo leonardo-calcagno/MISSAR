@@ -4497,9 +4497,7 @@ entities:
         #whose spouse is a formal wage-earner, since typically they have their spouse's health coverage. Finally, there are also monthly consumption limits. 
 #The biggest difference with the IFE is this is an individual benefit, not by household: two or more people in the same household can earn it at the same time.
             IFE_person:
-                #We assume 5% inflation on May and 4% on June, in line with our pessimistic economic scenario. These values will need to be recomputed when official CPI
-                       #values are available.
-                #We also assume people with a partner in the autonomous worker category are excluded from the benefit.
+                #We assume people with a partner in the autonomous worker category are excluded from the benefit. We compute it for period 78, although technically it should be spread out between periods 78 and 79
                 - decree_216_2022_bonus: if(period!=78, 0,
                                             if(age<18 or age>65, 0,
                                                 if(IS_WAGE_EARNER, 0, 
@@ -4507,7 +4505,7 @@ entities:
                                                        if(partner.labour_market_state==1, 0, 
                                                           if(monotributo_cat>=3,0,
                                                              if(rent_aut>0 or partner.rent_aut>0, 0,
-                                                                 (720.46+692.75)/3)
+                                                                 (720.12+683.90)/3)
                                                             )
                                                           )
                                                        )
