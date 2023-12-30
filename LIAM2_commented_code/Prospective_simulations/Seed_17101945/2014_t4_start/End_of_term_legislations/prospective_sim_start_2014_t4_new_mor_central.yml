@@ -4320,18 +4320,76 @@ entities:
                         #up to two minimum pensions. 
                 - decree_788_2022_bonus: if(period!=81, 0, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 469.78*4/7, 0,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 469.78*7/10, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
                                                        (531.13 + 500.94 + 469.78)/3,   
                                                          if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 469.78,
                                                             (3*MIN_PENSION_CENTRAL_2014_T4 + (531.13 + 500.94 + 469.78) -3*disc_cost_v2_m_2)/3,
                                                             if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
-                                                                4/7*(531.13 + 500.94 + 469.78)/3,  
-                                                                (6*MIN_PENSION_CENTRAL_2014_T4 + (531.13 + 500.94 + 469.78)*4/7-3*disc_cost_v2_m_2)/3)
+                                                                7/10*(531.13 + 500.94 + 469.78)/3,  
+                                                                (6*MIN_PENSION_CENTRAL_2014_T4 + (531.13 + 500.94 + 469.78)*7/10-3*disc_cost_v2_m_2)/3)
                                                             )))
                                               , 0)
                                            )
-                - temporary_pension_bonus: decree_1058_2017_bonus + decree_73_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus + decree_180_2022_bonus + decree_215_2022_bonus + decree_532_2022_bonus + decree_788_2022_bonus
+                #After that, Decree 105/2023 establishes bonuses for March, April and May 2023 (period 82). 
+                        #The bonus is $15000 for those earning a minimum pension; but at $5000 for those with more than the minimum pension + $15000, 
+                        #up to two minimum pensions. 
+                - decree_105_2023_bonus: if(period!=82, 0, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 560.19*5/15, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                       (654.46 + 603.73 + 560.19)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 560.19,
+                                                            (3*MIN_PENSION_CENTRAL_2014_T4 + (654.46 + 603.73 + 560.19) -3*disc_cost_v2_m_2)/3,
+                                                            if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
+                                                                5/15*(654.46 + 603.73 + 560.19)/3,  
+                                                                (6*MIN_PENSION_CENTRAL_2014_T4 + (654.46 + 603.73 + 560.19)*5/15-3*disc_cost_v2_m_2)/3)
+                                                            )))
+                                              , 0)
+                                           )
+                #After that, Decree 282/2023 establishes bonuses for June, July and August 2023 (period 83). 
+                        #The bonus is $15000; $17000; and $20000 for those earning a minimum pension; but at $5000 for those with more than the minimum pension + $15000; $17000; $20000, 
+                        #up to two minimum pensions. 
+                - decree_282_2023_bonus: if(period!=83, 0, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 147.39, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                       (528.73 + 563.47 + 589.56)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 589.56,
+                                                            (3*MIN_PENSION_CENTRAL_2014_T4 + (528.73 + 563.47 + 589.56) -3*disc_cost_v2_m_2)/3,
+                                                            if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
+                                                                (176.24 + 165.73 + 147.39)/3,  
+                                                                (6*MIN_PENSION_CENTRAL_2014_T4 + (176.24 + 165.73 + 147.39)-3*disc_cost_v2_m_2)/3)
+                                                            )))
+                                              , 0)
+                                           )
+                #After that, Decree 442/2023 establishes a $37000 bonus for September, October and November 2023 (period 84). 
+                        #Nothing is given to those with more than the minimum pension + $37000
+                - decree_442_2023_bonus: if(period!=84, 0, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 791.77, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
+                                                        (967.35 + 893.20 + 791.77)/3, 
+                                                        (3*MIN_PENSION_CENTRAL_2014_T4 + (967.35 + 893.20 + 791.77) - 3*disc_cost_v2_m_2)/3 
+                                                       )     
+                                                  ), 0 
+                                              )
+                                           )
+                #After that, Decree 626/2023 establishes a $55000 bonus for December 2023 (period 85). It was announced 29/12/23 such bonus will be repeated in January and February, but
+                        #the Decree has not yet been published. 
+                #After the December 2023 120% increase of the USD and various inflationary measures, we assume 25% inflation in December, 30% in January and 25% in February. These values must
+                        #be modified once official inflation indexes are released.
+                - decree_626_2023_bonus: if(period!=85, 0, 
+                                            if(has_any_benefit,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 579.42, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
+                                                        (941.56 + 724.28 + 579.42)/3, 
+                                                        (3*MIN_PENSION_CENTRAL_2014_T4 + (941.56 + 724.28 + 579.42) - 3*disc_cost_v2_m_2)/3 
+                                                       )     
+                                                  ), 0 
+                                              )
+                                           )
+                - temporary_pension_bonus: decree_1058_2017_bonus + decree_73_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus + decree_180_2022_bonus + decree_215_2022_bonus + decree_532_2022_bonus + decree_788_2022_bonus + decree_105_2023_bonus + decree_282_2023_bonus + decree_442_2023_bonus + decree_626_2023_bonus
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
             #hypotetical bonuses in the future. As such, we simply export in a separate csv file the cost of temporary pension bonuses. 
