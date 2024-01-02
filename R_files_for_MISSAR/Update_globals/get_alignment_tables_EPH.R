@@ -352,6 +352,8 @@ write.xlsx(df_demographic_men,"demographic_men.xlsx")
 write.xlsx(df_demographic_women,"demographic_women.xlsx")
 write.xlsx(df_independent_men,"independent_men.xlsx")
 write.xlsx(df_independent_women,"independent_women.xlsx")
+rm(df_demographic_men,df_demographic_women,df_independent_men,df_independent_women)
+
 #Base alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69) %>% #Use ageconti for subsetting, else age 15 is included
@@ -881,6 +883,7 @@ df_list_mar_stu<-list(df_uni_men,df_mar_men,df_uni_women,df_mar_women,df_stu_men
 rm(df_stu_women,df_stu_men,df_mar_women,df_uni_women,df_mar_men,df_uni_men)
 rm(df_list_cal_mar,df_list_cal_stu)
 rm(list=ls(pattern="*mean_"))
+
 #CSV tables ----
 ##Get 2003-2015 tables ----
 id_alignment_folder<- drive_get("Alignment_tables_update") 
@@ -998,7 +1001,7 @@ df_list_cal_low<-df_list_cal_low[1:10] %>%  #Marital status and student proporti
 
 ##CSV export -------
 
-setwd("../../") #Go up to the parent folder of LIAM2_commented_code
+setwd("../../../../") #Go up to the parent folder of LIAM2_commented_code
 folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
 setwd(folder_eot_leg)
 getwd()
