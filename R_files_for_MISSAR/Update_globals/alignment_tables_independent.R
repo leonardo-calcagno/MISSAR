@@ -893,6 +893,24 @@ cal_mono_h<-prospective_indep(cal_mono_h,"mono_h")
 cal_mono_f<-prospective_indep(cal_mono_f,"mono_f")
 cal_auton_h<-prospective_indep(cal_auton_h,"auton_h")
 cal_auton_f<-prospective_indep(cal_auton_f,"auton_f")
+rm(list=ls(pattern="col_*"))
+rm(indata,transp_data,names_EPH_indep)
+rm(list=ls(pattern="df_*"))
+
+
+##CSV export -------
+
+setwd("../../../") #Go up to the parent folder of LIAM2_commented_code
+folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
+setwd(folder_eot_leg)
+getwd()
+
+write_csv(cal_mono_h,"cal_mono_h_p.csv",na="",col_names=FALSE)
+write_csv(cal_mono_f,"cal_mono_f_p.csv",na="",col_names=FALSE)
+write_csv(cal_auton_h,"cal_auton_h_p.csv",na="",col_names=FALSE)
+write_csv(cal_auton_f,"cal_auton_f_p.csv",na="",col_names=FALSE)
+
+rm(list=ls(pattern="cal_*"))
 
 end.time=Sys.time()
 time.taken=end.time-start.time
