@@ -15,6 +15,7 @@ start.time=Sys.time()
 
 #setwd("C:/Users/lcalcagno/Documents/Investigacion/")
 #setwd("D:Git_repos/")
+setwd("/Users/Leonardo/Documents/MISSAR/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets")
 
 if(!file.exists("AIF")) {
