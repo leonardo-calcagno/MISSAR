@@ -14,7 +14,8 @@ library(glue)
 library(openxlsx)
 library(googlesheets4)
 library(googledrive)
-setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
+setwd("/Users/Leonardo/Documents/MISSAR/MISSAR_private")
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
 closeAllConnections() #Else, you risk the "all connections are in use" error.
@@ -545,7 +546,7 @@ rm(LMS_names)
 
 id_LMS_scenario<- drive_get("LMS_scenarios_16_69") 
 range_write(update_men,ss=id_LMS_scenario,range="F173",col_names =FALSE,reformat=FALSE) 
-range_write(update_women,ss=id_LMS_scenario,range="AK173",col_names =FALSE,reformat=FALSE)
+range_write(update_women,ss=id_LMS_scenario,range="AO173",col_names =FALSE,reformat=FALSE)
 rm(cal_men,cal_women,update_men,update_women,cal_LMS_all_ages)
 
 ##New LMS scenarios-----
