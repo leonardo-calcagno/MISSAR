@@ -1016,7 +1016,9 @@ export_csv(names_file=csv_names_low,df_list=df_list_cal_low,total_files=10)
 export_csv(names_file=csv_names_central,df_list=df_list_cal_central,total_files=16)
 export_csv(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
 
-
+rm(list=ls(pattern="df_list*"))
+rm(list=ls(pattern="csv_names*"))
+rm(dl_list,first_row,get_names,period_row,men,women,names_LMS,i,correct_names,folder_eot_leg,id_alignment_folder)
 
 #Descriptive statistics ----
 
