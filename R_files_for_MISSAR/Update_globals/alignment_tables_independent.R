@@ -13,7 +13,8 @@ id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
 
 start.time=Sys.time()
 #Set the working directory to the folder with the downloaded monthly social security bulletin excel files
-setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("/Users/Leonardo/Documents/MISSAR/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
 #Independent workers -----
@@ -283,13 +284,19 @@ get_href<-function(html){
   
   vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 }
-URL<-"https://www.trabajo.gob.ar/estadisticas/" %>% 
-  get_href() 
+URL<-"https://www.argentina.gob.ar/trabajo/estadisticas" %>% 
+  get_href()
+
+#URL_old<-"https://www.trabajo.gob.ar/estadisticas/" %>% 
+#  get_href() 
 
 df_URL<-URL%>% 
-  subset(grepl(pattern=".xls",.[[1]]) & grepl(pattern="registrado",.[[1]]))
+  subset(grepl(pattern=".xls",.[[1]]) & grepl(pattern="registrado",.[[1]])) %>% 
+  rename(URL=1) %>% 
+  mutate(URL=gsub(pattern="blank:#/",replacement="https://www.argentina.gob.ar/",URL))
 download.file(df_URL[[1,1]],destfile="trabajo_registrado.xlsx",mode="wb")
 rm(URL,df_URL)
+
 df_workers<-read_excel("trabajo_registrado.xlsx",sheet=4) %>% 
   janitor::row_to_names(row_number=1,remove_row=TRUE)
 unlink("trabajo_registrado.xlsx",recursive=TRUE)
