@@ -1113,7 +1113,7 @@ entities:
             - total_auh_mother: {type: int, initialdata: false}
             - retiree_care: {type: bool, initialdata: false}
             - moratoria_care: {type: bool, initialdata: false}
-            - 27705_moratorium_care: {type: bool, initialdata: false}
+            - moratorium_27705_care: {type: bool, initialdata: false}
             - track_auh: {type: int, initialdata: false}
             #Finally, we add an individual IFE variable, consistent with the Decree 216/2022 income reinforcement bonus, but also with the proposed Universal Base Wage
             - individual_IFE: {type: float, initialdata: false}
@@ -3475,15 +3475,15 @@ entities:
                 - remaining_payments: if(remaining_payments<0, 0, 
                                          remaining_payments)
         #3.5. We identify who retires with the new moratorium thanks to the recognised quarters for care labour.
-                - 27705_moratorium_care: if(period<82, False,
+                - moratorium_27705_care: if(period<82, False,
                                             if(retiree_care or moratoria_care, False,
-                                               27705_moratorium_care))
+                                               moratorium_27705_care))
                 - new_moratorium_27705_care: if(not (new_moratorium_senate and tag_moratorium_senate), False,
                                                 if((age_quarters-18*4-(period-4)+car_post_2008_q4) < (120-extra_trim/2 + care_trim), True,
                                              False))
-                - 27705_moratorium_care: if(new_moratorium_27705_care, True, 
-                                             27705_moratorium_care)
-                - total_care_27705_moratorium: sum(27705_moratorium_care,weights=pondera)
+                - moratorium_27705_care: if(new_moratorium_27705_care, True, 
+                                             moratorium_27705_care)
+                - total_care_27705_moratorium: sum(moratorium_27705_care,weights=pondera)
                 - new_moratorium_27705_by_care: sum(new_moratorium_27705_care,weights=pondera) / sum(new_moratorium_senate and not male,weights=pondera)
     #4- We compute universal pension beneficiaries. These pensions were given starting from period 56 (fourth quarter of 2016) to people aged 65 or more 
                 #that did not have any other retirement pension (survivors pensions can not be accumulated with a universal benefit).  
