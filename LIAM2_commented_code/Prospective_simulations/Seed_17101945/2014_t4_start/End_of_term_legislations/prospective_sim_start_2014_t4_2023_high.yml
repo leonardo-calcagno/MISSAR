@@ -189,7 +189,7 @@ entities:
             # We can use this process to easily compute the IFE: it goes to each household where there is neither a formal worker, nor a retirement pensioner. 
                     # Following Decree 310/2020, small independent workers in the Monotributo regime, from the lowest earning categories (A and B) can have access
                     # to the IFE. 
-            # There were three payments of $10000 pesos. The first one, spread through April and May; the second one, paid on June and July; and the third one, paid 
+            # There were three payments of $10000 pesos. The first one, spread through April and May, the second one, paid on June and July, and the third one, paid 
                     #on August and September. We thus model the IFE as being a monthly payment of $5000 given between April and September 2020. 
                     # We thus consider one payment in period 70 (May 2020), one and a half payment in period 71 (August 2020), and half a payment for
                     # period 72 (November 2020). We always discount these increases by the actual inflation rates, so we work with real inflation rates
@@ -1395,11 +1395,11 @@ entities:
                             fname='IFE_cost_high.csv',mode='a')        
         ################################################################################################################
         
-                - csv('Period', '0','[1;5[', '[5;10[', '[10;15[', '15', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
-                                '[70;75[','[75;80[','[80;85[','[85;90[','[90;95[','100+',
+                - csv('Period', '0','[1,5[', '[5,10[', '[10,15[', '15', '[16,20[', '[20,25[','[25,30[','[30,35[','[35,40[','[40,45[','[45,50[','[50,55[','[55,60[','[60,65[','[65,70[', 
+                                '[70,75[','[75,80[','[80,85[','[85,90[','[90,95[','100+',
                                                 fname='active_age_men.csv',mode='a')
-                - csv('Period', '0','[1;5[', '[5;10[', '[10;15[', '15', '[16;20[', '[20;25[','[25;30[','[30;35[','[35;40[','[40;45[','[45;50[','[50;55[','[55;60[','[60;65[','[65;70[', 
-                                '[70;75[','[75;80[','[80;85[','[85;90[','[90;95[','100+',
+                - csv('Period', '0','[1,5[', '[5,10[', '[10,15[', '15', '[16,20[', '[20,25[','[25,30[','[30,35[','[35,40[','[40,45[','[45,50[','[50,55[','[55,60[','[60,65[','[65,70[', 
+                                '[70,75[','[75,80[','[80,85[','[85,90[','[90,95[','100+',
                                                 fname='active_age_women.csv',mode='a')
                 - csv('Period','Mean_real_labour_income','Total_workers',
                                     fname='workers_and_wage_high.csv',mode='a')
@@ -1831,8 +1831,8 @@ entities:
             #3- Only women with a known partner aged 16 to 59 can give birth. 
             #4- Probability of having children conditional to current number of children 
                 #We run for period 49, in the console, groupby(agegroup,nb_children,filter=not male). Then for women age 40 to 49, we count total women with a given number of 
-                    #children. We find women those ages with one child represent 99% of those with no children; with two children, 154% of those with one child (these are
-                    #conditional probabilities of having one more child given the current number of children); with three children, 96% of those with two children, etc. 
+                    #children. We find women those ages with one child represent 99% of those with no children, with two children, 154% of those with one child (these are
+                    #conditional probabilities of having one more child given the current number of children), with three children, 96% of those with two children, etc. 
                 #This helps us reproduce plausible cohorts of mothers by number of children. 	
                 #For debugging purposes, uncomment the following to track new births. 
                # - csv(period,groupby(age,nb_children,marital_status,filter=ISFEMALE and age>=10 and age<=49 and to_give_birth and (partner.age>=16 and partner.age<=59) and nb_children<7 and (ISCOUPLE or ISMARRIED)),
@@ -1919,7 +1919,7 @@ entities:
                 - polimodal: if(age==15, 1, polimodal)
         #Modulo_period is the remainder of the euclidean division of the period variable by 4. It ranges from 0 to 3. We use it to identify quarters within a year
             #The first simulated period is 49 and corresponds to the first quarter of 2015. modulo_period for that period equals 1. 
-            #Thus: modulo_period==0 -> fourth quarter; ==1-> first quarter; ==2 -> second quarter; ==3, -> third quarter. 
+            #Thus: modulo_period==0 -> fourth quarter, ==1-> first quarter, ==2 -> second quarter, ==3, -> third quarter. 
                 - modulo_period: (period) % 4
               #  - show('modulo period', modulo_period)
               #  - show('polimodal', groupby(polimodal,age))
@@ -2028,7 +2028,7 @@ entities:
             marriage:
 # This module simulates the evolution of individual's marital status and updates family links accordingly. It simulates the formation and dissolution of common-law unions
         #and marriages, due to separation, divorce or death. 
-            #Reminder: marital_status==1-> common-law union; ==2, married; ==3, divorced; ==4, widowed; ==5, single; 
+            #Reminder: marital_status==1-> common-law union, ==2, married, ==3, divorced, ==4, widowed, ==5, single, 
     #1- We carry out operations to make current marital status consistent with some variables and within a given couple. 
         #First, we make all people younger than 16 be single and not in a couple.         
                 - marital_status: if(age<16, SINGLE, marital_status)
@@ -2611,7 +2611,7 @@ entities:
             # second and fourth quarters), because of inflation. If we compute the mean monthly revenue coming from the thirteenth month, we need to divide the thirteenth month first by 2, 
             # (because it is half an "aguinaldo", or "medio aguinaldo"), then by 3.                                  
                 - modulo_period: (period) %4
-        #We remind the reader modulo_period==1-> first quarter; ==2 second quarter; ==3 third quarter; ==0 fourth quarter. 
+        #We remind the reader modulo_period==1-> first quarter, ==2 second quarter, ==3 third quarter, ==0 fourth quarter. 
                 - medio_aguinaldo: if(labour_market_state!=1, 0, 
                                       if(modulo_period==1 or modulo_period==3,0, 
                                          discounted_itl/6))
@@ -3581,7 +3581,7 @@ entities:
                                         discounted_v2_m_2/0.97)  
     #9- We compute the thirteenth month for retirees and pensioners (available to all pensioners, even recipients of the universal pension). 
                 - modulo_period: period % 4       
-        #We remind the reader modulo_period==1-> first quarter; ==2 second quarter; ==3 third quarter; ==0 fourth quarter. 
+        #We remind the reader modulo_period==1-> first quarter, ==2 second quarter, ==3 third quarter, ==0 fourth quarter. 
                 - sac_jp_gross: 0
                 - sac_jp_gross_2: 0
                 - sac_jp_net: 0 
@@ -3732,7 +3732,7 @@ entities:
                                                 False))
             #There is not, however, a clear and constant criterium to determine which monotributo category gets what family benefit, and there is even a significant intra-year
                 # volatility (for instance, on June 2021 Category D got the highest family benefit, but on September 2021 it went down a category). For the sake of simplicity, 
-                # and given how on average these benefits were given, we consider categories A to D get the highest benefit; Category E, the second best; F, the second lowest; and G and H, the lowest.
+                # and given how on average these benefits were given, we consider categories A to D get the highest benefit, Category E, the second best, F, the second lowest, and G and H, the lowest.
                 - child_benefit: if(father_id==UNSET or mother_id==UNSET, 0, 
                                     if(no_mono_benefit, child_benefit, 
                                         if(age>=18 or labour_market_state==1 or labour_market_state==2  or lag_count_ind_1==1 or lag_mono_1==1, 0,
@@ -3873,7 +3873,7 @@ entities:
         #School aid is paid once a year, so we need to set it to 0 first, and then see whether it should be paid this period. 
                 - school_aid: 0
                 - modulo_period: period % 4        
-        #We remind the reader modulo_period==1-> first quarter; ==2 second quarter; ==3 third quarter; ==0 fourth quarter. 
+        #We remind the reader modulo_period==1-> first quarter, ==2 second quarter, ==3 third quarter, ==0 fourth quarter. 
         #We assume children attend school since age 5. 
                 - tag_school_aid: if(age>=18 or age<5 or not student or modulo_period!=1, False, 
                                             if(child_benefit>0, True,False))
@@ -4122,8 +4122,8 @@ entities:
             #The new Law 27.609 formula follows closely Law 26.417 mobility: we need to input the evolution of total retirement and survivors' benefits paid, as they
                     #determine part of the mobility. Non-SIPA benefits, such as family benefits, do not count. 
                 # There are two reglamentation hypotheses: we either adopt Res. 6/2009, as with Law 26.417, and only take contributory SIPA benefits (so no moratorium
-                        #pensions and no PUAM); or we take all benefits (including the PUAM and moratorium pensions). We thus export total SIPA beneficiaries and 
-                        #benefits, non-moratorium SIPA benefits; as well as PUAM benefits, for the sake of descriptive statistics. 
+                        #pensions and no PUAM), or we take all benefits (including the PUAM and moratorium pensions). We thus export total SIPA beneficiaries and 
+                        #benefits, non-moratorium SIPA benefits, as well as PUAM benefits, for the sake of descriptive statistics. 
                 - total_sipa_beneficiaries: sum(has_any_benefit, weights=pondera)
                 - total_women_sipa_beneficiaries: sum(has_any_benefit and not male, weights=pondera)
                 - total_sipa_benefits: sum(has_retirement_pension,weights=pondera) + sum(has_survivors_benefit and not tag_second_pension,weights=pondera) + sum(tag_second_pension,weights=pondera)
@@ -4300,7 +4300,7 @@ entities:
                                            )
                 #After that, Decree 532/2022 establishes bonuses for September, October and November 2022 (80). Since we work with middle of the quarter months, November 2022 represents the pension paid 
                         # for period 80, and we add all bonuses given the two previous months.
-                #From then on, every month there has been pension bonuses for lower pensions, with varying conditions. First, Decree 532/2022 puts it at $7000 for those earning a minimum pension; 
+                #From then on, every month there has been pension bonuses for lower pensions, with varying conditions. First, Decree 532/2022 puts it at $7000 for those earning a minimum pension, 
                         #but at $4000 for those with more than the minimum pension + $7000, up to two minimum pensions. 
                 - decree_532_2022_bonus: if(period!=80, 0,
                                             if(has_any_benefit,
@@ -4316,7 +4316,7 @@ entities:
                                                   , 0)
                                            )
                 #After that, Decree 788/2022 establishes bonuses for December, January and February 2023 (period 81). 
-                        #The bonus is $10000 for those earning a minimum pension; but at $7000 for those with more than the minimum pension + $10000, 
+                        #The bonus is $10000 for those earning a minimum pension, but at $7000 for those with more than the minimum pension + $10000, 
                         #up to two minimum pensions. 
                 - decree_788_2022_bonus: if(period!=81, 0, 
                                             if(has_any_benefit,
@@ -4332,7 +4332,7 @@ entities:
                                               , 0)
                                            )
                 #After that, Decree 105/2023 establishes bonuses for March, April and May 2023 (period 82). 
-                        #The bonus is $15000 for those earning a minimum pension; but at $5000 for those with more than the minimum pension + $15000, 
+                        #The bonus is $15000 for those earning a minimum pension, but at $5000 for those with more than the minimum pension + $15000, 
                         #up to two minimum pensions. 
                 - decree_105_2023_bonus: if(period!=82, 0, 
                                             if(has_any_benefit,
@@ -4348,7 +4348,7 @@ entities:
                                               , 0)
                                            )
                 #After that, Decree 282/2023 establishes bonuses for June, July and August 2023 (period 83). 
-                        #The bonus is $15000; $17000; and $20000 for those earning a minimum pension; but at $5000 for those with more than the minimum pension + $15000; $17000; $20000, 
+                        #The bonus is $15000, $17000, and $20000 for those earning a minimum pension, but at $5000 for those with more than the minimum pension + $15000, $17000, $20000, 
                         #up to two minimum pensions. 
                 - decree_282_2023_bonus: if(period!=83, 0, 
                                             if(has_any_benefit,
@@ -4538,13 +4538,13 @@ entities:
                 - individual_IFE: decree_216_2022_bonus*1
 
 #Proposed 2022 moratorium: you can rebuy missing contribution years when nearing retirement age, up to 31/3/2012. This is a permanent measure. You can only
-        #do this if you are a registered worker and you have enough income to buy the required months; and it is voluntary. We will have to make a lot of assumptions, 
+        #do this if you are a registered worker and you have enough income to buy the required months, and it is voluntary. We will have to make a lot of assumptions, 
         #but we will assume that: 
 #1- If you can retire without buying back any month, assuming you keep registered work until retirement age, then you don't buy back. 
 #2- You buy back the required minimum of months to retire, assuming you keep your registered work until retirement age. 
 #3- You can only buy back months for up to 25% of net monthly income. 
 #4- If needed, you can buy back more than a month at a time, if it rests below 25% of your gross income. 
-#5- This measure is implemented from the fourth quarter of 2022 onward, so period==80; and can buy until period==37 (first quarter of 2012)
+#5- This measure is implemented from the fourth quarter of 2022 onward, so period==80, and can buy until period==37 (first quarter of 2012)
 #6- If you reach retirement age up until four years after the implementation of this law (so until period==96), you only buy back the years necessary to 
         #retire with the moratorium (that you can buy until 31/12/2008, so until period==24)
             buyback_mechanism:
@@ -4589,7 +4589,7 @@ entities:
                                         )
                                       )
 
-        #For the first periods, discounted_v5_m and temporary_pension_bonus may be missing; to avoid missing values for all_income, we use the following workaround so we  
+        #For the first periods, discounted_v5_m and temporary_pension_bonus may be missing, to avoid missing values for all_income, we use the following workaround so we  
                 #can still add up these variables. 
                 - all_income: discounted_itl + discounted_v2_m 
                 - all_income: if(discounted_v5_m>0, all_income + discounted_v5_m, 
