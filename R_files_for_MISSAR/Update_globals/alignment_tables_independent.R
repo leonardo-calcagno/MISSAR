@@ -904,14 +904,10 @@ setwd("../../../") #Go up to the parent folder of LIAM2_commented_code
 folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
 setwd(folder_eot_leg)
 getwd()
-view(cal_auton_f)
 
 
-test<-format_numeric(cal_mono_h)
-test2<-format_numeric(cal_auton_h)
-write_csv(test2,"test2.csv",na="",col_names=FALSE)
-options(scipen=999)
-
+options(scipen=999) #This avoids using scientific notation to export values to CSV (important for LIAM2)
+#We use write.table() instead of write.csv() to also delete column and row names
 write.table(cal_mono_h,"cal_mono_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
 write.table(cal_mono_f,"cal_mono_f_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
 write.table(cal_auton_h,"cal_auton_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
