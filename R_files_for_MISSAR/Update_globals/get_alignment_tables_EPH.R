@@ -1019,8 +1019,8 @@ options(scipen=999) #This avoids using scientific notation to export values to C
 
 export_table<-function(names_file,df_list,total_files){
   for (i in 1:total_files){
-    write.table(first_row,paste0(names_file[i],".csv"),na="",col.names=FALSE,row.names=FALSE,sep=";")  
-    write.table(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col.names=FALSE,row.names=FALSE,sep=";")
+    write.table(first_row,paste0(names_file[i],".csv"),na="",col.names=FALSE,row.names=FALSE,sep=",")  
+    write.table(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col.names=FALSE,row.names=FALSE,sep=",")
   }
 }
 

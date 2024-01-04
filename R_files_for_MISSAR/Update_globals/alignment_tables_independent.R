@@ -299,7 +299,7 @@ rm(URL,df_URL)
 
 df_workers<-read_excel("trabajo_registrado.xlsx",sheet=4) %>% 
   janitor::row_to_names(row_number=1,remove_row=TRUE)
-unlink("trabajo_registrado.xlsx",recursive=TRUE)
+#unlink("trabajo_registrado.xlsx",recursive=TRUE)
 
 has_num<-colSums(mapply(grepl,"[0-9]",df_workers)) #Detects, for each column, how many lines have at least one integer
 has_char<-colSums(mapply(grepl,"^[A-Za-z]",df_workers)) #Detects, for each column, how many lines have at least one character
@@ -861,7 +861,7 @@ prospective_indep<-function(indata,varname){
       as.data.frame() %>% 
       rename(average_indep=1)
     
-  max_empirical_period<-indata[[1,ncol(indata)]]
+  max_empirical_period<-indata[[1,ncol(indata)]]+1
   for(i in max_empirical_period:152){
     add_period<-data.frame(i) 
     names(add_period)<-c(paste0(varname,i))
@@ -908,10 +908,10 @@ getwd()
 
 options(scipen=999) #This avoids using scientific notation to export values to CSV (important for LIAM2)
 #We use write.table() instead of write.csv() to also delete column and row names
-write.table(cal_mono_h,"cal_mono_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
-write.table(cal_mono_f,"cal_mono_f_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
-write.table(cal_auton_h,"cal_auton_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
-write.table(cal_auton_f,"cal_auton_f_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
+write.table(cal_mono_h,"cal_mono_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=",")
+write.table(cal_mono_f,"cal_mono_f_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=",")
+write.table(cal_auton_h,"cal_auton_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=",")
+write.table(cal_auton_f,"cal_auton_f_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=",")
 
 
 rm(list=ls(pattern="cal_*"))
