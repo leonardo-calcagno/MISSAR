@@ -905,10 +905,14 @@ folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014
 setwd(folder_eot_leg)
 getwd()
 
-write_csv(cal_mono_h,"cal_mono_h_p.csv",na="",col_names=FALSE)
-write_csv(cal_mono_f,"cal_mono_f_p.csv",na="",col_names=FALSE)
-write_csv(cal_auton_h,"cal_auton_h_p.csv",na="",col_names=FALSE)
-write_csv(cal_auton_f,"cal_auton_f_p.csv",na="",col_names=FALSE)
+
+options(scipen=999) #This avoids using scientific notation to export values to CSV (important for LIAM2)
+#We use write.table() instead of write.csv() to also delete column and row names
+write.table(cal_mono_h,"cal_mono_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
+write.table(cal_mono_f,"cal_mono_f_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
+write.table(cal_auton_h,"cal_auton_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
+write.table(cal_auton_f,"cal_auton_f_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=";")
+
 
 rm(list=ls(pattern="cal_*"))
 

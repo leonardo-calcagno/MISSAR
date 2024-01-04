@@ -1006,15 +1006,28 @@ folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014
 setwd(folder_eot_leg)
 getwd()
 
-export_csv<-function(names_file,df_list,total_files){
+
+options(scipen=999) #This avoids using scientific notation to export values to CSV (important for LIAM2)
+#We use write.table() instead of write.csv() to also delete column and row names
+
+#export_csv<-function(names_file,df_list,total_files){
+#  for (i in 1:total_files){
+#write_csv(first_row,paste0(names_file[i],".csv"),na="",col_names=FALSE)  
+#write_csv(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col_names=FALSE)                          }
+#}
+
+
+export_table<-function(names_file,df_list,total_files){
   for (i in 1:total_files){
-write_csv(first_row,paste0(names_file[i],".csv"),na="",col_names=FALSE)  
-write_csv(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col_names=FALSE)
-                          }
+    write.table(first_row,paste0(names_file[i],".csv"),na="",col.names=FALSE,row.names=FALSE,sep=";")  
+    write.table(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col.names=FALSE,row.names=FALSE,sep=";")
+  }
 }
-export_csv(names_file=csv_names_low,df_list=df_list_cal_low,total_files=10)
-export_csv(names_file=csv_names_central,df_list=df_list_cal_central,total_files=16)
-export_csv(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
+
+
+export_table(names_file=csv_names_low,df_list=df_list_cal_low,total_files=10)
+export_table(names_file=csv_names_central,df_list=df_list_cal_central,total_files=16)
+export_table(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
 
 rm(list=ls(pattern="df_list*"))
 rm(list=ls(pattern="csv_names*"))
