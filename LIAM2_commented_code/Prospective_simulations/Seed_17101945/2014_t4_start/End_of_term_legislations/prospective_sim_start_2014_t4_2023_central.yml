@@ -1104,8 +1104,8 @@ entities:
             - quarters_bought_back: {type: int, initialdata: false}
             - quarters_needed: {type: int, initialdata: false}
             - remaining_payments: {type: int, initialdata: false}
-            - tag_moratorium_senate: {type: bool, initialdata: false}
-            - gross_moratorium_senate: {type: float, initialdata: false}
+            - tag_moratorium_27705: {type: bool, initialdata: false}
+            - gross_moratorium_27705: {type: float, initialdata: false}
             - gross_moratorium_27705_2: {type: float, initialdata: false}
             #We count for each woman the maximum number of children she had, and how many of these had the AUH. This is used for Decree 475/2021 recognisition
                  #of contributed years for household care work.
@@ -1416,7 +1416,7 @@ entities:
                                             'Total_thirteenth_month_of_pension_pre-2016_cost','Total_net_thirteenth_month_of_pension_pre-2016','Total_thirteenth_month_of_pension_post-2016_cost','Total_net_thirteenth_month_of_pension_post-2016',
                                                 'Total_thirteenth_month_of_universal_pension_cost','Total_net_thirteenth_month_of_universal_pension',
                                                      'Contributory_retirement_care','Moratorium_retirement_care','New_contributory_pensioners','New_moratorium_pensioners','New_PUAM','Percent_care_pensioners','Percent_care_moratorium',
-                                                         'Moratorium_27705_care','New_moratorium_27705_pensioners','Percent_care_moratorium_senate',
+                                                         'Moratorium_27705_care','New_moratorium_27705_pensioners','Percent_care_moratorium_27705',
                                                               'Law_27705_onetime_payments','Law_27705_onetime_payers','Average_onetime_payment','Quarters_paid_onetime',
                                                         fname='central_v2_m.csv',mode='a')
                 - csv('period','Total_family_benefits','Total_contributive_child_benefits','Total_auh','Total_spouse_benefit',
@@ -1488,7 +1488,7 @@ entities:
                                                 False)), False
                                         )
                 - moratorium_27705_retiree: if(retiree==1,
-                                                if(tag_moratorium_senate, True,
+                                                if(tag_moratorium_27705, True,
                                                    False), False
                                                 )
             #The vast majority of survivor's pensions originate from the death of a retiree. Under some conditions however, the death of a worker may trigger survivor's pensions.
@@ -3349,7 +3349,7 @@ entities:
                 #can't enter this new moratorium program. 
         #The Law 27705 moratorium, by its Art. 4, is available for two years, for up to four years. By Res.76/2023 of ANSES, Annex I art. 8, the moratorium starts 23/3/2023, so is fully available in period 82
         #It is not possible to earn this proposed moratorium pension if you already have a retirement benefit, including a 2006 or a Law 26.970 moratorium pension.
-                - new_moratorium_senate: if(period<82 or period>97, False,
+                - new_moratorium_27705: if(period<82 or period>97, False,
                                            if(age<legal_retirement_age, False, 
                                               if(liqui_retirement, False,
                                                  if((contributed_quarters)>=(120-extra_trim/2), False, 
@@ -3373,14 +3373,14 @@ entities:
                     #or if the IGF exceeds the maximum household income cap for earning a family benefit, then that person cannot have a moratorium pension. 
         #The maximum individual income cap is equal to half the maximum family group income cap. 
                 - igf: household.igf_hh
-                - tag_one_payment_27705: if(not new_moratorium_senate, False, 
+                - tag_one_payment_27705: if(not new_moratorium_27705, False, 
                                             if(household.max_itl_sal_hh>IND_FAM_CAP_CENTRAL or igf>FAM_CAP_CENTRAL_4,
                                             True, False))
         #We tag those who fail the means test to process in the buyback_mechanism module whether they pay back the missing years 
         #Following Art. 12, it is possible to earn a survivors benefit together with this moratorium pension, but only if it's below the minimum pension. Else, you need to 
                 #pay back all the missing quarters at once.	
         #We only model one-time payment for new retirees, not for beneficiaries that become widows and earn a second pension higher than the minimum. It can
-                - tag_one_payment_27705: if(new_moratorium_senate and gross_pension>MIN_PENSION_CENTRAL_2014_T4, True, 
+                - tag_one_payment_27705: if(new_moratorium_27705 and gross_pension>MIN_PENSION_CENTRAL_2014_T4, True, 
                                                tag_one_payment_27705)
                 - min_contributive_base: MAX_CONTRIBUTIVE_BASE_CENTRAL*268.06/8711.82
                 - quarters_needed: if(period<82, 0, 
@@ -3393,48 +3393,50 @@ entities:
                                             0)
         #We assume people with total debt lower than twice the monthly family group income pay their pension debt in one payment. This assumption needs to be revised if there is 
                 #actual data of people retiring with this moratorium by making one payment. 
-                - new_moratorium_senate: if(tag_one_payment_27705 and one_time_payment==0, False, 
-                                            new_moratorium_senate)
+                - new_moratorium_27705: if(tag_one_payment_27705 and one_time_payment==0, False,
+                                              new_moratorium_27705)
                 - quarters_needed: if(quarters_needed>0, quarters_needed,
-                                     if(new_moratorium_senate, 
+                                     if(new_moratorium_27705, 
                                         30*4 - contributed_quarters - trunc(extra_trim/2), 
                                         quarters_needed)
                                       )
         #If you pay the whole debt in one instalment, future payments are nil. We thus put quarters_needed at 0.
-                - one_time_paid: if(one_time_payment>0, quarters_needed, 
+                - one_time_paid: if(tag_one_payment_27705 and one_time_payment>0, quarters_needed, 
                                    0)
                 - quarters_needed: if(one_time_payment>0, 0, 
                                       quarters_needed)
                 - total_debt: quarters_needed*min_contributive_base*0.29
-                - tag_moratorium_senate: if(period<82, False, 
-                                            tag_moratorium_senate)
-                - tag_moratorium_senate: if(new_moratorium_senate, True,
-                                            if(tag_one_payment_27705, False,
-                                               tag_moratorium_senate)
-                                            )
-                - liqui_retirement: if(tag_moratorium_senate, True, 
+                - tag_moratorium_27705: if(period<82, False, 
+                                           tag_moratorium_27705)
+                - tag_moratorium_27705: if(new_moratorium_27705, True,
+                                            tag_moratorium_27705)
+                - tag_moratorium_27705: if(tag_one_payment_27705 and one_time_payment==0, False,
+                                               tag_moratorium_27705)
+                - tag_moratorium_27705: if(new_moratorium_27705, True,
+                                            tag_moratorium_27705)
+                - liqui_retirement: if(new_moratorium_27705, True, 
                                        liqui_retirement)
         #Once you enter the pension moratorium, you get a benefit normally.
-                - right_to_a_moratorium_pension: if(new_moratorium_senate and tag_moratorium_senate,
+                - right_to_a_moratorium_pension: if(new_moratorium_27705 and tag_moratorium_27705,
                                                   GROSS_WAGE_CENTRAL_2014_T4/11802.61*replacement_ratio*((sum_rent_aut/car_ind*ind_ponderation + sum_lag_sal/sum_count_40_sal*sal_ponderation)), 
                                                 0)   
-                - right_to_a_moratorium_pension_2: if(new_moratorium_senate and tag_moratorium_senate,
+                - right_to_a_moratorium_pension_2: if(new_moratorium_27705 and tag_moratorium_27705,
                                                     GROSS_WAGE_CENTRAL_2014_T4/11802.61*replacement_ratio*((sum_rent_aut_2/car_ind*ind_ponderation + sum_lag_sal_2/sum_count_40_sal*sal_ponderation)), 
                                                    0)  
             #The right_to_a_pension variable corresponds to the sum of the PAP and the PC. To get the actual new pension, we add the PBU. Its value depends on the pension
                     #mobility up to the studied period, which in turn depends (to some extent) on the evolution of wages. As such, the real PBU depends on the chosen economic 
                     #scenario. 
-                - gross_moratorium_senate: if(new_moratorium_senate and tag_moratorium_senate, PBU_CENTRAL_2014_T4+ right_to_a_moratorium_pension,
-                                              gross_moratorium_senate) 
-                - gross_moratorium_27705_2: if(new_moratorium_senate and tag_moratorium_senate, PBU_CENTRAL_2014_T4+ right_to_a_moratorium_pension_2,
+                - gross_moratorium_27705: if(new_moratorium_27705 and tag_moratorium_27705, PBU_CENTRAL_2014_T4+ right_to_a_moratorium_pension,
+                                              gross_moratorium_27705) 
+                - gross_moratorium_27705_2: if(new_moratorium_27705 and tag_moratorium_27705, PBU_CENTRAL_2014_T4+ right_to_a_moratorium_pension_2,
                                                 gross_moratorium_27705_2)
             #We submit these retirement pensions to the minimum and maximum pensions in force for the period. 
-                - gross_moratorium_senate: if(new_moratorium_senate and tag_moratorium_senate, 
-                                              if(gross_moratorium_senate<MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4, 
-                                                 if(gross_moratorium_senate>MAX_PENSION_CENTRAL_2014_T4, MAX_PENSION_CENTRAL_2014_T4, 
-                                                    gross_moratorium_senate)),
-                                              gross_moratorium_senate) 
-                - gross_moratorium_27705_2: if(new_moratorium_senate and tag_moratorium_senate, 
+                - gross_moratorium_27705: if(new_moratorium_27705 and tag_moratorium_27705, 
+                                              if(gross_moratorium_27705<MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4, 
+                                                 if(gross_moratorium_27705>MAX_PENSION_CENTRAL_2014_T4, MAX_PENSION_CENTRAL_2014_T4, 
+                                                    gross_moratorium_27705)),
+                                              gross_moratorium_27705) 
+                - gross_moratorium_27705_2: if(new_moratorium_27705 and tag_moratorium_27705, 
                                                 if(gross_moratorium_27705_2<MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4, 
                                                    if(gross_moratorium_27705_2>MAX_PENSION_CENTRAL_2014_T4, MAX_PENSION_CENTRAL_2014_T4, 
                                                       gross_moratorium_27705_2)),
@@ -3446,31 +3448,31 @@ entities:
                 - total_debt: quarters_needed*min_contributive_base*0.29
                 - remaining_payments: if(period<82, 0, 
                                          remaining_payments)
-                - remaining_payments: if(new_moratorium_senate and tag_moratorium_senate, 40, 
+                - remaining_payments: if(new_moratorium_27705 and tag_moratorium_27705, 40, 
                                          remaining_payments)
         #It is not possible to reduce by more than 20% the pension benefit. However, if paid across 10 years, even someone with 0 validated quarters and no care quarters
                 # would only see its (minimum) pension  reduced by 9.77%. As thus, we can simply reduce the gross retirement by the payment plan amount. 
-                - gross_retirement: if(tag_moratorium_senate and remaining_payments>0, gross_moratorium_senate-total_debt/40,
-                                       if(tag_moratorium_senate and remaining_payments==0, gross_moratorium_senate,
+                - gross_retirement: if(tag_moratorium_27705 and remaining_payments>0, gross_moratorium_27705-total_debt/40,
+                                       if(tag_moratorium_27705 and remaining_payments==0, gross_moratorium_27705,
                                           gross_retirement)
                                        )
-                - gross_retirement_2: if(tag_moratorium_senate and remaining_payments>0, gross_moratorium_27705_2-total_debt/40,
-                                       if(tag_moratorium_senate and remaining_payments==0, gross_moratorium_27705_2,
+                - gross_retirement_2: if(tag_moratorium_27705 and remaining_payments>0, gross_moratorium_27705_2-total_debt/40,
+                                       if(tag_moratorium_27705 and remaining_payments==0, gross_moratorium_27705_2,
                                           gross_retirement_2)
                                        )
         #People that started to earn a survivors benefit higher than the minimum pension lose the proposed moratorium pension.
-                - liqui_retirement: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), False, 
+                - liqui_retirement: if((not tag_moratorium_27705) and lag(tag_moratorium_27705), False, 
                                        liqui_retirement)
-                - gross_retirement: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), 0,
+                - gross_retirement: if((not tag_moratorium_27705) and lag(tag_moratorium_27705), 0,
                                       gross_retirement)
-                - gross_moratorium_senate: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), 0,
-                                      gross_moratorium_senate)   
-                - gross_retirement_2: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), 0,  
+                - gross_moratorium_27705: if((not tag_moratorium_27705) and lag(tag_moratorium_27705), 0,
+                                      gross_moratorium_27705)   
+                - gross_retirement_2: if((not tag_moratorium_27705) and lag(tag_moratorium_27705), 0,  
                                       gross_retirement_2)
-                - gross_moratorium_27705_2: if((not tag_moratorium_senate) and lag(tag_moratorium_senate), 0, 
+                - gross_moratorium_27705_2: if((not tag_moratorium_27705) and lag(tag_moratorium_27705), 0, 
                                       gross_moratorium_27705_2)
 
-                - remaining_payments: if(tag_moratorium_senate, remaining_payments-1, 
+                - remaining_payments: if(tag_moratorium_27705, remaining_payments-1, 
                                          remaining_payments)
                 - remaining_payments: if(remaining_payments<0, 0, 
                                          remaining_payments)
@@ -3478,13 +3480,13 @@ entities:
                 - moratorium_27705_care: if(period<82, False,
                                             if(retiree_care or moratoria_care, False,
                                                moratorium_27705_care))
-                - new_moratorium_27705_care: if(not (new_moratorium_senate and tag_moratorium_senate), False,
+                - new_moratorium_27705_care: if(not (new_moratorium_27705 and tag_moratorium_27705), False,
                                                 if((age_quarters-18*4-(period-4)+car_post_2008_q4) < (120-extra_trim/2 + care_trim), True,
                                              False))
                 - moratorium_27705_care: if(new_moratorium_27705_care, True, 
                                              moratorium_27705_care)
                 - total_care_27705_moratorium: sum(moratorium_27705_care,weights=pondera)
-                - new_moratorium_27705_by_care: sum(new_moratorium_27705_care,weights=pondera) / sum(new_moratorium_senate and not male,weights=pondera)
+                - new_moratorium_27705_by_care: sum(new_moratorium_27705_care,weights=pondera) / sum(new_moratorium_27705 and not male,weights=pondera)
     #4- We compute universal pension beneficiaries. These pensions were given starting from period 56 (fourth quarter of 2016) to people aged 65 or more 
                 #that did not have any other retirement pension (survivors pensions can not be accumulated with a universal benefit).  
                 - new_pension_uni: if(period<56, False, 
@@ -3496,7 +3498,7 @@ entities:
                                             if(gross_pension>0, False, 
                                                 tag_pension_uni
                                      ))))
-                - tag_pension_uni: if(tag_moratorium_senate, False, 
+                - tag_pension_uni: if(tag_moratorium_27705, False, 
                                       tag_pension_uni)
         #The 2019 budget Law 27467 forbids formal workers from earning the universal pension, except those in the social monotributo program. 
                 - forbid_pension_uni: if(period<65, False, 
@@ -3515,11 +3517,11 @@ entities:
                 #Law 24241 pension beneficiaries even if they did not contribute the required 30 years as long as they fulfilled the conditions established in this Law
                 #to retire. Therefore, the 30 years of contributions are no longer a mandatory condition. 
         #On August 2022, the minimum pension of $37526.96 is lower than 82% of the minimum wage ($39.237), but only for a month. We thus ignore this period (lesser error).
-                - gross_retirement: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni or tag_moratorium_senate, gross_retirement, 
+                - gross_retirement: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni or tag_moratorium_27705, gross_retirement, 
                                         if((car_sal+car_ind+car_mono_norref)<(120-extra_trim/2), gross_retirement,
                                             if(period==79, gross_retirement,
                                                if(gross_retirement<0.82*MINIMUM_WAGE_CENTRAL_2014_T4, MINIMUM_WAGE_CENTRAL_2014_T4*0.82, gross_retirement))))
-                - gross_retirement_2: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni or tag_moratorium_senate, gross_retirement_2, 
+                - gross_retirement_2: if(period<62 or (not liqui_retirement) or moratorium_date<=0 or tag_pension_uni or tag_moratorium_27705, gross_retirement_2, 
                                         if((car_sal+car_ind+car_mono_norref)<(120-extra_trim/2), gross_retirement_2, 
                                             if(period==79, gross_retirement_2,
                                                if(gross_retirement_2<0.82*MINIMUM_WAGE_CENTRAL_2014_T4, MINIMUM_WAGE_CENTRAL_2014_T4*0.82, gross_retirement_2))))
@@ -3555,10 +3557,10 @@ entities:
     #7- We implement minimum and maximum pensions. 
         #We exclude moratorium pensions, universal pensions and survivors' pensions from this correction. The former two are often lower than the minimum pension. 
                 
-                - gross_retirement: if(tag_pension_uni or moratorium_date>0 or gross_retirement==0 , gross_retirement,
+                - gross_retirement: if(tag_pension_uni or moratorium_date>0 or gross_retirement==0 or tag_moratorium_27705 , gross_retirement,
                                         if(gross_retirement<MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4, 
                                             if(gross_retirement>MAX_PENSION_CENTRAL_2014_T4, MAX_PENSION_CENTRAL_2014_T4, gross_retirement)))
-                - gross_retirement_2: if(tag_pension_uni or moratorium_date>0 or gross_retirement_2==0 , gross_retirement_2,
+                - gross_retirement_2: if(tag_pension_uni or moratorium_date>0 or gross_retirement_2==0 or tag_moratorium_27705, gross_retirement_2,
                                         if(gross_retirement_2<MIN_PENSION_CENTRAL_2014_T4, MIN_PENSION_CENTRAL_2014_T4, 
                                             if(gross_retirement_2>MAX_PENSION_CENTRAL_2014_T4, MAX_PENSION_CENTRAL_2014_T4, gross_retirement_2)))                     
     #8- We output retirement pensions net of the compulsory contributions to the PAMI. These are 6% of the gross pension for earnings above the minimum pension and 
@@ -3597,7 +3599,7 @@ entities:
         #It is unclear how the payment plan handles the 13th month for retirement benefits. For the sake of simplicity, we will assume the 13th month is computed on the  
                 #actual benefit without the reduction caused by the payment plan. 
                 - sac_jp_gross: if(modulo_period==1 or modulo_period==3, 0, 
-                                   if(gross_moratorium_senate>=0, gross_moratorium_senate/6,0)
+                                   if(gross_moratorium_27705>=0, gross_moratorium_27705/6,0)
                                    )
                 - sac_jp_gross_2: if(modulo_period==1 or modulo_period==3, 0, 
                                    if(gross_moratorium_27705_2>=0, gross_moratorium_27705_2/6,0)
@@ -3623,6 +3625,7 @@ entities:
     #11- We've had some cases where individuals who do not get any pension still appear as having liquidated their retirement rights. 
             #We thus add this instruction to correct this error at every simulated period.
                 - liqui_retirement: if(discounted_v2_m==0 or discounted_v2_m_2==0, False, liqui_retirement)
+                - tag_moratorium_27705: if(not liqui_retirement, False, tag_moratorium_27705)
     #12- We identify who retires normally thanks to the recognised quarters for care labour.
                 - retiree_care: if(period<76, False, 
                                    retiree_care)
@@ -3636,7 +3639,7 @@ entities:
                 - new_retiree_by_care: sum(new_retiree_care,weights=pondera) / sum(new_contributory_pension and not male,weights=pondera)
                 - new_pension_uni: if(tag_pension_uni and not lag(tag_pension_uni), True, 
                                       False)
-                - new_moratorium_senate: if(tag_moratorium_senate and not lag(tag_moratorium_senate), True, 
+                - new_moratorium_27705: if(tag_moratorium_27705 and not lag(tag_moratorium_27705), True, 
                                             False)
 
     #14- We export total paid retirement benefits by type and computation method. This allows for a faster computation of ANSES deficit.  
@@ -3647,8 +3650,8 @@ entities:
                                             sum(sac_up_gross*pondera)/1000,sum(sac_up_net*pondera)/1000,
                                                 total_care_retirees,total_care_moratoria,sum(new_contributory_pension and discounted_v2_m>0,weights=pondera),sum(new_moratoria and discounted_v2_m>0,weights=pondera),sum(new_pension_uni and discounted_v2_m>0,weights=pondera),  
                                                      new_retiree_by_care,new_moratoria_by_care,
-                                                         total_care_27705_moratorium,sum(new_moratorium_senate and discounted_v2_m>0,weights=pondera),new_moratorium_27705_by_care,
-                                                          sum(one_time_payment*pondera)/1000,sum(tag_one_payment_27705 and one_time_payment>0,weights=pondera),sum(one_time_payment*pondera)/sum(tag_one_payment_27705 and one_time_payment>0,weights=pondera),sum(one_time_paid,weights=pondera)/sum(tag_one_payment_27705 and one_time_payment>0,weights=pondera),
+                                                         total_care_27705_moratorium,sum(new_moratorium_27705 and discounted_v2_m>0,weights=pondera),new_moratorium_27705_by_care,
+                                                          sum(one_time_payment*pondera)/1000,sum(tag_one_payment_27705 and one_time_payment>0 and discounted_v2_m>0,weights=pondera),sum(one_time_payment*pondera)/sum(tag_one_payment_27705 and one_time_payment>0 and discounted_v2_m>0,weights=pondera),sum(one_time_paid,weights=pondera)/sum(tag_one_payment_27705 and one_time_payment>0 and discounted_v2_m>0,weights=pondera),
                                                              fname='central_v2_m.csv',mode='a')
                 
             family_benefits: 
@@ -3953,7 +3956,7 @@ entities:
                                                     if(moratorium_date>0, False, 
                                                         if(universal_net_pension>0, False,
                                                             if(tag_initial_moratorium, False,
-                                                               if(tag_moratorium_senate, False, 
+                                                               if(tag_moratorium_27705, False, 
                                                                 True)))))
                 - has_survivors_benefit: if(survivors_benefit>0, True,
                                             if(tag_second_pension, True, 
@@ -3969,12 +3972,12 @@ entities:
                                                     False))
         # For the moratorium benefits, our model has trouble identifying beneficiaries of 2006 moratorium pensions since by 2014 they all received a 
             #normal pension equal at least to the minimum pension. This boolean therefore mainly identifies beneficiaries of the 2014 pension moratorium.  
-                - has_moratorium_pension: if(discounted_v2_m==0, False, 
+                - has_moratorium_pension: if(discounted_v2_m==0 or tag_moratorium_27705, False, 
                                                 if(moratorium_date>0, True,
                                                     if(tag_initial_moratorium, True, 
                                             False)))
                 - has_moratorium_27705_pension: if(discounted_v2_m==0, False, 
-                                            if(tag_moratorium_senate, True, 
+                                            if(tag_moratorium_27705, True, 
                                                False))
                 - has_universal_pension: if(universal_net_pension==0, False, 
                                         True)
@@ -3983,7 +3986,6 @@ entities:
                                                     if(has_universal_pension, True,
                                                        if(has_moratorium_27705_pension, True,
                                                           False))))
-
                 - has_any_benefit: if(has_retirement_pension, True, 
                                         if(has_survivors_benefit, True, 
                                             False))
@@ -4184,16 +4186,20 @@ entities:
                                                     False))
          # For the moratorium benefits, our model has trouble identifying beneficiaries of 2006 moratorium pensions since by 2014 they all received a 
             #normal pension equal at least to the minimum pension. This boolean therefore mainly identifies beneficiaries of the 2014 pension moratorium.  
-                - has_moratorium_pension: if(discounted_v2_m==0, False, 
+                - has_moratorium_pension: if(discounted_v2_m==0 or tag_moratorium_27705, False, 
                                                 if(moratorium_date>0, True,
                                                     if(tag_initial_moratorium, True, 
                                             False)))
+                - has_moratorium_27705_pension: if(discounted_v2_m==0, False, 
+                                            if(tag_moratorium_27705, True, 
+                                               False))
                 - has_universal_pension: if(universal_net_pension==0, False, 
-                                        True)
+                                            True)
                 - has_retirement_pension: if(has_contributory_retirement, True, 
                                                 if(has_moratorium_pension, True,  
-                                                    if(has_universal_pension, True, 
-                                                        False)))
+                                                    if(has_universal_pension, True,
+                                                       if(has_moratorium_27705_pension, True,
+                                                          False))))
                 - has_any_benefit: if(has_retirement_pension, True, 
                                         if(has_survivors_benefit, True, 
                                             False))
