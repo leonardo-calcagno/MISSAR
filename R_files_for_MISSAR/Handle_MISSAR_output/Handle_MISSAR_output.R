@@ -42,8 +42,9 @@ setwd("MISSAR_output/")
 #Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
 #decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
 correct_csv<-function(input){
+ # leave_out<-"FAM_CAP"
   input<-input%>%
-    mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
+    mutate(across(where(is.double ),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
                                            .x))
            
     )
@@ -53,13 +54,16 @@ correct_csv<-function(input){
 
 #Generate global files in csv format, without formatting problems (copy-pasting often generates missing decimal point errors)
 generate_globals<-function(id,input,output,ruta){
-
+#id<-id_globals
+#input<-sheet_name
+#output<-output_name
+#ruta<-leg
 csv_globals<-read_sheet(id,sheet=input)
 
 csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
 csv_globals<-csv_globals%>%
-  select(-c(152))%>%
-  correct_csv()# #Remove last column with #REF!
+  select(-c(152))#%>%
+#  correct_csv()# #Remove last column with #REF!
 
 # mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
 
@@ -67,6 +71,9 @@ write_csv(csv_globals,output)
 drive_upload(output,path=ruta,overwrite = T) #Upload it corrected
   
 }
+
+#debug<-csv_globals %>% 
+#  select(c("PERIOD","87","88","89"))
 
 leg<-"December_2023_legislation/"
 sust<-"Sustainability_LIAM2_output/"
