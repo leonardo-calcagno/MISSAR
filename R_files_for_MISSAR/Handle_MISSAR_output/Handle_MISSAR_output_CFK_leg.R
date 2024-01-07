@@ -1,14 +1,14 @@
 
 # Packages -----------------
-install.packages("tidyverse")
-install.packages("readxl")
-install.packages("openxlsx")
-install.packages("ggplot2")
-install.packages('Rcpp')
-install.packages('questionr')
-install.packages('readr')
-install.packages('googlesheets4')
-install.packages('googledrive')
+#install.packages("tidyverse")
+#install.packages("readxl")
+#install.packages("openxlsx")
+#install.packages("ggplot2")
+#install.packages('Rcpp')
+#install.packages('questionr')
+#install.packages('readr')
+#install.packages('googlesheets4')
+#install.packages('googledrive')
 
 rm(list=ls())
 gc()
@@ -25,8 +25,9 @@ library(googlesheets4)
 library(googledrive)
 
 gs4_auth() #Connection to google account
-setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
-
+#setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
+setwd("/Users/Leonardo/Documents/MISSAR/")
+setwd("MISSAR_PRIVATE/R_files_for_MISSAR/")
 #To verify working directory
 #getwd()
 
@@ -108,10 +109,6 @@ id_deficit<- drive_get(paste0(leg,"Deficit_computation_CFK_leg"))
 write_sheet(csv_workers_and_wage_low,ss=id_deficit,sheet="workers_and_wage_low")
 write_sheet(csv_workers_and_wage_central,ss=id_deficit,sheet="workers_and_wage_central")
 write_sheet(csv_workers_and_wage_high,ss=id_deficit,sheet="workers_and_wage_high")
-
-write_sheet(csv_temporary_pension_bonus_low,ss=id_deficit,sheet="temporary_pension_bonus_low")
-write_sheet(csv_temporary_pension_bonus_central,ss=id_deficit,sheet="temporary_pension_bonus_central")
-write_sheet(csv_temporary_pension_bonus_high,ss=id_deficit,sheet="temporary_pension_bonus_high")
 
 
 write_sheet(csv_low_v2_m,ss=id_deficit,sheet="low_v2_m")
@@ -353,7 +350,8 @@ rm(list=ls(pattern="^sim_"))
 rm(list=ls(pattern="^csv_"))
 
 #Cleanup -----
-setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
+#setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
+setwd("../")
 unlink("MISSAR_output",recursive=TRUE)
 rm(list=ls())
 
