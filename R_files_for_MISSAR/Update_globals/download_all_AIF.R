@@ -29,7 +29,7 @@ getwd()
 #comment out the years you are not interested in.
 year <- c("00","01","02","03","04","05","06","07","08","09",
           "10","11","12","13","14","15","16","17","18","19",
-          "20","21","22","23"
+          "20","21","22","23","24"
 ) 
 year_90<-c("97","98","99")
 #year_short<-sapply(year,function(x) substr(start=3,stop=4,x))

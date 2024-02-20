@@ -57,7 +57,7 @@ download_yearly_ss_bulletin<-function(year){
   
   download.file(try(try_url),destfile=names_xls,mode="wb")
 }
-
+#download_yearly_ss_bulletin(2024)
 download_yearly_ss_bulletin(2023)
 download_yearly_ss_bulletin(2022)
 download_yearly_ss_bulletin(2021)
