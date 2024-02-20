@@ -1,14 +1,14 @@
 
 # Packages -----------------
-install.packages("tidyverse")
-install.packages("readxl")
-install.packages("openxlsx")
-install.packages("ggplot2")
-install.packages('Rcpp')
-install.packages('questionr')
-install.packages('readr')
-install.packages('googlesheets4')
-install.packages('googledrive')
+#install.packages("tidyverse")
+#install.packages("readxl")
+#install.packages("openxlsx")
+#install.packages("ggplot2")
+#install.packages('Rcpp')
+#install.packages('questionr')
+#install.packages('readr')
+#install.packages('googlesheets4')
+#install.packages('googledrive')
 
 rm(list=ls())
 gc()
@@ -25,8 +25,9 @@ library(googlesheets4)
 library(googledrive)
 
 gs4_auth() #Connection to google account
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
-setwd("MISSAR_private/R_files_for_MISSAR/Globals")
+#setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
+setwd("/Users/Leonardo/Documents/MISSAR/")
+setwd("MISSAR_private/R_files_for_MISSAR")
 #To verify working directory
 #getwd()
 
@@ -77,7 +78,7 @@ generate_globals<-function(id,input,output,ruta){
   
 }
 
-leg<-"June_2022_legislation/"
+leg<-"December_2023_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
 #Google authentification may trigger here again, proceed with authentification before going further

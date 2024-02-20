@@ -1,14 +1,14 @@
 
 # Packages -----------------
-install.packages("tidyverse")
-install.packages("readxl")
-install.packages("openxlsx")
-install.packages("ggplot2")
-install.packages('Rcpp')
-install.packages('questionr')
-install.packages('readr')
-install.packages('googlesheets4')
-install.packages('googledrive')
+#install.packages("tidyverse")
+#install.packages("readxl")
+#install.packages("openxlsx")
+#install.packages("ggplot2")
+#install.packages('Rcpp')
+#install.packages('questionr')
+#install.packages('readr')
+#install.packages('googlesheets4')
+#install.packages('googledrive')
 
 rm(list=ls())
 gc()
@@ -25,7 +25,8 @@ library(googlesheets4)
 library(googledrive)
 
 gs4_auth() #Connection to google account
-setwd("C:/Users/lcalcagno/Documents/Investigación/")
+#setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
+setwd("/Users/Leonardo/Documents/MISSAR/")
 setwd("MISSAR_private/R_files_for_MISSAR")
 
 #To verify working directory
@@ -41,8 +42,9 @@ setwd("MISSAR_output/")
 #Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
 #decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
 correct_csv<-function(input){
+ # leave_out<-"FAM_CAP"
   input<-input%>%
-    mutate(across(where(is.double),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
+    mutate(across(where(is.double ),~ifelse(.x>median(.x[.x>0])*100 & .x%%1>0, .x/1000, 
                                            .x))
            
     )
@@ -52,13 +54,16 @@ correct_csv<-function(input){
 
 #Generate global files in csv format, without formatting problems (copy-pasting often generates missing decimal point errors)
 generate_globals<-function(id,input,output,ruta){
-
+#id<-id_globals
+#input<-sheet_name
+#output<-output_name
+#ruta<-leg
 csv_globals<-read_sheet(id,sheet=input)
 
 csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
 csv_globals<-csv_globals%>%
-  select(-c(152))%>%
-  correct_csv()# #Remove last column with #REF!
+  select(-c(152))#%>%
+#  correct_csv()# #Remove last column with #REF!
 
 # mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
 
@@ -67,7 +72,10 @@ drive_upload(output,path=ruta,overwrite = T) #Upload it corrected
   
 }
 
-leg<-"June_2022_legislation/"
+#debug<-csv_globals %>% 
+#  select(c("PERIOD","87","88","89"))
+
+leg<-"December_2023_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
 #Google authentification may trigger here again, proceed with authentification before going further
@@ -150,6 +158,13 @@ csv_IFE_cost_high <- read_csv("IFE_cost_high.csv")%>%
   correct_csv()
 
 
+csv_central_buyback <- read_csv("buyback_mechanism_central.csv")%>%
+  correct_csv()
+csv_low_buyback <- read_csv("buyback_mechanism_low.csv")%>%
+  correct_csv()
+csv_high_buyback <- read_csv("buyback_mechanism_high.csv")%>%
+  correct_csv()
+
 
 #Modify results sheets -----
 
@@ -180,6 +195,10 @@ write_sheet(csv_low_SIPA_income,ss=id_deficit,sheet="low_SIPA_income")
 write_sheet(csv_central_SIPA_income,ss=id_deficit,sheet="central_SIPA_income")
 write_sheet(csv_high_SIPA_income,ss=id_deficit,sheet="high_SIPA_income")
 
+write_sheet(csv_low_buyback,ss=id_deficit,sheet="low_buyback_mechanism")
+write_sheet(csv_central_buyback,ss=id_deficit,sheet="central_buyback_mechanism")
+write_sheet(csv_high_buyback,ss=id_deficit,sheet="high_buyback_mechanism")
+
 
 rm(list=ls(pattern="^csv_"))
 
@@ -189,7 +208,6 @@ id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare 
 id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim"))
 
 apply_short_term_macro<-function(scenario){
-
 sheet_name<-paste0(scenario," macro hypothesis")
 df<-read_sheet(id_globals,sheet=sheet_name,range="B4:G39",col_names = FALSE) %>% 
   select(c(1,4,6))
@@ -197,9 +215,9 @@ vector_GDP<-df[,1]
 vector_CPI<-df[,2]
 vector_wage<-df[,3]
 
-range_write(vector_GDP_central,ss=id_deficit,sheet=sheet_name,range="B4",reformat=FALSE,col_names=FALSE)
-range_write(vector_CPI_central,ss=id_deficit,sheet=sheet_name,range="D4",reformat=FALSE,col_names=FALSE)
-range_write(vector_wage_central,ss=id_deficit,sheet=sheet_name,range="F4",reformat=FALSE,col_names=FALSE)
+range_write(vector_GDP,ss=id_deficit,sheet=sheet_name,range="B4",reformat=FALSE,col_names=FALSE)
+range_write(vector_CPI,ss=id_deficit,sheet=sheet_name,range="D4",reformat=FALSE,col_names=FALSE)
+range_write(vector_wage,ss=id_deficit,sheet=sheet_name,range="F4",reformat=FALSE,col_names=FALSE)
 }
 apply_short_term_macro("Central")
 apply_short_term_macro("Pessimistic")

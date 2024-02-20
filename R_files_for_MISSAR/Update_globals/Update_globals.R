@@ -25,7 +25,7 @@ id_globals_senate<- drive_get("Globals_moratorium_senate")
 ##Generate temporary download folder----
 #setwd("D:/Git_repos/")
 #setwd("C:/Users/lcalcagno/Documents/Investigacion/")
-setwd("Documents/MISSAR/")
+setwd("/Users/Leonardo/Documents/MISSAR/")
 setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
 
 if(!file.exists("download_folder")) {
@@ -237,8 +237,9 @@ unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .
 
 #Cleanup -----
 rm(output_name,sheet_name)
-setwd("C:/Users/lcalcagno/Documents/Investigacion/")
-setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("MISSAR_private/R_files_for_MISSAR/Update_globals")
+setwd("../")
 unlink("download_folder",recursive=TRUE)
 
 #ANSES fiscal income, from Savings-Investment-Funding Account----
@@ -247,10 +248,10 @@ unlink("download_folder",recursive=TRUE)
 start.time=Sys.time()
 ##Go to the folder with updated AIF files (see download_all_AIF)
 #setwd("D:/Git_repos/")
-setwd("C:/Users/lcalcagno/Documents/Investigacion/")
-#setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
-setwd("../../") #Relative path: go up to R_files_for_MISSAR
-setwd("Scraped_datasets/AIF")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("/Users/Leonardo/Documents/MISSAR/MISSAR_private/R_files_for_MISSAR/Scraped_datasets/AIF")
+#setwd("../../") #Relative path: go up to R_files_for_MISSAR
+#setwd("Scraped_datasets/AIF")
 ###The only month that does not work is January 2000, it is a weird xml file. You need to open it with 
 #excel, and save it as an excel file in the AIF folder with a different name (2000_enero for instance). 
 
@@ -423,8 +424,6 @@ table(df_AIF$file)
 rm(list=ls(pattern="*df_list"))
 rm(list=ls(pattern="*n.cols"))
 rm(list_xls,keep_s2_xls,keep_s3_xls,df_AIF_s2,df_AIF_s3,names_first_sheet,track_index)
-#DEBUG, MISSING APRIL 2023
-
 ##Format AIF dataset ------
 
 df_AIF<-df_AIF %>% 
@@ -755,6 +754,7 @@ prefix<-"https://www.argentina.gob.ar"
 #Uncomment and launch if needed binman and wdman
 binman::rm_platform("phantomjs")
 wdman::selenium(retcommand = TRUE)
+#4545
 rD <- rsDriver(browser="firefox",chromever=NULL, port=4545L, verbose=F)
 #From https://stackoverflow.com/questions/45395849/cant-execute-rsdriver-connection-refused
 ##Even though we specifiy firefox as the browser, Selenium tries to load chrome anyway, which leads to an error.

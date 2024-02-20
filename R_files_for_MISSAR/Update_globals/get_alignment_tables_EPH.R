@@ -14,7 +14,8 @@ library(glue)
 library(openxlsx)
 library(googlesheets4)
 library(googledrive)
-setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
+setwd("/Users/Leonardo/Documents/MISSAR/MISSAR_private")
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
 closeAllConnections() #Else, you risk the "all connections are in use" error.
@@ -351,6 +352,8 @@ write.xlsx(df_demographic_men,"demographic_men.xlsx")
 write.xlsx(df_demographic_women,"demographic_women.xlsx")
 write.xlsx(df_independent_men,"independent_men.xlsx")
 write.xlsx(df_independent_women,"independent_women.xlsx")
+rm(df_demographic_men,df_demographic_women,df_independent_men,df_independent_women)
+
 #Base alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69) %>% #Use ageconti for subsetting, else age 15 is included
@@ -545,7 +548,7 @@ rm(LMS_names)
 
 id_LMS_scenario<- drive_get("LMS_scenarios_16_69") 
 range_write(update_men,ss=id_LMS_scenario,range="F173",col_names =FALSE,reformat=FALSE) 
-range_write(update_women,ss=id_LMS_scenario,range="AK173",col_names =FALSE,reformat=FALSE)
+range_write(update_women,ss=id_LMS_scenario,range="AO173",col_names =FALSE,reformat=FALSE)
 rm(cal_men,cal_women,update_men,update_women,cal_LMS_all_ages)
 
 ##New LMS scenarios-----
@@ -880,6 +883,7 @@ df_list_mar_stu<-list(df_uni_men,df_mar_men,df_uni_women,df_mar_women,df_stu_men
 rm(df_stu_women,df_stu_men,df_mar_women,df_uni_women,df_mar_men,df_uni_men)
 rm(df_list_cal_mar,df_list_cal_stu)
 rm(list=ls(pattern="*mean_"))
+
 #CSV tables ----
 ##Get 2003-2015 tables ----
 id_alignment_folder<- drive_get("Alignment_tables_update") 
@@ -997,22 +1001,37 @@ df_list_cal_low<-df_list_cal_low[1:10] %>%  #Marital status and student proporti
 
 ##CSV export -------
 
-setwd("../../") #Go up to the parent folder of LIAM2_commented_code
+setwd("../../../../") #Go up to the parent folder of LIAM2_commented_code
 folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
 setwd(folder_eot_leg)
 getwd()
 
-export_csv<-function(names_file,df_list,total_files){
+
+options(scipen=999) #This avoids using scientific notation to export values to CSV (important for LIAM2)
+#We use write.table() instead of write.csv() to also delete column and row names
+
+#export_csv<-function(names_file,df_list,total_files){
+#  for (i in 1:total_files){
+#write_csv(first_row,paste0(names_file[i],".csv"),na="",col_names=FALSE)  
+#write_csv(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col_names=FALSE)                          }
+#}
+
+
+export_table<-function(names_file,df_list,total_files){
   for (i in 1:total_files){
-write_csv(first_row,paste0(names_file[i],".csv"),na="",col_names=FALSE)  
-write_csv(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col_names=FALSE)
-                          }
+    write.table(first_row,paste0(names_file[i],".csv"),na="",col.names=FALSE,row.names=FALSE,sep=",",quote=FALSE)  
+    write.table(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col.names=FALSE,row.names=FALSE,sep=",",quote=FALSE)
+  }
 }
-export_csv(names_file=csv_names_low,df_list=df_list_cal_low,total_files=10)
-export_csv(names_file=csv_names_central,df_list=df_list_cal_central,total_files=16)
-export_csv(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
 
 
+export_table(names_file=csv_names_low,df_list=df_list_cal_low,total_files=10)
+export_table(names_file=csv_names_central,df_list=df_list_cal_central,total_files=16)
+export_table(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
+
+rm(list=ls(pattern="df_list*"))
+rm(list=ls(pattern="csv_names*"))
+rm(dl_list,first_row,get_names,period_row,men,women,names_LMS,i,correct_names,folder_eot_leg,id_alignment_folder)
 
 #Descriptive statistics ----
 

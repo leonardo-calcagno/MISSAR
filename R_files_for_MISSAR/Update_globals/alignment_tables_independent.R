@@ -13,7 +13,8 @@ id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
 
 start.time=Sys.time()
 #Set the working directory to the folder with the downloaded monthly social security bulletin excel files
-setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/")
+setwd("/Users/Leonardo/Documents/MISSAR/")
 setwd("MISSAR_private/R_files_for_MISSAR/Scraped_datasets/bol_men_ss")
 getwd()
 #Independent workers -----
@@ -283,16 +284,22 @@ get_href<-function(html){
   
   vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
 }
-URL<-"https://www.trabajo.gob.ar/estadisticas/" %>% 
-  get_href() 
+URL<-"https://www.argentina.gob.ar/trabajo/estadisticas" %>% 
+  get_href()
+
+#URL_old<-"https://www.trabajo.gob.ar/estadisticas/" %>% 
+#  get_href() 
 
 df_URL<-URL%>% 
-  subset(grepl(pattern=".xls",.[[1]]) & grepl(pattern="registrado",.[[1]]))
+  subset(grepl(pattern=".xls",.[[1]]) & grepl(pattern="registrado",.[[1]])) %>% 
+  rename(URL=1) %>% 
+  mutate(URL=gsub(pattern="blank:#/",replacement="https://www.argentina.gob.ar/",URL))
 download.file(df_URL[[1,1]],destfile="trabajo_registrado.xlsx",mode="wb")
 rm(URL,df_URL)
+
 df_workers<-read_excel("trabajo_registrado.xlsx",sheet=4) %>% 
   janitor::row_to_names(row_number=1,remove_row=TRUE)
-unlink("trabajo_registrado.xlsx",recursive=TRUE)
+#unlink("trabajo_registrado.xlsx",recursive=TRUE)
 
 has_num<-colSums(mapply(grepl,"[0-9]",df_workers)) #Detects, for each column, how many lines have at least one integer
 has_char<-colSums(mapply(grepl,"^[A-Za-z]",df_workers)) #Detects, for each column, how many lines have at least one character
@@ -854,7 +861,7 @@ prospective_indep<-function(indata,varname){
       as.data.frame() %>% 
       rename(average_indep=1)
     
-  max_empirical_period<-indata[[1,ncol(indata)]]
+  max_empirical_period<-indata[[1,ncol(indata)]]+1
   for(i in max_empirical_period:152){
     add_period<-data.frame(i) 
     names(add_period)<-c(paste0(varname,i))
@@ -886,6 +893,28 @@ cal_mono_h<-prospective_indep(cal_mono_h,"mono_h")
 cal_mono_f<-prospective_indep(cal_mono_f,"mono_f")
 cal_auton_h<-prospective_indep(cal_auton_h,"auton_h")
 cal_auton_f<-prospective_indep(cal_auton_f,"auton_f")
+rm(list=ls(pattern="col_*"))
+rm(indata,transp_data,names_EPH_indep)
+rm(list=ls(pattern="df_*"))
+
+
+##CSV export -------
+
+setwd("../../../") #Go up to the parent folder of LIAM2_commented_code
+folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
+setwd(folder_eot_leg)
+getwd()
+
+
+options(scipen=999) #This avoids using scientific notation to export values to CSV (important for LIAM2)
+#We use write.table() instead of write.csv() to also delete column and row names
+write.table(cal_mono_h,"cal_mono_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=",",quote=FALSE)
+write.table(cal_mono_f,"cal_mono_f_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=",",quote=FALSE)
+write.table(cal_auton_h,"cal_auton_h_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=",",quote=FALSE)
+write.table(cal_auton_f,"cal_auton_f_p.csv",na="",col.names=FALSE,row.names=FALSE,sep=",",quote=FALSE)
+
+
+rm(list=ls(pattern="cal_*"))
 
 end.time=Sys.time()
 time.taken=end.time-start.time
