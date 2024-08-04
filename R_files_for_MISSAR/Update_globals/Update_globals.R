@@ -133,7 +133,7 @@ df_CPI_for_globals<-df_CPI_for_globals %>%
          )
 #Now we update the CPI index in the globals file
 
-range_write(df_CPI_for_globals,ss=id_globals,range="E889",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE)
+range_write(df_CPI_for_globals,ss=id_globals,range="F889",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE)
 rm(df_CPI_for_globals,df_latest_CPI)
 #INDEC wage index ------
  #URL: https://www.indec.gob.ar/ftp/cuadros/sociedad/variaciones_salarios_09_22.xls for July data
@@ -231,7 +231,7 @@ vector_RIPTE <- read_csv("RIPTE_index.csv") %>%
 
 head(vector_RIPTE)
 
-range_write(vector_RIPTE,ss=id_globals,range="N620",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE) #
+range_write(vector_RIPTE,ss=id_globals,range="O620",col_names =FALSE,sheet="Inflation and wages",reformat=FALSE) #
 rm(vector_RIPTE)
 unlink("RIPTE_index.csv",recursive=TRUE) #Delete downloaded file, important as .csv is not in gitignore
 
