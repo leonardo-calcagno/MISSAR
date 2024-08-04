@@ -787,7 +787,7 @@ rm(vector_urls,pg)
 
 #To get to next page, you need to clicka button referenced with an xpath. You inspect the element, 
     #then right click copy, xpath, and copy it there 
-next_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[4]/a" 
+next_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[3]/a"
 remDr$findElement(using="xpath",value=next_page)$clickElement() #Here you click the next page button
 
 Sys.sleep(3) # give the page time to fully load
@@ -802,8 +802,29 @@ vector_pasivos_2<-vector_urls %>%
   rename(URL=1) %>% 
   subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl(keyword,URL,ignore.case=TRUE) ) 
 
+
+next_page<-"/html/body/main/div[2]/div/section[2]/div/div[1]/div/div/div/div[3]/div/div[3]/div/div/ul/li[4]/a" 
+
+remDr$findElement(using="xpath",value=next_page)$clickElement() #Here you click the next page button
+
+Sys.sleep(3) # give the page time to fully load
+html <- remDr$getPageSource()[[1]]
+
+pg<-read_html(html)
+
+vector_urls<-as.data.frame(html_attr(html_nodes(pg, "a"), "href"))
+
+
+vector_pasivos_3<-vector_urls %>% 
+  rename(URL=1) %>% 
+  subset(grepl(".xls",URL) & (!grepl("bessj",URL)) & grepl("bess|seguridad",URL)& grepl(keyword,URL,ignore.case=TRUE) ) 
+
+
+
+
 vector_pasivos<-vector_pasivos %>% 
   bind_rows(vector_pasivos_2) %>% 
+  bind_rows(vector_pasivos_3) %>% 
   unique() %>% 
   mutate(full_URL=paste0(prefix,URL)
          )
