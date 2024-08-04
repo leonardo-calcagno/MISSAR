@@ -212,7 +212,7 @@ df_latest_wage<-df_latest_wage%>%
 vector_wage_index<-df_latest_wage %>% 
   select(c(wage_index))
 
-range_write(vector_wage_index,ss=id_globals,range="G269",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
+range_write(vector_wage_index,ss=id_globals,range="H269",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
 
 rm(vector_wage_index,df_latest_wage)
 
@@ -559,7 +559,7 @@ vector_ISS_fiscal_income<-df_ISS_fiscal_income %>%
   select(c(ISS))
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
-range_write(vector_ISS_fiscal_income,ss=id_globals,range="I284",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
+range_write(vector_ISS_fiscal_income,ss=id_globals,range="J284",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
 
 rm(total_files,control,list_AIF,table_file_size,concept_names,vector_ISS_fiscal_income,df_ISS_fiscal_income)
 setwd("../../") #Restore wd to R_files_for_MISSAR
@@ -729,7 +729,7 @@ vector_ANSES_contributions<-df_ANSES_contributions %>%
   mutate(monto=monto*1000) #The excel format is in thousands of pesos
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") 
-range_write(vector_ANSES_contributions,ss=id_globals,range="H108",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
+range_write(vector_ANSES_contributions,ss=id_globals,range="I108",col_names =FALSE,sheet="Pessimistic projection",reformat=FALSE) #
 
 rm(vector_ANSES_contributions,df_2003_2016,df_post_2017,
    format_cuadro_8_monthly,format_cuadro_8_yearly,read_cuadro_8,read_cuadro_9)
