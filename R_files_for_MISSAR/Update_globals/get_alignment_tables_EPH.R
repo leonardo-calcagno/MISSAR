@@ -1001,7 +1001,7 @@ df_list_cal_low<-df_list_cal_low[1:10] %>%  #Marital status and student proporti
 
 ##CSV export -------
 
-setwd("../../../../") #Go up to the parent folder of LIAM2_commented_code
+setwd("../../../") #Go up to the parent folder of LIAM2_commented_code
 folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
 setwd(folder_eot_leg)
 getwd()
