@@ -767,6 +767,7 @@ remDr <- rD[["client"]]
 get_poncho_urls <- function(keyword,keyword2){
  remDr$navigate(URL)
 pasivos<-keyword2  
+Sys.sleep(3) # give the page time to fully load
 ##Get URLs ------
 remDr$findElement(using = "id", value = "ponchoTableSearch")$sendKeysToElement(list(pasivos))
 
