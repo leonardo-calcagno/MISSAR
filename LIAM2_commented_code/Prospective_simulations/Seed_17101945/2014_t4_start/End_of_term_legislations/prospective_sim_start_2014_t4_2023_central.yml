@@ -3841,7 +3841,7 @@ entities:
                     #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
                     #the AUH paid on average the whole quarter (or at least on the middle month). 
                 - decree_309_2020_auh_bonus: if(auh<=0, 0, 
-                                                if(period==69, 611.87/3,
+                                                if(period==69, 611.98/3,
                                                    0)
                                                 )
             #Decree 261/2021 included a $15000 payment for beneficiaries of the AUH or of contributive child benefits for categories A and B of the monotributo, 
