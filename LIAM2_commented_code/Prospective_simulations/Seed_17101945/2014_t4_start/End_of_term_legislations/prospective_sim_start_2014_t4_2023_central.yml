@@ -4341,76 +4341,113 @@ entities:
                                                   )
                                              ,0)
                                            )
-                #After that, Decree 788/2022 establishes bonuses for December, January and February 2023 (period 81). 
+                #After that, Decree 788/2022 establishes bonuses for December (80), January and February 2023 (period 81). 
                         #The bonus is $10000 for those earning a minimum pension, but at $7000 for those with more than the minimum pension + $10000, 
                         #up to two minimum pensions. 
-                - decree_788_2022_bonus: if(period!=81, 0, 
+                - decree_788_2022_bonus: if(period!=80 and period!=81, 0,
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 469.78*7/10, 0,
-                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
-                                                       (531.13 + 500.94 + 469.78)/3,   
-                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 469.78,
-                                                            (3*MIN_PENSION_CENTRAL_2014_T4 + (531.13 + 500.94 + 469.78) -3*disc_cost_v2_m_2)/3,
+                                               if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 7000*100/CPI_CENTRAL, 0, 
+                                                  if(period==80,
+                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                       (531.13)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 10000*100/CPI_CENTRAL,
+                                                            (MIN_PENSION_CENTRAL_2014_T4 + (531.13) -disc_cost_v2_m_2)/3,
+                                                            if(disc_cost_v2_m_2 <= 2*MIN_PENSION_CENTRAL_2014_T4, 
+                                                                (7/10*531.13)/3,  
+                                                                (2*MIN_PENSION_CENTRAL_2014_T4 + (531.13)*7/10-disc_cost_v2_m_2)/3
+                                                               )
+                                                            )
+                                                        ), 
+                                                      if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                         (500.93 + 469.8)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 10000*100/CPI_CENTRAL,
+                                                            (2*MIN_PENSION_CENTRAL_2014_T4 + (500.93 + 469.8 ) -2*disc_cost_v2_m_2)/3,
                                                             if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
-                                                                7/10*(531.13 + 500.94 + 469.78)/3,  
-                                                                (6*MIN_PENSION_CENTRAL_2014_T4 + (531.13 + 500.94 + 469.78)*7/10-3*disc_cost_v2_m_2)/3)
-                                                            )))
-                                              , 0)
+                                                                7/10*(500.93 + 469.8)/3,  
+                                                                (4*MIN_PENSION_CENTRAL_2014_T4 + (500.93 + 469.8 )*7/10-2*disc_cost_v2_m_2)/3)
+                                                            )
+                                                         )
+                                                    )
+                                                  )
+                                             ,0)
                                            )
-                #After that, Decree 105/2023 establishes bonuses for March, April and May 2023 (period 82). 
+                #After that, Decree 105/2023 establishes bonuses for March (81), April and May 2023 (period 82). 
                         #The bonus is $15000 for those earning a minimum pension, but at $5000 for those with more than the minimum pension + $15000, 
                         #up to two minimum pensions. 
-                - decree_105_2023_bonus: if(period!=82, 0, 
+                - decree_105_2023_bonus: if(period!=81 and period!=82, 0,
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 560.19*5/15, 0,
-                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
-                                                       (654.46 + 603.73 + 560.19)/3,   
-                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 560.19,
-                                                            (3*MIN_PENSION_CENTRAL_2014_T4 + (654.46 + 603.73 + 560.19) -3*disc_cost_v2_m_2)/3,
+                                               if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 5000*100/CPI_CENTRAL, 0, 
+                                                  if(period==81,
+                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                       (654.47)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 15000*100/CPI_CENTRAL,
+                                                            (MIN_PENSION_CENTRAL_2014_T4 + (654.47) -disc_cost_v2_m_2)/3,
+                                                            if(disc_cost_v2_m_2 <= 2*MIN_PENSION_CENTRAL_2014_T4, 
+                                                                (5/15*654.47)/3,  
+                                                                (2*MIN_PENSION_CENTRAL_2014_T4 + (654.47)*5/15-disc_cost_v2_m_2)/3
+                                                               )
+                                                            )
+                                                        ), 
+                                                      if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                         (603.73 + 560.19 + 528.73)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 15000*100/CPI_CENTRAL,
+                                                            (3*MIN_PENSION_CENTRAL_2014_T4 + (603.73 + 560.19 + 528.73) -3*disc_cost_v2_m_2)/3,
                                                             if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
-                                                                5/15*(654.46 + 603.73 + 560.19)/3,  
-                                                                (6*MIN_PENSION_CENTRAL_2014_T4 + (654.46 + 603.73 + 560.19)*5/15-3*disc_cost_v2_m_2)/3)
-                                                            )))
-                                              , 0)
+                                                                5/15*(603.73 + 560.19 + 528.73)/3,  
+                                                                (6*MIN_PENSION_CENTRAL_2014_T4 + (603.73 + 560.19 + 528.73)*5/15-3*disc_cost_v2_m_2)/3)
+                                                            )
+                                                         )
+                                                    )
+                                                  )
+                                             ,0)
                                            )
-                #After that, Decree 282/2023 establishes bonuses for June, July and August 2023 (period 83). 
+                #After that, Decree 282/2023 establishes bonuses for June (82), July and August 2023 (period 83). 
                         #The bonus is $15000, $17000, and $20000 for those earning a minimum pension, but at $5000 for those with more than the minimum pension + $15000, $17000, $20000, 
                         #up to two minimum pensions. 
+                #The June 2023 bonus is included in decree_105_2023_bonus
                 - decree_282_2023_bonus: if(period!=83, 0, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 147.39, 0,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 5000*100/CPI_CENTRAL, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
-                                                       (528.73 + 563.47 + 589.56)/3,   
-                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 589.56,
-                                                            (3*MIN_PENSION_CENTRAL_2014_T4 + (528.73 + 563.47 + 589.56) -3*disc_cost_v2_m_2)/3,
-                                                            if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
-                                                                (176.24 + 165.73 + 147.39)/3,  
-                                                                (6*MIN_PENSION_CENTRAL_2014_T4 + (176.24 + 165.73 + 147.39)-3*disc_cost_v2_m_2)/3)
+                                                       (563.47 + 589.56)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 17000*100/CPI_CENTRAL,
+                                                            (2*MIN_PENSION_CENTRAL_2014_T4 + (563.47 + 589.56) -2*disc_cost_v2_m_2)/3,
+                                                            if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 20000*100/CPI_CENTRAL,
+                                                              (MIN_PENSION_CENTRAL_2014_T4 + 589.56 - disc_cost_v2_m_2 + 563.47*5/17)/3,
+                                                               if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
+                                                                (563.47*5/17 + 589.56*5/20)/3,  
+                                                                (4*MIN_PENSION_CENTRAL_2014_T4 + (563.47*5/17 + 589.56*5/20)-2*disc_cost_v2_m_2)/3)
                                                             )))
-                                              , 0)
-                                           )
-                #After that, Decree 442/2023 establishes a $37000 bonus for September, October and November 2023 (period 84). 
+                                                   )
+                                               ,0)
+                                            )
+                #After that, Decree 442/2023 establishes a $37000 bonus for September (83), October and November 2023 (period 84). 
                         #Nothing is given to those with more than the minimum pension + $37000
-                - decree_442_2023_bonus: if(period!=84, 0, 
+                - decree_442_2023_bonus: if(period!=83 and period!=84, 0,
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 791.77, 0,
-                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
-                                                        (967.35 + 893.20 + 791.77)/3, 
-                                                        (3*MIN_PENSION_CENTRAL_2014_T4 + (967.35 + 893.20 + 791.77) - 3*disc_cost_v2_m_2)/3 
-                                                       )     
-                                                  ), 0 
-                                              )
+                                               if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 37000*100/CPI_CENTRAL, 0, 
+                                                  if(period==83,
+                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                         (967.35)/3,   
+                                                         (MIN_PENSION_CENTRAL_2014_T4 + (967.35) -disc_cost_v2_m_2)/3
+                                                        ),
+                                                      if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                         (893.20 + 791.77)/3,
+                                                         (2*MIN_PENSION_CENTRAL_2014_T4 + (893.20 + 791.77) -2*disc_cost_v2_m_2)/3
+                                                         )
+                                                    )
+                                                  )
+                                             ,0)
                                            )
-                #After that, Decree 626/2023 establishes a $55000 bonus for December 2023 (period 85). It was announced 29/12/23 such bonus will be repeated in January and February, but
-                        #the Decree has not yet been published. 
-                #After the December 2023 120% increase of the USD and various inflationary measures, we assume 25% inflation in December, 30% in January and 25% in February. These values must
-                        #be modified once official inflation indexes are released.
-                - decree_626_2023_bonus: if(period!=85, 0, 
+                #After that, Decree 626/2023 establishes a $55000 bonus for December 2023 (period 84). 
+                        #This is, stricto sensu, the last pension bonus given with AF legislation. For comparability reasons with current legislation, 
+                        #we assume AF legislation would have given the same pension bonuses than Milei. 
+                - decree_626_2023_bonus: if(period!=84, 0, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 579.42, 0,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 55000*100/CPI_CENTRAL, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
-                                                        (941.56 + 724.28 + 579.42)/3, 
-                                                        (3*MIN_PENSION_CENTRAL_2014_T4 + (941.56 + 724.28 + 579.42) - 3*disc_cost_v2_m_2)/3 
+                                                        (938.07)/3, 
+                                                        (MIN_PENSION_CENTRAL_2014_T4 + (938.07) - disc_cost_v2_m_2)/3 
                                                        )     
                                                   ), 0 
                                               )
