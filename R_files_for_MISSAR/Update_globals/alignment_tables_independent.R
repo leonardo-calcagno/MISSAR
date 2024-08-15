@@ -852,9 +852,10 @@ cal_auton_h<-df_indep_cal %>%
 cal_auton_f<-df_indep_cal %>% 
   select(starts_with("auto")) %>% 
   select(contains("_f_"))
-rm(df_indep_cal)
 
 prospective_indep<-function(indata,varname){
+  #Drop columns with missing values (can happen with cal_auton)
+    indata<-indata[colSums(is.na(indata))==0]
   #Take average of last 10 years of data for projection
     average<-indata [2:nrow(indata),(ncol(indata)-41):ncol(indata)] 
     average<-rowMeans(average) %>% 
