@@ -4227,25 +4227,24 @@ entities:
                     #- Those earning less than $19067.93 pesos exceptionnally earned that benefit for the month. 
                 #We however divide it by three each time, since it is paid on a single month, and the pension of the period is 
                         #the pension paid on average the whole quarter. 
-                #For periods 68 and 69 the bonus equals respectively 1063.02 and 1039.60 November 2014 pesos. We use these values to also limit who gets the bonus.
+                #For periods 68 and 69 the bonus equals respectively 1063.02 and 1039.60 November 2014 pesos. 
+                #To check however if the bonus is paid, we use CPI_CENTRAL (the period's CPI average)
                 - decree_73_2019_bonus: if(has_any_benefit,
+                                           if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 5000*100/CPI_CENTRAL, 0, 
                                                if(period==68,
-                                                  if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 1063.02, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
                                                         1063.02/3, 
                                                         (2*MIN_PENSION_CENTRAL_2014_T4 + 1063.02 - 2*disc_cost_v2_m_2)/3 
-                                                       )     
-                                                    ), 
+                                                       ), 
                                                if(period==69, 
-                                                  if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 1039.6, 0,
-                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
+                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
                                                         1039.6/3, 
                                                         (2*MIN_PENSION_CENTRAL_2014_T4 + 1039.6 - 2*disc_cost_v2_m_2)/3 
                                                        )     
-                                                     )
-                                                        ,0)
-                                                  )
-                                           ,0)
+                                                     ,0)
+                                                   )
+                                             )
+                                       ,0)
                                            
                 #Shortly after, the Decree 309/2020 gave a $3000 bonus on April 2020. It meant the minimum pension was temporarily increased up to $18891.49, at the onset of the COVID-19 pandemic. 
                     #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
