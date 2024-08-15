@@ -4247,15 +4247,14 @@ entities:
                                        ,0)
                                            
                 #Shortly after, the Decree 309/2020 gave a $3000 bonus on April 2020. It meant the minimum pension was temporarily increased up to $18891.49, at the onset of the COVID-19 pandemic. 
-                    #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
-                    #the AUH paid on average the whole quarter (or at least on the middle month). 
-                #Finally, the bonus is only paid to those earning at most the minimum pension + 3000 pesos. Since we work with May 2020 pensions, discounted
-                        #with inflation by May 2020, these 3000 pesos are equal to 574.08 November 2014 pesos, using the official CPI indexes with which the model is calibrated. We use this value
+                #We however divide it by three each time, since it is paid on a single month, and the pension of the period is 
+                        #the pension paid on average the whole quarter. 
+                #Finally, the bonus is only paid to those earning at most the minimum pension + 3000 pesos. We divide this value by period 70's CPI global 
                         # to determine which person gets this benefit, but since the bonus was actually paid on April 2020, we input the real value for this month when taking into account the bonus
                         # that was actually paid ($582,94). 
                 - decree_309_2020_bonus: if(period!=70, 0, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 574.08, 0,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 3000*100/CPI_CENTRAL, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
                                                         582.94/3, 
                                                         (MIN_PENSION_CENTRAL_2014_T4 + 582.94 - disc_cost_v2_m_2)/3 
@@ -4265,11 +4264,11 @@ entities:
                                            )
                 #Next, pension bonuses were given again on April and May 2021 ($1500) (Decree 218/2021) and on August 2021 ($5000) (Decree 481/2021) 
                 #The $1500 bonuses go to the second quarter of 2021 (period 74), while the $5000 goes to the third quarter of 2021 (period 75). 
-                        #As usual, we take the middle of quarter value to determine whether a beneficiary is eligible to the bonus, but take the real value of the month the bonus was 
+                        #As usual, we take the real average quarter value to determine whether a beneficiary is eligible to the bonus, but take the real value of the month the bonus was 
                         #actually given to determine the real pension increase. 
                 - decree_218_2021_bonus: if(period!=74, 0, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 192.85, 0,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 1500*100/CPI_CENTRAL, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
                                                         199.25/3 + 192.85/3, 
                                                         (2*MIN_PENSION_CENTRAL_2014_T4 + 192.85 + 199.25 - 2*disc_cost_v2_m_2)/3  
@@ -4279,7 +4278,7 @@ entities:
                                            )
                 - decree_481_2021_bonus: if(period!=75, 0, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 590.34, 0,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 5000*100/CPI_CENTRAL, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
                                                         590.34/3, 
                                                         (MIN_PENSION_CENTRAL_2014_T4 + 590.34 - disc_cost_v2_m_2)/3 
@@ -4292,7 +4291,7 @@ entities:
                         #account, if you had more than one benefit you were excluded from the bonus. 
                 - decree_180_2022_bonus: if(period==78, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 504.32, 0,
+                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 6000*100/CPI_CENTRAL, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
                                                         504.32/3, 
                                                         (MIN_PENSION_CENTRAL_2014_T4 + 504.32 - disc_cost_v2_m_2)/3 
@@ -4304,7 +4303,7 @@ entities:
                         #up to two minimum pensions, considering all their benefits, and increased their pension revenue to up to two minimum pensions plus $12000. 		
                 - decree_215_2022_bonus: if(period==78, 
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 960.15, 0,
+                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 12000*100/CPI_CENTRAL, 0,
                                                     if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
                                                          960.15/3, 
                                                         (2*MIN_PENSION_CENTRAL_2014_T4 + 960.15 - disc_cost_v2_m_2)/3 
@@ -4312,22 +4311,35 @@ entities:
                                                   ), 0 
                                               ), 0
                                            )
-                #After that, Decree 532/2022 establishes bonuses for September, October and November 2022 (80). Since we work with middle of the quarter months, November 2022 represents the pension paid 
-                        # for period 80, and we add all bonuses given the two previous months.
+                #After that, Decree 532/2022 establishes bonuses for September (79), October and November 2022 (80).
                 #From then on, every month there has been pension bonuses for lower pensions, with varying conditions. First, Decree 532/2022 puts it at $7000 for those earning a minimum pension, 
                         #but at $4000 for those with more than the minimum pension + $7000, up to two minimum pensions. 
-                - decree_532_2022_bonus: if(period!=80, 0,
+                - decree_532_2022_bonus: if(period!=79 and period!=80, 0,
                                             if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 390.84*4/7, 0,
-                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
-                                                       (390.84 + 410.06 + 436.09)/3,   
-                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 390.84,
-                                                            (3*MIN_PENSION_CENTRAL_2014_T4 + (390.84 + 410.06 + 436.09) -3*disc_cost_v2_m_2)/3,
+                                               if(disc_cost_v2_m_2 > 2*MIN_PENSION_CENTRAL_2014_T4 + 4000*100/CPI_CENTRAL, 0, 
+                                                  if(period==79,
+                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                       (436.09)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 7000*100/CPI_CENTRAL,
+                                                            (MIN_PENSION_CENTRAL_2014_T4 + (436.09) -disc_cost_v2_m_2)/3,
+                                                            if(disc_cost_v2_m_2 <= 2*MIN_PENSION_CENTRAL_2014_T4, 
+                                                                (4/7*436.09)/3,  
+                                                                (2*MIN_PENSION_CENTRAL_2014_T4 + (436.09)*4/7-disc_cost_v2_m_2)/3
+                                                               )
+                                                            )
+                                                        ), 
+                                                      if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                         (390.84 + 410.06)/3,   
+                                                         if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4 + 7000*100/CPI_CENTRAL,
+                                                            (2*MIN_PENSION_CENTRAL_2014_T4 + (390.84 + 410.06 ) -2*disc_cost_v2_m_2)/3,
                                                             if(disc_cost_v2_m_2<=2*MIN_PENSION_CENTRAL_2014_T4, 
-                                                                4/7*(390.84 + 410.06 + 436.09)/3,  
-                                                                (6*MIN_PENSION_CENTRAL_2014_T4 + (390.84 + 410.06 + 436.09)*4/7-3*disc_cost_v2_m_2)/3)
-                                                            )))
-                                                  , 0)
+                                                                4/7*(390.84 + 410.06)/3,  
+                                                                (4*MIN_PENSION_CENTRAL_2014_T4 + (390.84 + 410.06 )*4/7-2*disc_cost_v2_m_2)/3)
+                                                            )
+                                                         )
+                                                    )
+                                                  )
+                                             ,0)
                                            )
                 #After that, Decree 788/2022 establishes bonuses for December, January and February 2023 (period 81). 
                         #The bonus is $10000 for those earning a minimum pension, but at $7000 for those with more than the minimum pension + $10000, 
