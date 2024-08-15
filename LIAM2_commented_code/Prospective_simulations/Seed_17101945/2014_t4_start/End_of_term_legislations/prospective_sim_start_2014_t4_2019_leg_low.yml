@@ -3307,32 +3307,35 @@ entities:
             #Finally, just to double check, we ensure a child that earns a family benefit cannot earn the AUH.     
                 - auh: if(child_benefit>0, 0, auh) 
     #5.2- We add temporary AUH bonuses, for one period only, given since 2018. 
-            #First, the Decree 1058/2017 gave $400 pesos to AUH recipients on March 2018. Thus, we use the CPI index for March, but assume it is given the second quarter
-                    #of 2018 (together with the increase of the AUH in the model). 
+            #First, the Decree 1058/2017 gave $400 pesos to AUH recipients on March 2018. Thus, we use the CPI index for March. 
                 #It was a one-time bonus paid on a single month, so we divide it by three: the AUH value for a given period 
                         #represents the average of the AUH paid on the whole quarter.
-                - decree_1058_2017_auh_bonus: if(period!=62, 0, 
+                - decree_1058_2017_auh_bonus: if(period!=61, 0, 
                                                 if(auh<=0, 0, 
                                                     181.09/3))
             #Then, the Decree 594/2019 gave AUH beneficiaries a $1000 bonus on September and October 2019. We add this bonus. 
                     #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
                     #the AUH paid on average the whole quarter (or at least on the middle month).
-                #In our model, we take as the third and fourths quarters of 2019 family benefits, the ones paid in August and November 2019. So the September and October 
-                    #2019 nominal increases both appear in period 68, the fourth quarter of 2019.       
-                - decree_594_2019_auh_bonus: if(period==68, 
-                                                    237.52/3 + 227.51/3, 
-                                                            0)
-           
+                #This means the September bonus is paid on the third quarter of 2019 (period 67), and the October bonus on the fourth quarter of 2019 (period 68)    
+                - decree_594_2019_auh_bonus: if(auh<=0, 0, 
+                                                if(period==67, 237.52/3, 
+                                                   if(period==68, 227.51/3, 
+                                                      0)
+                                                   )
+                                                )
                 - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus
-    #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. Thus, for three periods (May 2019, August 2019 and November 2019) in
-            #our model, the AUH is higher than the contributive child benefit earned by the children of monotributistas or lowest earning wage-earners. We hard-code it 
-            #here. Beware, CPI indexes for October and November 2019 are taken from market expectations published by the Central Bank (REM): once official CPI 
-            #indexes are published, we have to change the period 68 value for the auh. 
+    #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. From March 2019 to November 2019, the AUH was thus higher than the 
+            #highest contributive child benefit. This affects the AUH value of the whole 2019 (periods 65 to 68), so we hard-code an average real AUH for 2019
                 - auh: if(auh<=0, auh,
-                            if(period==66, 727.85, 
-                                if(period==67, 666.98,
-                                    if(period==68, 584.93, 
-                                         auh)))) 
+                            if(period==65, 636.44, 
+                                if(period==66, 728.85,
+                                    if(period==67, 663.41, 
+                                       if(period==68, 592.86, 
+                                          auh)
+                                       )
+                                    )
+                               )
+                          )
                 - auh: if(auh==0, auh, 
                             auh+temporary_auh_bonus)
     #6- We compute the yearly school aid (paid on March). This benefit is meant for minors that attend school. 
@@ -3649,16 +3652,16 @@ entities:
                                             False))
     # 3- Temporary pension bonuses
      #In our model, we take as the first quarter of 2018 pension, the average of the real pension each month. So the March 2018 nominal increase appears in
-                        #period 62, the second quarter of 2018. As such, even though the bonus was paid on March 2018, we add it only on the second quarter of 2018. 
-                #To determine the real value of the bonus, we proceed as such: the $10,000 pesos limit is applied to the pension earned in the second quarter of 2018, 
-                        # discounted following May 2018 inflation: we thus divide the pension limit with the CPI index value of May 2018. This equals $4317.05 November 
-                        # 2014 pesos, with the official CPI index we calibrate the MISSAR model. This is a strict limit: the median pension simulated by the model on that
-                        # period is $3360.18, and the average pension $4749.29
+                        #period 61, the first quarter of 2018.  
+                #To determine the real value of the bonus, we proceed as such: the $10,000 pesos limit is applied to the pension earned in the first quarter of 2018, 
+                        # discounted following the average of CPI indexes of that quarter.This equals $4633.65 November 2014 pesos,
+                        # with the official CPI index we calibrate the MISSAR model. This is a strict limit: the median pension simulated by the model on the second 
+                        # quarter of 2018 is $3360.18, and the average pension $4749.29
                 #However, we actualise the value of the bonus by the March 2018 CPI index, because this is when the bonus was actually paid. 
                         #Thus, contributory retirement pensioners get $339.55, while moratorium and universal pensioners get half this bonus, $169.78.
                 #We also divide by three this bonus: it was paid on a single month, and the pension variable for a given period is the mean pension during a quarter.
-                - decree_1058_2017_bonus: if(period!=62, 0, 
-                                            if(disc_cost_v2_m_2>4317.05, 0,
+                - decree_1058_2017_bonus: if(period!=61, 0, 
+                                            if(disc_cost_v2_m_2>4633.65, 0,
                                                if(has_contributory_benefit, 339.55/3, 
                                                 if(has_moratorium_pension or has_universal_pension, 169.78/3,
                                                     0))))
