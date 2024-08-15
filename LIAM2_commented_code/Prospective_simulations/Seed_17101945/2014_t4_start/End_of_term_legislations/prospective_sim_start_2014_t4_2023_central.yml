@@ -3847,15 +3847,18 @@ entities:
             #Decree 261/2021 included a $15000 payment for beneficiaries of the AUH or of contributive child benefits for categories A and B of the monotributo, 
                     # but only for people living in the urban area of Buenos Aires, or in provinces that adopted a lockdown. We thus do not simulate it here.    
                 - temporary_auh_bonus: decree_1058_2017_auh_bonus + decree_594_2019_auh_bonus + decree_73_2019_auh_bonus + decree_309_2020_auh_bonus
-    #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. Thus, for three periods (May 2019, August 2019 and November 2019) in
-            #our model, the AUH is higher than the contributive child benefit earned by the children of monotributistas or lowest earning wage-earners. We hard-code it 
-            #here.  
+    #5.3- There was also an increase of the AUH on March 2019 for the rest of the year, of 46%. From March 2019 to November 2019, the AUH was thus higher than the 
+            #highest contributive child benefit. This affects the AUH value of the whole 2019 (periods 65 to 68), so we hard-code an average real AUH for 2019
                 - auh: if(auh<=0, auh,
-                            if(period==66, 727.85, 
-                                if(period==67, 666.98,
-                                    if(period==68, 584.93, 
-                                         auh)))) 
-                
+                            if(period==65, 636.44, 
+                                if(period==66, 728.85,
+                                    if(period==67, 663.41, 
+                                       if(period==68, 592.86, 
+                                          auh)
+                                       )
+                                    )
+                               )
+                          )
                 - auh: if(auh==0, auh, 
                             auh+temporary_auh_bonus)
     #5.4.- By Decree 475/2021, it became possible for mothers to validate missing contribution years depending on the number of children they had: 
