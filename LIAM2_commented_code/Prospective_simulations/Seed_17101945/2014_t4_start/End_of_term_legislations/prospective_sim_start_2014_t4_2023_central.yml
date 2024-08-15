@@ -4442,17 +4442,48 @@ entities:
                 #After that, Decree 626/2023 establishes a $55000 bonus for December 2023 (period 84). 
                         #This is, stricto sensu, the last pension bonus given with AF legislation. For comparability reasons with current legislation, 
                         #we assume AF legislation would have given the same pension bonuses than Milei. 
-                - decree_626_2023_bonus: if(period!=84, 0, 
+                - decree_626_2023_bonus: if(period!=84 and period!=85, 0, 
                                             if(has_any_benefit,
                                                 if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 55000*100/CPI_CENTRAL, 0,
+                                                   if(period==84,
+                                                      if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
+                                                          (938.07)/3, 
+                                                          (MIN_PENSION_CENTRAL_2014_T4 + (938.07) - disc_cost_v2_m_2)/3 
+                                                         ),
+                                                      if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
+                                                          (777.74+686.8)/3,
+                                                          (2*MIN_PENSION_CENTRAL_2014_T4 + (777.74+686.8) - 2*disc_cost_v2_m_2)/3
+                                                        )
+                                                      )
+                                                   )
+                                               ,0)
+                                             )
+                #The Milei government has so far given $55.000 (January and February 2024) and $70.000 (March through August 2024) pension bonuses, through Decrees: 
+                        #Decree 116/2023; Decree 81/2024; Decree 177/2024; Decree 268/2024; Decree 340/2024; Decree 440/2024; Decree 552/2024; Decree 667/2024
+                        #Decrees 116/2023 and 81/2024 bonuses are added to decree_626_2023_bonus, since they have the same conditions
+                - bonus_of_70000_pesos: if(period<85, 0, 
+                                           if(has_any_benefit,
+                                              if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 70000*100/CPI_CENTRAL, 0, 
+                                                 if(period==85, 
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
-                                                        (938.07)/3, 
-                                                        (MIN_PENSION_CENTRAL_2014_T4 + (938.07) - disc_cost_v2_m_2)/3 
-                                                       )     
-                                                  ), 0 
-                                              )
-                                           )
-                - temporary_pension_bonus: decree_1058_2017_bonus + decree_73_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus + decree_481_2021_bonus + decree_180_2022_bonus + decree_215_2022_bonus + decree_532_2022_bonus + decree_788_2022_bonus + decree_105_2023_bonus + decree_282_2023_bonus + decree_442_2023_bonus + decree_626_2023_bonus
+                                                       787.42/3,
+                                                       (MIN_PENSION_CENTRAL_2014_T4 + 787.42 - disc_cost_v2_m_2)/3
+                                                       ),
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4,
+                                                        70000*100/CPI_CENTRAL,
+                                                        (MIN_PENSION_CENTRAL_2014_T4 + 70000*100/CPI_CENTRAL - disc_cost_v2_m_2)
+                                                       )
+                                                   )
+                                                  )
+                                           ,0)
+                                          )
+                #We assume, starting March 2024, a permanent pension bonus of $70.000 pesos is given to pensioners with a minimum pension; and that this bonus remains frozen.
+                        #If the bonuses change, or stop being given altogether, this assumption will have to be changed.
+
+                - temporary_pension_bonus: decree_1058_2017_bonus + decree_73_2019_bonus + decree_309_2020_bonus + decree_218_2021_bonus 
+                                           + decree_481_2021_bonus + decree_180_2022_bonus + decree_215_2022_bonus + decree_532_2022_bonus 
+                                           + decree_788_2022_bonus + decree_105_2023_bonus + decree_282_2023_bonus + decree_442_2023_bonus 
+                                           + decree_626_2023_bonus + bonus_of_70000_pesos
     #We have included the temporary pension bonus in the adequacy and redistribution modules. We do not need however to add it to the retirement module to measure its 
             #cost. We would rather avoid that, as it is better to have a separate module for determining temporary pension bonuses, to evaluate the impact of 
             #hypotetical bonuses in the future. As such, we simply export in a separate csv file the cost of temporary pension bonuses. 
