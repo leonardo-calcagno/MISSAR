@@ -4226,22 +4226,27 @@ entities:
                     #- The full $5000 were given to those earning at most the minimum pension of  $14067.93
                     #- Those earning less than $19067.93 pesos exceptionnally earned that benefit for the month. 
                 #We however divide it by three each time, since it is paid on a single month, and the pension of the period is 
-                        #the pension paid on average the whole quarter (or at least on the middle month). Also, since these bonuses were given after 
-                        #November 2019, we add them to the first quarter of 2020 family benefit.   
-                #Finally, the bonus is only paid to those earning at most the minimum pension + 5000 pesos. Since we work with February 2020 pensions, discounted
-                        #with inflation by February 2020, these 5000 pesos are equal to 1019.08 November 2014 pesos, using the official CPI indexes with which the model is calibrated. 
-                #Also, we use the february 2020 real value of $5000 pesos for determining who gets the benefit, but since the bonus was actually paid on December 2019 
-                        # and January 2020, we input the real value for these months when taking into account the bonus that was actually paid. 
-                - decree_73_2019_bonus: if(period!=69, 0, 
-                                            if(has_any_benefit,
-                                                if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 1019.08, 0,
+                        #the pension paid on average the whole quarter. 
+                #For periods 68 and 69 the bonus equals respectively 1063.02 and 1039.60 November 2014 pesos. We use these values to also limit who gets the bonus.
+                - decree_73_2019_bonus: if(has_any_benefit,
+                                               if(period==68,
+                                                  if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 1063.02, 0,
                                                     if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
-                                                        (1063.02 + 1039.60)/3, 
-                                                        (2*MIN_PENSION_CENTRAL_2014_T4 + 1063.02 + 1039.60 - 2*disc_cost_v2_m_2)/3 
+                                                        1063.02/3, 
+                                                        (2*MIN_PENSION_CENTRAL_2014_T4 + 1063.02 - 2*disc_cost_v2_m_2)/3 
                                                        )     
-                                                  ), 0 
-                                              )
-                                           )
+                                                    ), 
+                                               if(period==69, 
+                                                  if(disc_cost_v2_m_2 > MIN_PENSION_CENTRAL_2014_T4 + 1039.6, 0,
+                                                    if(disc_cost_v2_m_2<=MIN_PENSION_CENTRAL_2014_T4, 
+                                                        1039.6/3, 
+                                                        (2*MIN_PENSION_CENTRAL_2014_T4 + 1039.6 - 2*disc_cost_v2_m_2)/3 
+                                                       )     
+                                                     )
+                                                        ,0)
+                                                  )
+                                           ,0)
+                                           
                 #Shortly after, the Decree 309/2020 gave a $3000 bonus on April 2020. It meant the minimum pension was temporarily increased up to $18891.49, at the onset of the COVID-19 pandemic. 
                     #We however divide it by three each time, since it is paid on a single month, and the AUH of the period is 
                     #the AUH paid on average the whole quarter (or at least on the middle month). 
