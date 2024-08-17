@@ -3859,9 +3859,15 @@ entities:
                                     )
                                )
                           )
+    #5.4- By Decree 117/2023, the AUH is permanently doubled starting from January 2024. This means, from period 85 onward, auh==2*CHILD_BEN_CENTRAL_1
+                - auh: if(auh<=0, 0,
+                            if(period<85, auh, 
+                                2*CHILD_BEN_CENTRAL_1
+                               )
+                          )
                 - auh: if(auh==0, auh, 
                             auh+temporary_auh_bonus)
-    #5.4.- By Decree 475/2021, it became possible for mothers to validate missing contribution years depending on the number of children they had: 
+    #5.5.- By Decree 475/2021, it became possible for mothers to validate missing contribution years depending on the number of children they had: 
            #One year per child, but three years total for each child that had the AUH for at least 12 months. This only gives access to the PBU, much like 
            #monotributo contributions. As such, we need to track how many quarters a given mother received AUH benefits for her children, and for how many children.
            #Also, how many children she had. We start the simulation in 2014, so it does not cover the whole AUH period, but it is a good enough approximation of 
