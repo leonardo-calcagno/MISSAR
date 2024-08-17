@@ -3344,12 +3344,13 @@ entities:
                 - remaining_career: if(remaining_career<=0, 0, 
                                        remaining_career)
                 - moratorium_quarters: age_quarters-18*4 - (period-24) - (contributed_quarters - car_post_2008_q4)
-        #We assume here the moratorium is only available for four years (so until the first quarter of 2027 included, period 97). People that today have the PUAM may enter. Contrary to the 
+        #We assume here the moratorium is only available for two years (so until the first quarter of 2025 included, period 89). People that today have the PUAM may enter. Contrary to the 
                 #buyback mechanism, here you can only enter the moratorium if you reached retirement age. Following Art. 13 of the draft law, those earning today a moratorium pension 
                 #can't enter this new moratorium program. 
-        #The Law 27705 moratorium, by its Art. 4, is available for two years, for up to four years. By Res.76/2023 of ANSES, Annex I art. 8, the moratorium starts 23/3/2023, so is fully available in period 82
+        #The Law 27705 moratorium, by its Art. 4, is available for two years, for up to four years (we assume the Milei government will not renew it, as it has vocally opposed this moratorium).
+                #By Res.76/2023 of ANSES, Annex I art. 8, the moratorium starts 23/3/2023, so is fully available in period 82
         #It is not possible to earn this proposed moratorium pension if you already have a retirement benefit, including a 2006 or a Law 26.970 moratorium pension.
-                - new_moratorium_27705: if(period<82 or period>97, False,
+                - new_moratorium_27705: if(period<82 or period>89, False,
                                            if(age<legal_retirement_age, False, 
                                               if(liqui_retirement, False,
                                                  if((contributed_quarters)>=(120-extra_trim/2), False, 
