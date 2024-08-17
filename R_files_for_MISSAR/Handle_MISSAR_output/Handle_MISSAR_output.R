@@ -75,6 +75,16 @@ drive_upload(output,path=ruta,overwrite = T) #Upload it corrected
 #debug<-csv_globals %>% 
 #  select(c("PERIOD","87","88","89"))
 
+leg<-"August_2024_legislation/"
+sust<-"Sustainability_LIAM2_output/"
+adeq<-"Adequacy_and_redistribution_LIAM2_output/"
+#Google authentification may trigger here again, proceed with authentification before going further
+id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
+
+sheet_name<-"copy_to_csv_2024_leg"
+output_name<-"globals_prosp_Milei_leg.csv"
+generate_globals(id_globals,sheet_name,output_name,leg)
+
 leg<-"December_2023_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
