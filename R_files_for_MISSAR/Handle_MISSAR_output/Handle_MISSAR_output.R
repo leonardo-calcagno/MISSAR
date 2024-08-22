@@ -70,6 +70,7 @@ walk(csv_files$id,
 
 rm(adeq_folder,csv_files)
 
+##Load simulated csv to R -----
 csv_workers_and_wage_central <- read_csv("workers_and_wage_central.csv")%>%
   correct_csv()
 csv_workers_and_wage_low <- read_csv("workers_and_wage_low.csv")%>%
@@ -159,7 +160,7 @@ write_sheet(csv_high_buyback,ss=id_deficit,sheet="high_buyback_mechanism")
 rm(list=ls(pattern="^csv_"))
 
 
-##Apply short-term growth, CPI and wage to results file 
+##Apply short-term growth, CPI and wage to results file -----
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
 id_deficit<- drive_get(paste0(leg,"Deficit_computation_Milei_leg"))
 
@@ -304,7 +305,7 @@ write_sheet(csv_adequacy_central,ss=id_adequacy,sheet="Adequacy_central")
 write_sheet(csv_adequacy_low,ss=id_adequacy,sheet="Adequacy_low")
 write_sheet(csv_adequacy_high,ss=id_adequacy,sheet="Adequacy_high")
 
-#Update wage figures in adequacy sheets
+##Update wage figures ----
 
 sim_wage_central<-read_sheet(id_deficit,sheet="workers_and_wage_central",range="B2:B105",col_names = FALSE)%>% #We import simulated contributions
   rename(Real_wages_central=c(1))
@@ -317,7 +318,7 @@ range_write(sim_wage_low,ss=id_adequacy,sheet="Retirement benefit values", range
 range_write(sim_wage_central,ss=id_adequacy,sheet="Retirement benefit values", range="R5:R108",reformat=FALSE,col_names = FALSE)
 range_write(sim_wage_high,ss=id_adequacy,sheet="Retirement benefit values", range="AO5:AO108",reformat=FALSE,col_names = FALSE)
 
-#Update minimum wage and minimum pension figures in adequacy sheets
+##Update minimum wage and minimum pension figures -----
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
 csv_minima<-read_sheet(id_globals,sheet="copy_to_csv_2020_leg",col_names = FALSE)
@@ -356,7 +357,7 @@ rm(csv_minima)
 
 
 
-#Update values on redistribution sheets
+#Update redistribution sheets -----
 
 id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita"))
 id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC"))
