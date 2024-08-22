@@ -51,61 +51,6 @@ correct_csv<-function(input){
   
 }
 
-
-#Generate global files in csv format, without formatting problems (copy-pasting often generates missing decimal point errors)
-generate_globals<-function(id,input,output,ruta){
-#id<-id_globals
-#input<-sheet_name
-#output<-output_name
-#ruta<-leg
-csv_globals<-read_sheet(id,sheet=input)
-
-csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
-csv_globals<-csv_globals%>%
-  select(-c(152))#%>%
-#  correct_csv()# #Remove last column with #REF!
-
-# mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
-
-write_csv(csv_globals,output)
-drive_upload(output,path=ruta,overwrite = T) #Upload it corrected
-  
-}
-
-#debug<-csv_globals %>% 
-#  select(c("PERIOD","87","88","89"))
-
-leg<-"August_2024_legislation/"
-sust<-"Sustainability_LIAM2_output/"
-adeq<-"Adequacy_and_redistribution_LIAM2_output/"
-#Google authentification may trigger here again, proceed with authentification before going further
-id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
-
-sheet_name<-"copy_to_csv_2024_leg"
-output_name<-"globals_prosp_Milei_leg.csv"
-generate_globals(id_globals,sheet_name,output_name,leg)
-
-leg_AF<-"December_2023_legislation/"
-#Google authentification may trigger here again, proceed with authentification before going further
-sheet_name<-"copy_to_csv_2020_leg"
-output_name<-"globals_prosp_jun_2022_leg.csv"
-generate_globals(id_globals,sheet_name,output_name,leg)
-
-
-sheet_name<-"copy_to_csv_Macri_leg"
-output_name<-"globals_prosp_scenarios_Macri_leg.csv"
-leg_Macri<-"Macri_legislation/"
-generate_globals(id_globals,sheet_name,output_name,leg_Macri)
-
-
-sheet_name<-"copy_to_csv_2017_leg"
-output_name<-"globals_transposed_prosp_scenarios_2017_leg.csv"
-leg_CFK<-"Dec_2015_legislation_with_moratorium/"
-generate_globals(id_globals,sheet_name,output_name,leg_CFK)
-
-#Cleanup 
-rm(output_name,sheet_name)
-
 #Import csv simulation results -----
 sust_folder<-drive_get(paste0(leg,sust))
 csv_files<-drive_ls(sust_folder,type="csv")
