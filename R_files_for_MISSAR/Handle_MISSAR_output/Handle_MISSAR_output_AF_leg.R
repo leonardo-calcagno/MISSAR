@@ -38,7 +38,7 @@ if(!file.exists("MISSAR_output")) {
 setwd("MISSAR_output/")
 
 
-###Generate csv globals ----
+#Functions and path ----
 #Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
 #decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
 correct_csv<-function(input){
@@ -51,69 +51,21 @@ correct_csv<-function(input){
   
 }
 
-
-#Generate global files in csv format, without formatting problems (copy-pasting often generates missing decimal point errors)
-generate_globals<-function(id,input,output,ruta){
-#id<-id_globals
-#input<-sheet_name
-#output<-output_name
-#ruta<-leg
-csv_globals<-read_sheet(id,sheet=input)
-
-csv_globals[is.na(csv_globals)]<-0 #Missing values put to 0
-csv_globals<-csv_globals%>%
-  select(-c(152))#%>%
-#  correct_csv()# #Remove last column with #REF!
-
-# mutate_all(~(str_replace(.,",","."))) #Keep variables as character, but replace "," by "." (needed for LIAM2)
-
-write_csv(csv_globals,output)
-drive_upload(output,path=ruta,overwrite = T) #Upload it corrected
-  
-}
-
-#debug<-csv_globals %>% 
-#  select(c("PERIOD","87","88","89"))
-
-leg<-"August_2024_legislation/"
+leg_AF<-"December_2023_legislation/"
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
 #Google authentification may trigger here again, proceed with authentification before going further
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
 
-sheet_name<-"copy_to_csv_2024_leg"
-output_name<-"globals_prosp_Milei_leg.csv"
-generate_globals(id_globals,sheet_name,output_name,leg)
-
-leg_AF<-"December_2023_legislation/"
-#Google authentification may trigger here again, proceed with authentification before going further
-sheet_name<-"copy_to_csv_2020_leg"
-output_name<-"globals_prosp_jun_2022_leg.csv"
-generate_globals(id_globals,sheet_name,output_name,leg)
-
-
-sheet_name<-"copy_to_csv_Macri_leg"
-output_name<-"globals_prosp_scenarios_Macri_leg.csv"
-leg_Macri<-"Macri_legislation/"
-generate_globals(id_globals,sheet_name,output_name,leg_Macri)
-
-
-sheet_name<-"copy_to_csv_2017_leg"
-output_name<-"globals_transposed_prosp_scenarios_2017_leg.csv"
-leg_CFK<-"Dec_2015_legislation_with_moratorium/"
-generate_globals(id_globals,sheet_name,output_name,leg_CFK)
-
-#Cleanup 
-rm(output_name,sheet_name)
 
 #Import csv simulation results -----
-sust_folder<-drive_get(paste0(leg,sust))
+sust_folder<-drive_get(paste0(leg_AF,sust))
 csv_files<-drive_ls(sust_folder,type="csv")
 walk(csv_files$id, 
      ~ drive_download(as_id(.x)))
 rm(sust_folder,csv_files)
 
-adeq_folder<-drive_get(paste0(leg,adeq))
+adeq_folder<-drive_get(paste0(leg_AF,adeq))
 csv_files<-drive_ls(adeq_folder,type="csv")
 walk(csv_files$id, 
      ~ drive_download(as_id(.x)))
@@ -174,7 +126,7 @@ csv_high_buyback <- read_csv("buyback_mechanism_high.csv")%>%
 
 #Modify results sheets -----
 
-id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim"))
+id_deficit<- drive_get(paste0(leg_AF,"Deficit_computation_50_1.03_trim"))
 
 write_sheet(csv_workers_and_wage_low,ss=id_deficit,sheet="workers_and_wage_low")
 write_sheet(csv_workers_and_wage_central,ss=id_deficit,sheet="workers_and_wage_central")
@@ -211,7 +163,7 @@ rm(list=ls(pattern="^csv_"))
 
 ##Apply short-term growth, CPI and wage to results file 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
-id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim"))
+id_deficit<- drive_get(paste0(leg_AF,"Deficit_computation_50_1.03_trim"))
 
 apply_short_term_macro<-function(scenario){
 sheet_name<-paste0(scenario," macro hypothesis")
@@ -348,7 +300,7 @@ csv_redistribution_high_insee <- read_csv("redistribution_high_insee.csv")%>%
 
 
 #Modify the corresponding sheets
-id_adequacy<- drive_get(paste0(leg,"Graphics_adequacy"))
+id_adequacy<- drive_get(paste0(leg_AF,"Graphics_adequacy"))
 
 write_sheet(csv_adequacy_central,ss=id_adequacy,sheet="Adequacy_central")
 write_sheet(csv_adequacy_low,ss=id_adequacy,sheet="Adequacy_low")
@@ -370,7 +322,7 @@ range_write(sim_wage_high,ss=id_adequacy,sheet="Retirement benefit values", rang
 #Update minimum wage and minimum pension figures in adequacy sheets
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
-csv_minima<-read_sheet(id_globals,sheet="copy_to_csv_2020_leg",col_names = FALSE)
+csv_minima<-read_sheet(id_globals,sheet="copy_to_csv_2020_leg_AF",col_names = FALSE)
 csv_minima<-csv_minima%>%
   subset(...1 %in% c("PERIOD","MIN_PENSION_CENTRAL_2014_T4","MINIMUM_WAGE_CENTRAL_2014_T4",
                      "MIN_PENSION_HIGH_2014_T4","MINIMUM_WAGE_HIGH_2014_T4","MIN_PENSION_LOW_2014_T4","MINIMUM_WAGE_LOW_2014_T4"))%>%
@@ -408,9 +360,9 @@ rm(csv_minima)
 
 #Update values on redistribution sheets
 
-id_redistribution<- drive_get(paste0(leg,"Graphics_redistribution_per_capita"))
-id_redistribution_SEDLAC<- drive_get(paste0(leg,"Graphics_redistribution_SEDLAC"))
-id_redistribution_INSEE<- drive_get(paste0(leg,"Graphics_redistribution_INSEE"))
+id_redistribution<- drive_get(paste0(leg_AF,"Graphics_redistribution_per_capita"))
+id_redistribution_SEDLAC<- drive_get(paste0(leg_AF,"Graphics_redistribution_SEDLAC"))
+id_redistribution_INSEE<- drive_get(paste0(leg_AF,"Graphics_redistribution_INSEE"))
 
 
 write_sheet(csv_redistribution_central,ss=id_redistribution,sheet="Redistribution_central")

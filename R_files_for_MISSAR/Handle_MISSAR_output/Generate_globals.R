@@ -91,12 +91,7 @@ generate_globals(id_globals,sheet_name,output_name,leg)
 
 
 
-leg<-"December_2023_legislation/"
-sust<-"Sustainability_LIAM2_output/"
-adeq<-"Adequacy_and_redistribution_LIAM2_output/"
-#Google authentification may trigger here again, proceed with authentification before going further
-id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
-
+leg_AF<-"December_2023_legislation/"
 sheet_name<-"copy_to_csv_2020_leg"
 output_name<-"globals_prosp_jun_2022_leg.csv"
 generate_globals(id_globals,sheet_name,output_name,leg)
