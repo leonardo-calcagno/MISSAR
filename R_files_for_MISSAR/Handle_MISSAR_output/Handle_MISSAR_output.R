@@ -124,7 +124,7 @@ csv_high_buyback <- read_csv("buyback_mechanism_high.csv")%>%
 
 #Modify results sheets -----
 
-id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim"))
+id_deficit<- drive_get(paste0(leg,"Deficit_computation_Milei_leg"))
 
 write_sheet(csv_workers_and_wage_low,ss=id_deficit,sheet="workers_and_wage_low")
 write_sheet(csv_workers_and_wage_central,ss=id_deficit,sheet="workers_and_wage_central")
@@ -161,7 +161,7 @@ rm(list=ls(pattern="^csv_"))
 
 ##Apply short-term growth, CPI and wage to results file 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
-id_deficit<- drive_get(paste0(leg,"Deficit_computation_50_1.03_trim"))
+id_deficit<- drive_get(paste0(leg,"Deficit_computation_Milei_leg"))
 
 apply_short_term_macro<-function(scenario){
 sheet_name<-paste0(scenario," macro hypothesis")
