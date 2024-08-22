@@ -200,27 +200,6 @@ rm(sim_GDP_central,sim_GDP_low,sim_GDP_high)
 head(sim_GDP)
 
 
-
-sim_income_central<-read_sheet(id_deficit,sheet="Central SIPA income",range="E9:E112",col_names = FALSE)%>% #We import simulated contributions
-  rename(Central=c(1))%>%
-  mutate(mergeid=row_number())
-sim_income_low<-read_sheet(id_deficit,sheet="Low SIPA income",range="E9:E112",col_names = FALSE)%>%
-  rename(Low=c(1))%>%
-  mutate(mergeid=row_number())
-sim_income_high<-read_sheet(id_deficit,sheet="High SIPA income",range="E9:E112",col_names = FALSE)%>%
-  rename(High=c(1))%>%
-  mutate(mergeid=row_number())
-
-
-
-sim_income<-sim_income_central%>%
-  left_join(sim_income_low)%>%
-  left_join(sim_income_high)%>%
-  select(-c(mergeid))
-rm(sim_income_central,sim_income_low,sim_income_high)
-head(sim_income)
-
-
 sim_workers_central<-read_sheet(id_deficit,sheet="workers_and_wage_central",range="C2:C105",col_names = FALSE)%>% #We import simulated contributions
   rename(Central=c(1))%>%
   mutate(mergeid=row_number())
@@ -257,8 +236,6 @@ rm(sim_wage_central,sim_wage_low,sim_wage_high)
 head(sim_wage)
 
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public")
-range_write(sim_income,ss=id_globals,sheet="Simulated_ANSES_contributions",range="B3:D107",reformat=FALSE)
-range_write(sim_GDP,ss=id_globals,sheet="Simulated_ANSES_contributions",range="H3:J107",reformat=FALSE)
 range_write(sim_workers,ss=id_globals,sheet="Labour GDP participation",range="N3:P107",reformat=FALSE)
 range_write(sim_wage,ss=id_globals,sheet="Labour GDP participation",range="Q3:S107",reformat=FALSE)
 
