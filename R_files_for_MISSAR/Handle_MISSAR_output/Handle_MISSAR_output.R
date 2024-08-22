@@ -38,7 +38,7 @@ if(!file.exists("MISSAR_output")) {
 setwd("MISSAR_output/")
 
 
-###Generate csv globals ----
+#Functions and path ----
 #Import errors may make variables with decimal spaces 1000 times bigger (read as if they were integers). We identify, for all variables with a non-null
 #decimal part (.x%%1>0), those that are more than 100 times larger than their median, excluding null values, and correct them. 
 correct_csv<-function(input){
@@ -50,6 +50,11 @@ correct_csv<-function(input){
     )
   
 }
+
+leg<-"August_2024_legislation/"
+sust<-"Sustainability_LIAM2_output/"
+adeq<-"Adequacy_and_redistribution_LIAM2_output/"
+#Google authentification may trigger here again, proceed with authentification before going further
 
 #Import csv simulation results -----
 sust_folder<-drive_get(paste0(leg,sust))
