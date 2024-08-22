@@ -375,33 +375,7 @@ write_sheet(csv_redistribution_central_insee,ss=id_redistribution_INSEE,sheet="R
 write_sheet(csv_redistribution_low_insee,ss=id_redistribution_INSEE,sheet="Redistribution_low")
 write_sheet(csv_redistribution_high_insee,ss=id_redistribution_INSEE,sheet="Redistribution_high")
 
-#Update simulated number of pensions in globals file -----
-
-sim_benefits_central<-csv_adequacy_central%>%
-  select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
-  rename(Central_total=Total_SIPA_benefits, 
-         Central_cont=Total_non_moratorium_benefits)
-
-sim_benefits_low<-csv_adequacy_low%>%
-  select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
-  rename(Pesimista_total=Total_SIPA_benefits, 
-         Pesimista_cont=Total_non_moratorium_benefits)
-
-sim_benefits_high<-csv_adequacy_high%>%
-  select(period,Total_SIPA_benefits,Total_non_moratorium_benefits)%>%
-  rename(Optimista_total=Total_SIPA_benefits, 
-         Optimista_cont=Total_non_moratorium_benefits)
-
-
-sim_benefits<-sim_benefits_central%>%
-  left_join(sim_benefits_low)%>%
-  left_join(sim_benefits_high)%>%
-  select(-c(period))
-rm(sim_benefits_central,sim_benefits_low,sim_benefits_high)
-
-sim_benefits<-sim_benefits[,c(1,3,5,2,4,6)] #Re-order columns
-
-range_write(sim_benefits,ss=id_globals,sheet="Simulated_ANSES_contributions",range="AV3:BA107",reformat=FALSE)
+#Milei legislation does not use simulated number of pensions for future pension mobility, we stop here.
 
 rm(list=ls(pattern="^sim_"))
 rm(list=ls(pattern="^csv_"))
