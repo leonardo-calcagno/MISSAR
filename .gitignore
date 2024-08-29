@@ -109,3 +109,10 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+<<<<<<< HEAD
+=======
+
+# Zip files
+*.zip
+*.rar
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3

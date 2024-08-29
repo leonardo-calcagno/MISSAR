@@ -1,5 +1,6 @@
 
 # Packages -----------------
+<<<<<<< HEAD
 install.packages("tidyverse")
 install.packages("readxl")
 install.packages("openxlsx")
@@ -9,6 +10,17 @@ install.packages('questionr')
 install.packages('readr')
 install.packages('googlesheets4')
 install.packages('googledrive')
+=======
+#install.packages("tidyverse")
+#install.packages("readxl")
+#install.packages("openxlsx")
+#install.packages("ggplot2")
+#install.packages('Rcpp')
+#install.packages('questionr')
+#install.packages('readr')
+#install.packages('googlesheets4')
+#install.packages('googledrive')
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 
 rm(list=ls())
 gc()
@@ -25,8 +37,14 @@ library(googlesheets4)
 library(googledrive)
 
 gs4_auth() #Connection to google account
+<<<<<<< HEAD
 setwd("C:/Users/lcalcagno/Documents/Investigación/")
 setwd("MISSAR_private/R_files_for_MISSAR/Globals")
+=======
+#setwd("C:/Users/lcalcagno/Documents/Investigaci?n/")
+setwd("/Users/Leonardo/Documents/MISSAR/")
+setwd("MISSAR_private/R_files_for_MISSAR")
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 #To verify working directory
 #getwd()
 
@@ -77,12 +95,27 @@ generate_globals<-function(id,input,output,ruta){
   
 }
 
+<<<<<<< HEAD
 leg<-"June_2022_legislation/"
+=======
+leg<-"August_2024_legislation/"
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 sust<-"Sustainability_LIAM2_output/"
 adeq<-"Adequacy_and_redistribution_LIAM2_output/"
 #Google authentification may trigger here again, proceed with authentification before going further
 id_globals<- drive_get("Inflation_RIPTE_and_ANSES_discounting_public") #Prepare globals csv with R to avoid formatting errors
 
+<<<<<<< HEAD
+=======
+sheet_name<-"copy_to_csv_2024_leg"
+output_name<-"globals_prosp_Milei_leg.csv"
+generate_globals(id_globals,sheet_name,output_name,leg)
+
+
+
+
+leg_AF<-"December_2023_legislation/"
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 sheet_name<-"copy_to_csv_2020_leg"
 output_name<-"globals_prosp_jun_2022_leg.csv"
 generate_globals(id_globals,sheet_name,output_name,leg)

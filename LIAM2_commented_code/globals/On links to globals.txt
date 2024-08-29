@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 LIAM2 can only import csv files, as of version 0.12. We thus need to copy and paste the values of the globals from the xlsx files where they are computed to the csv files
 that are imported by LIAM2. 
 
@@ -8,4 +9,16 @@ The last sheet, copy_to_csv, is what you need to copy and paste to the globals c
 Inflation_RIPTE_and_ANSES_discounting.xlsx spreadsheet. 
 
 Thus, to change the real wage or inflation hypothesis in the prospective simulation, you must change it in that spreadsheet. This will update the copy_to_csv sheet. Finally, 
+=======
+LIAM2 can only import csv files, as of version 0.12. We thus need to copy and paste the values of the globals from the xlsx files where they are computed to the csv files
+that are imported by LIAM2. 
+
+We tried to make intermediate .xlsx globals files, from where you could directly copy the values to the csv globals, but failed to handle libreoffice links. 
+
+Simply go to  the Inflation_RIPTE_and_ANSES_discounting.xlsx excel file provided in the latest release.
+The last sheet, copy_to_csv, is what you need to copy and paste to the globals csv file. This sheet is automatically updated with the values in the rest of the 
+Inflation_RIPTE_and_ANSES_discounting.xlsx spreadsheet. 
+
+Thus, to change the real wage or inflation hypothesis in the prospective simulation, you must change it in that spreadsheet. This will update the copy_to_csv sheet. Finally, 
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 before running the simulations, you must overwrite the csv file with the contents of the copy_to_csv sheet. 

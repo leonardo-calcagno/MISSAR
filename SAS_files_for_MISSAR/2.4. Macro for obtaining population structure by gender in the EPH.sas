@@ -160,7 +160,11 @@ run;
 data &indata.; 
 set &indata.; 
 	indep=0;
+<<<<<<< HEAD
 		if cat_ocup=1 | cat_ocup=2 
+=======
+		if estado=1 & (cat_ocup=1 | cat_ocup=2) 
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 			then indep=1; 
 run; 
 proc freq data=&indata.; 

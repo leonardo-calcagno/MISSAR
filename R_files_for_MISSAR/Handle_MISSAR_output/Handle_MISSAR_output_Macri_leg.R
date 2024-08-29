@@ -1,5 +1,6 @@
 
 # Packages -----------------
+<<<<<<< HEAD
 install.packages("tidyverse")
 install.packages("readxl")
 install.packages("openxlsx")
@@ -9,6 +10,17 @@ install.packages('questionr')
 install.packages('readr')
 install.packages('googlesheets4')
 install.packages('googledrive')
+=======
+#install.packages("tidyverse")
+#install.packages("readxl")
+#install.packages("openxlsx")
+#install.packages("ggplot2")
+#install.packages('Rcpp')
+#install.packages('questionr')
+#install.packages('readr')
+#install.packages('googlesheets4')
+#install.packages('googledrive')
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 
 rm(list=ls())
 gc()
@@ -25,8 +37,14 @@ library(googlesheets4)
 library(googledrive)
 
 gs4_auth() #Connection to google account
+<<<<<<< HEAD
 setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
 
+=======
+#setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
+setwd("/Users/Leonardo/Documents/MISSAR/")
+setwd("MISSAR_private/R_files_for_MISSAR/")
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 #To verify working directory
 #getwd()
 
@@ -248,7 +266,12 @@ write_sheet(csv_redistribution_high_insee,ss=id_redistribution_INSEE,sheet="Redi
 
 
 #Cleanup -----
+<<<<<<< HEAD
 setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
+=======
+#setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
+setwd("../")
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 unlink("MISSAR_output",recursive=TRUE)
 rm(list=ls())
 

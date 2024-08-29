@@ -6,12 +6,25 @@
 # Packages -----------------
 rm(list=ls())
 gc()
+<<<<<<< HEAD
 library(tidyverse)
 library(eph)
 library(readr)
 library(googlesheets4)
 library(googledrive)
 setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private")
+=======
+#install.packages("eph")
+library(tidyverse)
+library(eph)
+library(readr)
+library(glue)
+library(openxlsx)
+library(googlesheets4)
+library(googledrive)
+#setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
+setwd("/Users/Leonardo/Documents/MISSAR/MISSAR_private")
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
 closeAllConnections() #Else, you risk the "all connections are in use" error.
@@ -64,7 +77,109 @@ table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Shows which periods wer
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
+<<<<<<< HEAD
 rm(start.time,end.time,time.taken,year,vars_to_import)
+=======
+
+df_periods<-table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) %>%  #Identify periods to download.
+  as.data.frame() %>% 
+  rename(ANO4=1,
+         TRIMESTRE=2,
+         obs=3)
+has_2016<-df_periods %>% 
+  subset(ANO4==2016)
+
+if(nrow(has_2016)==0){
+add_2016<-data.frame(2:4) %>% 
+  mutate(ANO4=2016,
+         obs=0) %>% 
+  rename(TRIMESTRE=1) %>% 
+  select(c(ANO4,TRIMESTRE,obs))
+df_periods<-add_2016 %>%
+  rbind(df_periods)
+rm(add_2016)
+}
+missing_periods<-df_periods %>% 
+  subset(obs==0) 
+
+rm(start.time,end.time,time.taken,year,df_periods)
+#The EPH package, most of the time, does not import all quarters correctly. 
+
+#Complete download if needed -------
+year <- c("2016","2017","2018","2019","2020","2021","2022","2023"
+) 
+
+#Possible imported months and years names
+quarter <- c("1_Trim","2_Trim","3_Trim","4_Trim","1erTrim","2doTrim","3erTrim","4toTrim","1er_Trim"
+)
+
+#Put different names for each option, or they get overwritten
+quarter_2 <- c("t1","t2","t3","t4","trim1","trim2","trim3","trim4","q1")
+
+urls_zip <- 
+  tidyr::expand_grid(quarter, year) %>%
+  glue_data("https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/EPH_usu_{quarter}_{year}_txt.zip")
+
+# File names for downloaded zip files
+names_zip <- 
+  tidyr::expand_grid(quarter_2, year) %>%
+  glue_data("{year}_{quarter_2}.zip")
+
+#---- Download zip files with purrr library
+setwd("../")
+setwd("Scraped_datasets/")
+if(!file.exists("EPH_folder")) {
+  dir.create("EPH_folder")
+}
+setwd("EPH_folder/")
+
+
+walk2(urls_zip,names_zip,safely(download.file))
+list_zip <- list.files(pattern='*.zip')
+for (i in 1:length(list_zip)){
+  unzip(list_zip[[i]])
+} #Open all zip folders
+#Some unzipped files are extracted in folders, we get the information from there
+list_folders<-list.dirs() 
+list_folders<-list_folders%>% 
+  subset(grepl(pattern="*EPH",list_folders)
+  )
+for (i in list_folders){
+ ind_file<-list.files(path=i,pattern="*ind|*pers") 
+  file.copy(from=paste0(i,"/",ind_file), to=paste0(getwd(),"/",ind_file), 
+            overwrite = TRUE, recursive = FALSE, 
+            copy.mode = TRUE)
+}
+rm(ind_file)
+
+list_txt<-list.files(pattern="*.txt")
+list_ind<-list_txt %>% 
+  subset(grepl(pattern="*ind|*pers",list_txt))
+
+missing_periods<-missing_periods %>% 
+  mutate(anio_corto=substr(ANO4,start=3,stop=4)
+         )
+array_missing<-paste0("T",missing_periods$TRIMESTRE,missing_periods$anio_corto)
+array_missing<-gsub(pattern="T420",replacement="4to.trim_2020",array_missing)
+
+list_missing<-list_ind %>% 
+  subset(grepl(pattern=paste(array_missing,collapse="|"),list_ind,ignore.case=TRUE))
+
+for (i in list_missing){
+  df_import<-read_delim(i, delim=";", escape_double=FALSE,
+                        trim_ws=TRUE, col_select=vars_to_import)
+  dl_EPH_post_2016<-dl_EPH_post_2016 %>% 
+    rbind(df_import)
+  rm(df_import)
+}
+table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Verify all periods are correctly imported
+unlink(list_txt,recursive=TRUE) #Keep only downloaded zip files
+unlink("*.pdf",recursive=TRUE)
+#unlink("*.zip",recursive=TRUE) #Uncomment to also delete downloaded zip files
+rm(array_missing,list_missing,list_ind,list_zip,i,list_txt,vars_to_import,has_2016,missing_periods,list_folders,names_zip,quarter,quarter_2,urls_zip,year)
+
+
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 #Variables of interest -----
 vector_periods<-dl_EPH_post_2016 %>% 
   select(c(ANO4,TRIMESTRE)) %>% 
@@ -105,6 +220,11 @@ rm(vector_periods)
     select(-c(PP07H,PP07I,CH06,NIVEL_ED,CAT_INAC))
   
   
+<<<<<<< HEAD
+=======
+  
+  
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
   #Run to verify independent workers in the EPH don't report social security contributions
  # control<-dl_EPH_post_2016 %>% 
 #    subset(ESTADO==1 & (CAT_OCUP==1|CAT_OCUP==2)) 
@@ -176,7 +296,11 @@ rm(vector_periods)
   
 
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
+<<<<<<< HEAD
   select(-c(contributes,is_indep,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
+=======
+  select(-c(contributes,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 head(df_EPH_post_2016)
 #Finally, we create 5-year age groups for MISSAR's age-dependent alignment
 make_5y_agegroup<-function(indata,agevariable){
@@ -205,6 +329,54 @@ make_5y_agegroup<-function(indata,agevariable){
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   make_5y_agegroup("ageconti")
 gc()
+<<<<<<< HEAD
+=======
+#DF independent workers-----
+df_demographic_men<-df_EPH_post_2016 %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==1) %>% 
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(PONDERA=sum(PONDERA)) %>% 
+  ungroup()
+
+df_demographic_women<-df_EPH_post_2016 %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==2) %>% 
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(PONDERA=sum(PONDERA)) %>% 
+  ungroup()
+
+df_independent_men<-df_EPH_post_2016 %>% 
+  mutate(indep=ifelse(is_indep, 1, 
+                      0)
+         ) %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==1) %>%
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(indep=sum(PONDERA*indep)/sum(PONDERA)
+            ) %>% 
+  ungroup()
+
+df_independent_women<-df_EPH_post_2016 %>% 
+  mutate(indep=ifelse(is_indep, 1, 
+                      0)
+  ) %>% 
+  subset(ageconti>15 & ageconti<70 & CH04==2) %>%
+  group_by(ANO4,TRIMESTRE,agegroup) %>% 
+  summarise(indep=sum(PONDERA*indep)/sum(PONDERA)) %>% 
+  ungroup()
+##Export, for use in alignment_tables_independent.R 
+setwd("../../")
+setwd("Update_globals/")
+if(!file.exists("EPH_alignment")) {
+  dir.create("EPH_alignment")
+}
+setwd("EPH_alignment/")
+getwd()
+write.xlsx(df_demographic_men,"demographic_men.xlsx")
+write.xlsx(df_demographic_women,"demographic_women.xlsx")
+write.xlsx(df_independent_men,"independent_men.xlsx")
+write.xlsx(df_independent_women,"independent_women.xlsx")
+rm(df_demographic_men,df_demographic_women,df_independent_men,df_independent_women)
+
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 #Base alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69) %>% #Use ageconti for subsetting, else age 15 is included
@@ -399,7 +571,11 @@ rm(LMS_names)
 
 id_LMS_scenario<- drive_get("LMS_scenarios_16_69") 
 range_write(update_men,ss=id_LMS_scenario,range="F173",col_names =FALSE,reformat=FALSE) 
+<<<<<<< HEAD
 range_write(update_women,ss=id_LMS_scenario,range="AK173",col_names =FALSE,reformat=FALSE)
+=======
+range_write(update_women,ss=id_LMS_scenario,range="AO173",col_names =FALSE,reformat=FALSE)
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 rm(cal_men,cal_women,update_men,update_women,cal_LMS_all_ages)
 
 ##New LMS scenarios-----
@@ -734,6 +910,10 @@ df_list_mar_stu<-list(df_uni_men,df_mar_men,df_uni_women,df_mar_women,df_stu_men
 rm(df_stu_women,df_stu_men,df_mar_women,df_uni_women,df_mar_men,df_uni_men)
 rm(df_list_cal_mar,df_list_cal_stu)
 rm(list=ls(pattern="*mean_"))
+<<<<<<< HEAD
+=======
+
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 #CSV tables ----
 ##Get 2003-2015 tables ----
 id_alignment_folder<- drive_get("Alignment_tables_update") 
@@ -851,11 +1031,16 @@ df_list_cal_low<-df_list_cal_low[1:10] %>%  #Marital status and student proporti
 
 ##CSV export -------
 
+<<<<<<< HEAD
 setwd("../../") #Go up to the parent folder of LIAM2_commented_code
+=======
+setwd("../../../") #Go up to the parent folder of LIAM2_commented_code
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
 setwd(folder_eot_leg)
 getwd()
 
+<<<<<<< HEAD
 export_csv<-function(names_file,df_list,total_files){
   for (i in 1:total_files){
 write_csv(first_row,paste0(names_file[i],".csv"),na="",col_names=FALSE)  
@@ -867,6 +1052,34 @@ export_csv(names_file=csv_names_central,df_list=df_list_cal_central,total_files=
 export_csv(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
 
 
+=======
+
+options(scipen=999) #This avoids using scientific notation to export values to CSV (important for LIAM2)
+#We use write.table() instead of write.csv() to also delete column and row names
+
+#export_csv<-function(names_file,df_list,total_files){
+#  for (i in 1:total_files){
+#write_csv(first_row,paste0(names_file[i],".csv"),na="",col_names=FALSE)  
+#write_csv(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col_names=FALSE)                          }
+#}
+
+
+export_table<-function(names_file,df_list,total_files){
+  for (i in 1:total_files){
+    write.table(first_row,paste0(names_file[i],".csv"),na="",col.names=FALSE,row.names=FALSE,sep=",",quote=FALSE)  
+    write.table(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col.names=FALSE,row.names=FALSE,sep=",",quote=FALSE)
+  }
+}
+
+
+export_table(names_file=csv_names_low,df_list=df_list_cal_low,total_files=10)
+export_table(names_file=csv_names_central,df_list=df_list_cal_central,total_files=16)
+export_table(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
+
+rm(list=ls(pattern="df_list*"))
+rm(list=ls(pattern="csv_names*"))
+rm(dl_list,first_row,get_names,period_row,men,women,names_LMS,i,correct_names,folder_eot_leg,id_alignment_folder)
+>>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 
 #Descriptive statistics ----
 
