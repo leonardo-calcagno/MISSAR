@@ -1,16 +1,5 @@
 
 # Packages -----------------
-<<<<<<< HEAD
-install.packages("tidyverse")
-install.packages("readxl")
-install.packages("openxlsx")
-install.packages("ggplot2")
-install.packages('Rcpp')
-install.packages('questionr')
-install.packages('readr')
-install.packages('googlesheets4')
-install.packages('googledrive')
-=======
 #install.packages("tidyverse")
 #install.packages("readxl")
 #install.packages("openxlsx")
@@ -20,7 +9,6 @@ install.packages('googledrive')
 #install.packages('readr')
 #install.packages('googlesheets4')
 #install.packages('googledrive')
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 
 rm(list=ls())
 gc()
@@ -37,14 +25,9 @@ library(googlesheets4)
 library(googledrive)
 
 gs4_auth() #Connection to google account
-<<<<<<< HEAD
-setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
-
-=======
 #setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
 setwd("/Users/Leonardo/Documents/MISSAR/")
 setwd("MISSAR_PRIVATE/R_files_for_MISSAR/")
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 #To verify working directory
 #getwd()
 
@@ -127,13 +110,6 @@ write_sheet(csv_workers_and_wage_low,ss=id_deficit,sheet="workers_and_wage_low")
 write_sheet(csv_workers_and_wage_central,ss=id_deficit,sheet="workers_and_wage_central")
 write_sheet(csv_workers_and_wage_high,ss=id_deficit,sheet="workers_and_wage_high")
 
-<<<<<<< HEAD
-write_sheet(csv_temporary_pension_bonus_low,ss=id_deficit,sheet="temporary_pension_bonus_low")
-write_sheet(csv_temporary_pension_bonus_central,ss=id_deficit,sheet="temporary_pension_bonus_central")
-write_sheet(csv_temporary_pension_bonus_high,ss=id_deficit,sheet="temporary_pension_bonus_high")
-
-=======
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 
 write_sheet(csv_low_v2_m,ss=id_deficit,sheet="low_v2_m")
 write_sheet(csv_central_v2_m,ss=id_deficit,sheet="central_v2_m")
@@ -374,12 +350,8 @@ rm(list=ls(pattern="^sim_"))
 rm(list=ls(pattern="^csv_"))
 
 #Cleanup -----
-<<<<<<< HEAD
-setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
-=======
 #setwd("C:/Users/Ministerio/Documents/MISSAR_private/R_files_for_MISSAR")
 setwd("../")
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 unlink("MISSAR_output",recursive=TRUE)
 rm(list=ls())
 

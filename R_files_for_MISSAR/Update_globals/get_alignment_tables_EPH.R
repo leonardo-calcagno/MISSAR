@@ -6,14 +6,6 @@
 # Packages -----------------
 rm(list=ls())
 gc()
-<<<<<<< HEAD
-library(tidyverse)
-library(eph)
-library(readr)
-library(googlesheets4)
-library(googledrive)
-setwd("C:/Users/lcalcagno/Documents/Investigación/MISSAR_private")
-=======
 #install.packages("eph")
 library(tidyverse)
 library(eph)
@@ -24,7 +16,6 @@ library(googlesheets4)
 library(googledrive)
 #setwd("C:/Users/lcalcagno/Documents/Investigacion/MISSAR_private")
 setwd("/Users/Leonardo/Documents/MISSAR/MISSAR_private")
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 setwd("R_files_for_MISSAR/Update_globals")
 # Import datasets ------------------
 closeAllConnections() #Else, you risk the "all connections are in use" error.
@@ -77,9 +68,6 @@ table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) #Shows which periods wer
 end.time=Sys.time()
 time.taken=end.time-start.time
 head(time.taken)
-<<<<<<< HEAD
-rm(start.time,end.time,time.taken,year,vars_to_import)
-=======
 
 df_periods<-table(dl_EPH_post_2016$ANO4,dl_EPH_post_2016$TRIMESTRE) %>%  #Identify periods to download.
   as.data.frame() %>% 
@@ -179,7 +167,6 @@ unlink("*.pdf",recursive=TRUE)
 rm(array_missing,list_missing,list_ind,list_zip,i,list_txt,vars_to_import,has_2016,missing_periods,list_folders,names_zip,quarter,quarter_2,urls_zip,year)
 
 
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 #Variables of interest -----
 vector_periods<-dl_EPH_post_2016 %>% 
   select(c(ANO4,TRIMESTRE)) %>% 
@@ -220,11 +207,8 @@ rm(vector_periods)
     select(-c(PP07H,PP07I,CH06,NIVEL_ED,CAT_INAC))
   
   
-<<<<<<< HEAD
-=======
   
   
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
   #Run to verify independent workers in the EPH don't report social security contributions
  # control<-dl_EPH_post_2016 %>% 
 #    subset(ESTADO==1 & (CAT_OCUP==1|CAT_OCUP==2)) 
@@ -296,11 +280,7 @@ rm(vector_periods)
   
 
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
-<<<<<<< HEAD
-  select(-c(contributes,is_indep,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
-=======
   select(-c(contributes,ESTADO,CAT_OCUP,PP04C,PP04D_COD,PP04A))
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 head(df_EPH_post_2016)
 #Finally, we create 5-year age groups for MISSAR's age-dependent alignment
 make_5y_agegroup<-function(indata,agevariable){
@@ -329,8 +309,6 @@ make_5y_agegroup<-function(indata,agevariable){
 df_EPH_post_2016<-df_EPH_post_2016 %>% 
   make_5y_agegroup("ageconti")
 gc()
-<<<<<<< HEAD
-=======
 #DF independent workers-----
 df_demographic_men<-df_EPH_post_2016 %>% 
   subset(ageconti>15 & ageconti<70 & CH04==1) %>% 
@@ -376,7 +354,6 @@ write.xlsx(df_independent_men,"independent_men.xlsx")
 write.xlsx(df_independent_women,"independent_women.xlsx")
 rm(df_demographic_men,df_demographic_women,df_independent_men,df_independent_women)
 
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 #Base alignment tables ------
 cal_base<-df_EPH_post_2016 %>% 
   subset(ageconti>=16 & ageconti<=69) %>% #Use ageconti for subsetting, else age 15 is included
@@ -571,11 +548,7 @@ rm(LMS_names)
 
 id_LMS_scenario<- drive_get("LMS_scenarios_16_69") 
 range_write(update_men,ss=id_LMS_scenario,range="F173",col_names =FALSE,reformat=FALSE) 
-<<<<<<< HEAD
-range_write(update_women,ss=id_LMS_scenario,range="AK173",col_names =FALSE,reformat=FALSE)
-=======
 range_write(update_women,ss=id_LMS_scenario,range="AO173",col_names =FALSE,reformat=FALSE)
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 rm(cal_men,cal_women,update_men,update_women,cal_LMS_all_ages)
 
 ##New LMS scenarios-----
@@ -910,10 +883,7 @@ df_list_mar_stu<-list(df_uni_men,df_mar_men,df_uni_women,df_mar_women,df_stu_men
 rm(df_stu_women,df_stu_men,df_mar_women,df_uni_women,df_mar_men,df_uni_men)
 rm(df_list_cal_mar,df_list_cal_stu)
 rm(list=ls(pattern="*mean_"))
-<<<<<<< HEAD
-=======
 
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 #CSV tables ----
 ##Get 2003-2015 tables ----
 id_alignment_folder<- drive_get("Alignment_tables_update") 
@@ -1031,28 +1001,11 @@ df_list_cal_low<-df_list_cal_low[1:10] %>%  #Marital status and student proporti
 
 ##CSV export -------
 
-<<<<<<< HEAD
-setwd("../../") #Go up to the parent folder of LIAM2_commented_code
-=======
 setwd("../../../") #Go up to the parent folder of LIAM2_commented_code
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 folder_eot_leg<-"LIAM2_commented_code/Prospective_simulations/Seed_17101945/2014_t4_start/End_of_term_legislations"
 setwd(folder_eot_leg)
 getwd()
 
-<<<<<<< HEAD
-export_csv<-function(names_file,df_list,total_files){
-  for (i in 1:total_files){
-write_csv(first_row,paste0(names_file[i],".csv"),na="",col_names=FALSE)  
-write_csv(df_list[[i]],paste0(names_file[i],".csv"),na="",append=TRUE,col_names=FALSE)
-                          }
-}
-export_csv(names_file=csv_names_low,df_list=df_list_cal_low,total_files=10)
-export_csv(names_file=csv_names_central,df_list=df_list_cal_central,total_files=16)
-export_csv(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
-
-
-=======
 
 options(scipen=999) #This avoids using scientific notation to export values to CSV (important for LIAM2)
 #We use write.table() instead of write.csv() to also delete column and row names
@@ -1079,7 +1032,6 @@ export_table(names_file=csv_names_high,df_list=df_list_cal_high,total_files=10)
 rm(list=ls(pattern="df_list*"))
 rm(list=ls(pattern="csv_names*"))
 rm(dl_list,first_row,get_names,period_row,men,women,names_LMS,i,correct_names,folder_eot_leg,id_alignment_folder)
->>>>>>> 12f2b92332c8cca169e4072a1b1ee4ea607764e3
 
 #Descriptive statistics ----
 
