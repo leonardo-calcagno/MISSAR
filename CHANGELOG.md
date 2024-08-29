@@ -61,14 +61,19 @@ Version 1.3.
 - Removed excel files and results from ex-ante policy evaluation variants; moved to ZENODO repository linked to tagged versions. Included xls and xlsx files in gitignore.
 
 Version 1.4. (ongoing)
-- Corrected various globals errors, including Law 26.417 pension mobility formula computation
-- 2021 temporary benefits taken into account: doubling of family benefits, pension bonuses...
+- Corrected various globals errors, including Laws 26.417and 27.426 pension mobility formula computation
+- Temporary benefits taken into account: doubling of family benefits (2021), pension boqnuses (2021-2024)...
 - Correct birth module, making child-bearing probability conditional on current number of children
 - Correct major birth probability error in p_birth_f3.csv; also, stop dividing by 4 for quarterly probabilities of giving birth
 - Add Decree 475/2021 quarter validation for women depending on total children, and number of children with AUH
+- Add 2023 Law 27.705 pension moratorium and buyback mechanism simulation
+- Add August 2024 Milei legislation:
+	* Monthly pension indexation following CPI, (Decree 274/2024) 
+	* Doubling of the AUH (Decree 117/2023)
+	* Tentative pension bonus for minimum pensions of fixed $70.000 ARS (same in AF end-of-term legislation)
+- Rework pension mobility in globals: actual quarterly average of real monthly values, instead of middle-of-the quarter pension mobility value
 - Generate and handle globals with R and google drive
 - Handle MISSAR results with R and google drive
-- Include 2022 proposed pension moratorium legislation
 - Data scraping for automatic calibration data updates: 
 	* CPI, RIPTE and INDEC wage indexes
 	* ANSES fiscal income , from Savings-Investment-Accounts
@@ -76,5 +81,6 @@ Version 1.4. (ongoing)
 	* ANSES benefits, for pension mobility computation, with Selenium
 	* Autonomous and monotributista independent workers information (gender taken from December 2021 BESS)
 - Migration from SAS to R:
-	* Alignment tables from the EPH dataset (2003-2023)
+	* Alignment tables from the EPH dataset (2003-2024)
 	* Macro for family links determination for post 2016 EPH dataset
+- Add CELADE 2024 demographic projections alignment tables in alternative projections folder (by Agustin Romero)
